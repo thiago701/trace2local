@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TraceVanta — runtime canvas</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">▚</span>
+      <h1>TRACEVANTA</h1>
+    </div>
+    <div class="env-info">
+      <span id="env-app" class="pill">app: —</span>
+      <span id="env-mode" class="pill">mode: —</span>
+    </div>
+    <div class="conn">
+      <span id="conn-dot" class="dot"></span>
+      <span id="conn-text">CONNECTING…</span>
+      <span id="dropped-badge" class="pill warn hidden" title="Eventos descartados na borda do buffer (ADR-006)">0 descartados</span>
+    </div>
+  </header>
+
+  <div id="layout">
+    <aside id="sidebar">
+      <section id="endpoints-section">
+        <h2>DISCOVERED ENDPOINTS</h2>
+        <div id="endpoints" class="list" role="list" aria-label="Endpoints descobertos"></div>
+      </section>
+      <section id="recent-section">
+        <h2>RECENT EXECUTIONS <span id="recent-count" class="count hidden">0</span></h2>
+        <div class="search-wrap">
+          <input id="recent-filter" class="search-input" type="search"
+                 placeholder="Filtrar por rótulo, status ou trigger…"
+                 aria-label="Filtrar execuções recentes" autocomplete="off">
+        </div>
+        <div id="recent" class="list" role="list" aria-label="Execuções recentes"></div>
+      </section>
+      <section id="warnings-section" class="hidden">
+        <h2>AVISOS</h2>
+        <div id="warnings" class="list" role="list" aria-label="Avisos de honestidade"></div>
+      </section>
+    </aside>
+
+    <main id="canvas-wrap">
+      <div id="canvas-header">
+        <span id="canvas-title">EXECUTION CANVAS</span>
+        <div id="exec-summary" class="hidden"></div>
+        <div id="view-buttons">
+          <button type="button" id="btn-legend" class="small" title="Legenda dos tipos de nó">LEGENDA</button>
+          <button type="button" id="btn-shortcuts" class="small" title="Atalhos de teclado">ATALHOS</button>
+          <button type="button" id="zoom-in" class="icon" title="Aproximar (Ctrl++)">＋</button>
+          <button type="button" id="zoom-out" class="icon" title="Afastar (Ctrl+-)">－</button>
+          <button type="button" id="zoom-fit" class="icon" title="Ajustar à tela (F)">⤢</button>
+          <button type="button" id="btn-export" title="Exportar .tvtrace" disabled>EXPORTAR .tvtrace</button>
+        </div>
+      </div>
+      <div id="canvas" tabindex="0" aria-label="Canvas de execução — use as setas para navegar entre nós">
+        <svg id="tree" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div id="canvas-empty" class="canvas-hint">
+          <p class="glyph" aria-hidden="true">▚</p>
+          <p class="big">Nenhuma execução selecionada.</p>
+          <p>Escolha um endpoint à esquerda, edite o payload e clique em <strong>EXECUTE REQUEST</strong> — ou dispare a aplicação por fora e veja a árvore crescer aqui em tempo real.</p>
+        </div>
+        <div id="canvas-loading" class="skeleton hidden">
+          <div class="bars">
+            <i></i><i></i><i></i>
+          </div>
+        </div>
+        <div id="legend-pop" class="pop hidden" role="dialog" aria-label="Legenda"></div>
+        <div id="shortcuts-pop" class="pop hidden" role="dialog" aria-label="Atalhos de teclado"></div>
+      </div>
+    </main>
+  </div>
+
+  <footer id="inspector" class="hidden" aria-live="polite">
+    <div id="inspector-head">
+      <h2>INSPECTOR PANEL</h2>
+      <span id="inspector-title"></span>
+      <button type="button" id="inspector-close" title="Fechar (Esc)">✕</button>
+    </div>
+    <div id="inspector-body"></div>
+  </footer>
+
+  <div id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Normalização de fim de linha (repos multiplataforma)
+* text=auto
+
+# código e docs: LF no repositório
+*.java text eol=lf
+*.xml  text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.svg  text eol=lf
+*.sh   text eol=lf
+mvnw   text eol=lf
+
+# binários e imagens
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.jar  binary

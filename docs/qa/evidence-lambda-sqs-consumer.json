@@ -1,0 +1,180 @@
+{
+  "executionId" : "req-lambda-it-3",
+  "traceId" : "39a2658d803136a4d66b77d253c7ef10",
+  "status" : "COMPLETED",
+  "trigger" : "LAMBDA_EVENT",
+  "startedAt" : "2026-09-20T03:27:33.546836100Z",
+  "duration" : 402,
+  "roots" : [ {
+    "nodeId" : "5781d4ebec2d06ce",
+    "parentId" : null,
+    "kind" : "LAMBDA",
+    "label" : "order-processor",
+    "status" : "OK",
+    "startedAt" : "2026-09-20T03:27:33.497983700Z",
+    "selfTime" : 3,
+    "totalTime" : 63,
+    "attributes" : {
+      "faas.name" : "order-processor",
+      "faas.invocation_id" : "req-lambda-it-3",
+      "tv.trigger" : "lambda_event",
+      "tv.execution.id" : "req-lambda-it-3"
+    },
+    "payload" : null,
+    "mutation" : null,
+    "error" : null,
+    "children" : [ {
+      "nodeId" : "14bb564ecb3f2e2b",
+      "parentId" : "5781d4ebec2d06ce",
+      "kind" : "DYNAMODB",
+      "label" : "DynamoDB: orders",
+      "status" : "OK",
+      "startedAt" : "2026-09-20T03:27:33.500199400Z",
+      "selfTime" : 46,
+      "totalTime" : 46,
+      "attributes" : {
+        "db.system" : "dynamodb",
+        "rpc.service" : "DynamoDb",
+        "aws.request_id" : "4d70b100-b354-4433-a544-fc1bda6a9cd1",
+        "url.full" : "http://127.0.0.1:58698/",
+        "server.address" : "127.0.0.1",
+        "rpc.method" : "PutItem",
+        "aws.dynamodb.table_names" : "orders",
+        "http.request.method" : "POST",
+        "rpc.system" : "aws-api",
+        "http.response.status_code" : "200",
+        "server.port" : "58698",
+        "db.operation" : "PutItem"
+      },
+      "payload" : null,
+      "mutation" : {
+        "kind" : "CREATE",
+        "target" : "orders",
+        "key" : "ORDER-L3",
+        "before" : { },
+        "after" : {
+          "customerId" : "C-J3",
+          "total" : 77.7,
+          "pk" : "ORDER-L3"
+        },
+        "deltas" : [ {
+          "path" : "customerId",
+          "before" : null,
+          "after" : "C-J3"
+        }, {
+          "path" : "total",
+          "before" : null,
+          "after" : 77.7
+        }, {
+          "path" : "pk",
+          "before" : null,
+          "after" : "ORDER-L3"
+        } ],
+        "fidelity" : "EXACT"
+      },
+      "error" : null,
+      "children" : [ ]
+    }, {
+      "nodeId" : "516bde331f29c7ac",
+      "parentId" : "5781d4ebec2d06ce",
+      "kind" : "SQS",
+      "label" : "SQS: orders-queue",
+      "status" : "OK",
+      "startedAt" : "2026-09-20T03:27:33.547569200Z",
+      "selfTime" : 13,
+      "totalTime" : 13,
+      "attributes" : {
+        "aws.sqs.queue.url" : "http://127.0.0.1:58698/000000000000/orders-queue",
+        "messaging.system" : "aws_sqs",
+        "messaging.operation.type" : "publish",
+        "messaging.destination.name" : "orders-queue"
+      },
+      "payload" : null,
+      "mutation" : null,
+      "error" : null,
+      "children" : [ {
+        "nodeId" : "1c6c653adcacce54",
+        "parentId" : "516bde331f29c7ac",
+        "kind" : "LAMBDA",
+        "label" : "order-billing",
+        "status" : "OK",
+        "startedAt" : "2026-09-20T03:27:33.627498600Z",
+        "selfTime" : 25,
+        "totalTime" : 272,
+        "attributes" : {
+          "faas.name" : "order-billing",
+          "faas.invocation_id" : "req-lambda-it-4",
+          "tv.trigger" : "lambda_event",
+          "tv.execution.id" : "req-lambda-it-4"
+        },
+        "payload" : null,
+        "mutation" : null,
+        "error" : null,
+        "children" : [ {
+          "nodeId" : "8570cf11bd9c6dfd",
+          "parentId" : "1c6c653adcacce54",
+          "kind" : "DYNAMODB",
+          "label" : "DynamoDB: orders",
+          "status" : "OK",
+          "startedAt" : "2026-09-20T03:27:33.651597Z",
+          "selfTime" : 247,
+          "totalTime" : 247,
+          "attributes" : {
+            "db.system" : "dynamodb",
+            "rpc.service" : "DynamoDb",
+            "aws.request_id" : "9936e315-4bb4-4c62-9f01-e876b07c759e",
+            "url.full" : "http://127.0.0.1:58698/",
+            "server.address" : "127.0.0.1",
+            "rpc.method" : "UpdateItem",
+            "aws.dynamodb.table_names" : "orders",
+            "http.request.method" : "POST",
+            "rpc.system" : "aws-api",
+            "http.response.status_code" : "200",
+            "server.port" : "58698",
+            "db.operation" : "UpdateItem"
+          },
+          "payload" : null,
+          "mutation" : {
+            "kind" : "UPDATE",
+            "target" : "orders",
+            "key" : "ORDER-L3",
+            "before" : null,
+            "after" : {
+              "customerId" : "C-J3",
+              "total" : 77.7,
+              "pk" : "ORDER-L3",
+              "status" : "BILLED"
+            },
+            "deltas" : [ {
+              "path" : "customerId",
+              "before" : null,
+              "after" : "C-J3"
+            }, {
+              "path" : "total",
+              "before" : null,
+              "after" : 77.7
+            }, {
+              "path" : "pk",
+              "before" : null,
+              "after" : "ORDER-L3"
+            }, {
+              "path" : "status",
+              "before" : null,
+              "after" : "BILLED"
+            } ],
+            "fidelity" : "EXACT"
+          },
+          "error" : null,
+          "children" : [ ]
+        } ]
+      } ]
+    } ]
+  } ],
+  "metrics" : {
+    "nodeCount" : 5,
+    "maxDepth" : 4,
+    "lostSpans" : 0,
+    "droppedEvents" : 0
+  },
+  "warnings" : [ ]
+}

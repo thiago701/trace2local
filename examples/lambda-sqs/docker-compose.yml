@@ -1,0 +1,62 @@
+# Projeto de teste/validação: AWS Lambda (java21) + DynamoDB + SQS no LocalStack,
+# com a lib TraceVanta em modo Companion (ADR-002).
+#
+# Pré-requisito: o fat jar já construído (mvn -f examples/lambda-sqs/pom.xml package)
+#   → target/lambda-sqs-bundle.jar (montado no container de provisionamento).
+# Uso: docker compose up   → sobe LocalStack + Station + provisiona e INVOCA a função.
+# A UI do Station: http://localhost:19877/tracevanta
+services:
+  localstack:
+    image: localstack/localstack:4.2
+    ports:
+      # 4567 no host: 4566 costuma estar ocupada por um LocalStack standalone
+      # (a função emulada e o init usam o nome interno `localstack:4566`)
+      - "4567:4566"
+    environment:
+      - SERVICES=dynamodb,sqs,lambda
+      - AWS_DEFAULT_REGION=us-east-1
+      - PERSISTENCE=0
+      # o primeiro start do emulador copia o código extraído (14k arquivos) para
+      # dentro do container via socket do Docker — no Docker Desktop isso pode
+      # passar do teto padrão (~20s); 180s cobre extração + copy + boot da JVM
+      - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=180
+    extra_hosts:
+      # a função (emulada em container irmão) alcança o Station publicado no host
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # executor docker do Lambda: o LocalStack sobe a função em container irmão
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  tracevanta-station:
+    build:
+      context: ../..
+      dockerfile: examples/lambda-sqs/Dockerfile.station
+    ports:
+      - "19877:19877"
+    environment:
+      # ingest protegido: OTLP/mutações exigem Authorization: Bearer devtoken
+      # (a UI/API continuam locais; o token é do cenário demo — troque em produção)
+      - TRACEVANTA_STATION_TOKEN=devtoken
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/19877 && echo ok"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  init-localstack:
+    image: amazon/aws-cli:2.22.0
+    depends_on:
+      localstack:
+        condition: service_started
+      tracevanta-station:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - ./target:/bundle:ro
+      - ./scripts/init-localstack.sh:/init/init.sh:ro
+    entrypoint:
+      - /bin/sh
+      - /init/init.sh

@@ -1,0 +1,122 @@
+﻿{
+    "executionId":  "683ccc2c-0e23-4051-8a23-b7beaf7ce399",
+    "traceId":  "e5ab071e0d3efc5e72477456a554cc11",
+    "status":  "COMPLETED",
+    "trigger":  "LAMBDA_EVENT",
+    "startedAt":  "2026-09-20T02:59:50.908706995Z",
+    "duration":  75,
+    "roots":  [
+                  {
+                      "nodeId":  "1c2d65e910ea965b",
+                      "parentId":  null,
+                      "kind":  "LAMBDA",
+                      "label":  "order-processor",
+                      "status":  "OK",
+                      "startedAt":  "2026-09-20T02:59:50.854864488Z",
+                      "selfTime":  4,
+                      "totalTime":  75,
+                      "attributes":  {
+                                         "tv.execution.id":  "683ccc2c-0e23-4051-8a23-b7beaf7ce399",
+                                         "tv.trigger":  "lambda_event",
+                                         "faas.invocation_id":  "683ccc2c-0e23-4051-8a23-b7beaf7ce399",
+                                         "faas.name":  "order-processor"
+                                     },
+                      "payload":  null,
+                      "mutation":  null,
+                      "error":  null,
+                      "children":  [
+                                       {
+                                           "nodeId":  "f290028330fea106",
+                                           "parentId":  "1c2d65e910ea965b",
+                                           "kind":  "DYNAMODB",
+                                           "label":  "DynamoDB: orders",
+                                           "status":  "OK",
+                                           "startedAt":  "2026-09-20T02:59:50.856372714Z",
+                                           "selfTime":  52,
+                                           "totalTime":  52,
+                                           "attributes":  {
+                                                              "db.system":  "dynamodb",
+                                                              "db.operation":  "PutItem",
+                                                              "server.port":  "4566",
+                                                              "http.response.status_code":  "200",
+                                                              "rpc.system":  "aws-api",
+                                                              "http.request.method":  "POST",
+                                                              "aws.dynamodb.table_names":  "orders",
+                                                              "rpc.method":  "PutItem",
+                                                              "server.address":  "172.26.0.3",
+                                                              "url.full":  "http://172.26.0.3:4566/",
+                                                              "aws.request_id":  "e37f88e7-5a37-4355-863b-0a5f35d6bf5c",
+                                                              "rpc.service":  "DynamoDb"
+                                                          },
+                                           "payload":  null,
+                                           "mutation":  {
+                                                            "kind":  "CREATE",
+                                                            "target":  "orders",
+                                                            "key":  "ORDER-C2",
+                                                            "before":  {
+
+                                                                       },
+                                                            "after":  {
+                                                                          "total":  0,
+                                                                          "pk":  "ORDER-C2",
+                                                                          "customerId":  "C-REPREY"
+                                                                      },
+                                                            "deltas":  [
+                                                                           {
+                                                                               "path":  "total",
+                                                                               "before":  null,
+                                                                               "after":  0
+                                                                           },
+                                                                           {
+                                                                               "path":  "pk",
+                                                                               "before":  null,
+                                                                               "after":  "ORDER-C2"
+                                                                           },
+                                                                           {
+                                                                               "path":  "customerId",
+                                                                               "before":  null,
+                                                                               "after":  "C-REPREY"
+                                                                           }
+                                                                       ],
+                                                            "fidelity":  "EXACT"
+                                                        },
+                                           "error":  null,
+                                           "children":  [
+
+                                                        ]
+                                       },
+                                       {
+                                           "nodeId":  "53bf708407c477a1",
+                                           "parentId":  "1c2d65e910ea965b",
+                                           "kind":  "SQS",
+                                           "label":  "SQS: orders-queue",
+                                           "status":  "OK",
+                                           "startedAt":  "2026-09-20T02:59:50.910502645Z",
+                                           "selfTime":  19,
+                                           "totalTime":  19,
+                                           "attributes":  {
+                                                              "messaging.destination.name":  "orders-queue",
+                                                              "messaging.operation.type":  "publish",
+                                                              "messaging.system":  "aws_sqs",
+                                                              "aws.sqs.queue.url":  "http://172.26.0.3:4566/000000000000/orders-queue"
+                                                          },
+                                           "payload":  null,
+                                           "mutation":  null,
+                                           "error":  null,
+                                           "children":  [
+
+                                                        ]
+                                       }
+                                   ]
+                  }
+              ],
+    "metrics":  {
+                    "nodeCount":  3,
+                    "maxDepth":  2,
+                    "lostSpans":  0,
+                    "droppedEvents":  0
+                },
+    "warnings":  [
+
+                 ]
+}

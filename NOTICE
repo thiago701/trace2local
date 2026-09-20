@@ -1,0 +1,17 @@
+TraceVanta
+Copyright 2026 Neural7 Tech (Thiago Gonçalo)
+
+Este produto inclui software desenvolvido pelo projeto OpenTelemetry
+(https://opentelemetry.io), distribuído sob Apache License 2.0.
+
+Este produto inclui software do AWS SDK for Java v2 (Amazon Web Services),
+distribuído sob Apache License 2.0.
+
+Este produto inclui software do Spring Framework / Spring Boot (VMware/Broadcom),
+distribuído sob Apache License 2.0.
+
+Este produto inclui software do projeto Jackson (FasterXML), distribuído sob
+Apache License 2.0.
+
+Veja LICENSE para os termos completos. As licenças e avisos das dependências
+estão nos respectivos artefatos.

@@ -1,0 +1,90 @@
+{
+  "executionId" : "req-lambda-it-2",
+  "traceId" : "b9603d063fedc879862eac47776088ef",
+  "status" : "FAILED",
+  "trigger" : "LAMBDA_EVENT",
+  "startedAt" : "2026-09-20T03:27:29.318537Z",
+  "duration" : 74,
+  "roots" : [ {
+    "nodeId" : "811cfa6dda0ca847",
+    "parentId" : null,
+    "kind" : "LAMBDA",
+    "label" : "order-processor",
+    "status" : "ERROR",
+    "startedAt" : "2026-09-20T03:27:29.248944700Z",
+    "selfTime" : 6,
+    "totalTime" : 74,
+    "attributes" : {
+      "faas.name" : "order-processor",
+      "faas.invocation_id" : "req-lambda-it-2",
+      "tv.trigger" : "lambda_event",
+      "tv.execution.id" : "req-lambda-it-2"
+    },
+    "payload" : null,
+    "mutation" : null,
+    "error" : {
+      "type" : "OTLP:STATUS_CODE_ERROR",
+      "message" : "java.lang.IllegalStateException: ordem recusada: ORDER-L2 excede o limite de crédito",
+      "stack" : null
+    },
+    "children" : [ {
+      "nodeId" : "2921a705083b92d2",
+      "parentId" : "811cfa6dda0ca847",
+      "kind" : "DYNAMODB",
+      "label" : "DynamoDB: orders",
+      "status" : "OK",
+      "startedAt" : "2026-09-20T03:27:29.250418400Z",
+      "selfTime" : 68,
+      "totalTime" : 68,
+      "attributes" : {
+        "db.system" : "dynamodb",
+        "rpc.service" : "DynamoDb",
+        "aws.request_id" : "901b62a7-e232-41d9-b693-9ce991ffd6cc",
+        "url.full" : "http://127.0.0.1:58698/",
+        "server.address" : "127.0.0.1",
+        "rpc.method" : "PutItem",
+        "aws.dynamodb.table_names" : "orders",
+        "http.request.method" : "POST",
+        "rpc.system" : "aws-api",
+        "http.response.status_code" : "200",
+        "server.port" : "58698",
+        "db.operation" : "PutItem"
+      },
+      "payload" : null,
+      "mutation" : {
+        "kind" : "CREATE",
+        "target" : "orders",
+        "key" : "ORDER-L2",
+        "before" : { },
+        "after" : {
+          "customerId" : "C-FAIL",
+          "total" : 5000.0,
+          "pk" : "ORDER-L2"
+        },
+        "deltas" : [ {
+          "path" : "customerId",
+          "before" : null,
+          "after" : "C-FAIL"
+        }, {
+          "path" : "total",
+          "before" : null,
+          "after" : 5000.0
+        }, {
+          "path" : "pk",
+          "before" : null,
+          "after" : "ORDER-L2"
+        } ],
+        "fidelity" : "EXACT"
+      },
+      "error" : null,
+      "children" : [ ]
+    } ]
+  } ],
+  "metrics" : {
+    "nodeCount" : 2,
+    "maxDepth" : 2,
+    "lostSpans" : 0,
+    "droppedEvents" : 0
+  },
+  "warnings" : [ ]
+}

@@ -1,0 +1,16 @@
+package tech.neural7.tracevanta.spi;
+
+import tech.neural7.tracevanta.internal.TraceVantaEvent;
+import tech.neural7.tracevanta.model.DataMutation;
+
+import java.time.Instant;
+
+/**
+ * Evento do Data Mutation Channel (ADR-003 / SPEC §4.10): delta de dados
+ * correlacionado por {@code spanId}, fundido pelo assembler no TVEM.
+ */
+public record MutationEvent(
+        String spanId,
+        String traceId,
+        DataMutation mutation,
+        Instant at) implements TraceVantaEvent {}

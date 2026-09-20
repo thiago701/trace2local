@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    ignore:
+      # em 0.x as versões são travadas pelo GATE/ADR-009 — bumps passam por
+      # auditoria (CVE + contrato semântico) antes de subir
+      - dependency-name: "io.opentelemetry:*"
+      - dependency-name: "io.opentelemetry.instrumentation:*"
+      - dependency-name: "software.amazon.awssdk:*"
+      - dependency-name: "org.springframework.boot:*"
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

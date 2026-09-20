@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: order-service
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+
+# TraceVanta: uma dependência, zero configuração — tudo abaixo são os padrões.
+tracevanta:
+  enabled: true
+  port: 9876
+  bind-address: 127.0.0.1
+  redaction:
+    mode: strict
+  aws:
+    dynamodb:
+      capture-before: true   # ADR-003 / D-3: ligado em dev, com aviso no boot
+
+localstack:
+  endpoint: ${LOCALSTACK_ENDPOINT:http://localhost:4566}
+
+orders:
+  sns-topic-arn: ${ORDERS_SNS_TOPIC_ARN:arn:aws:sns:us-east-1:000000000000:order-events}
+  billing-queue-url: ${ORDERS_BILLING_QUEUE_URL:}
+
+logging:
+  level:
+    tech.neural7.tracevanta: info

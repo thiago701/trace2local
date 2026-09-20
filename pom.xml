@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TraceVanta — runtime canvas para desenvolvimento local.
+  Apache-2.0 · tech.neural7.tracevanta
+  Baseline de bytecode: Java 21 (ADR-009, decisão D-1). Build: JDK 25.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>tech.neural7.tracevanta</groupId>
+  <artifactId>tracevanta-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>TraceVanta — parent</name>
+  <description>See your request travel through the system. Runtime canvas interativa para desenvolvimento local (Java 21+, Spring Boot 4, GraalVM AOT).</description>
+  <url>https://github.com/thiago701/tracevanta</url>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <inceptionYear>2026</inceptionYear>
+  <organization>
+    <name>Neural7 Tech</name>
+    <url>https://github.com/thiago701/tracevanta</url>
+  </organization>
+
+  <scm>
+    <connection>scm:git:https://github.com/thiago701/tracevanta.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/thiago701/tracevanta.git</developerConnection>
+    <url>https://github.com/thiago701/tracevanta</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>https://github.com/thiago701/tracevanta/issues</url>
+  </issueManagement>
+
+  <ciManagement>
+    <system>GitHub Actions</system>
+    <url>https://github.com/thiago701/tracevanta/actions</url>
+  </ciManagement>
+
+  <distributionManagement>
+    <!-- Publicação padrão no Maven Central via Sonatype OSSRH (credenciais no settings.xml) -->
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
+
+  <developers>
+    <developer>
+      <name>Thiago Gonçalo</name>
+      <organization>Neural7 Tech</organization>
+    </developer>
+  </developers>
+
+  <modules>
+    <module>tracevanta-bom</module>
+    <module>tracevanta-core</module>
+    <module>tracevanta-otel</module>
+    <module>tracevanta-ui</module>
+    <module>tracevanta-server</module>
+    <module>tracevanta-aws</module>
+    <module>tracevanta-jdbc</module>
+    <module>tracevanta-spring-boot-starter</module>
+    <module>tracevanta-lambda</module>
+    <module>tracevanta-station</module>
+    <module>tracevanta-testing</module>
+    <module>tracevanta-architecture</module>
+    <module>examples/order-service</module>
+    <module>examples/lambda-sqs</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.compiler.release>21</maven.compiler.release>
+    <!-- Builds reproduzíveis: timestamp fixo por release (atualizar no `mvn release`) -->
+    <project.build.outputTimestamp>2026-09-20T00:00:00Z</project.build.outputTimestamp>
+
+    <!-- Matriz de versões (SPEC §7.2 / ADR-009). Verificada em Maven Central no GATE 1. -->
+    <version.opentelemetry>1.66.0</version.opentelemetry>
+    <version.opentelemetry.instrumentation>2.31.1</version.opentelemetry.instrumentation>
+    <version.opentelemetry.semconv>1.44.0</version.opentelemetry.semconv>
+    <version.opentelemetry.proto>1.11.0-alpha</version.opentelemetry.proto>
+    <version.spring-boot>4.1.1</version.spring-boot>
+    <version.awssdk>2.55.0</version.awssdk>
+    <version.jackson>2.22.2</version.jackson>
+    <version.aws-lambda-core>1.4.0</version.aws-lambda-core>
+
+    <!-- Testes -->
+    <version.junit>5.14.1</version.junit>
+    <version.assertj>3.27.7</version.assertj>
+    <version.mockito>5.23.0</version.mockito>
+    <version.jqwik>1.10.1</version.jqwik>
+    <version.archunit>1.5.0</version.archunit>
+    <version.testcontainers>1.21.4</version.testcontainers>
+
+    <!-- Build -->
+    <version.maven.compiler>3.14.1</version.maven.compiler>
+    <version.maven.surefire>3.5.4</version.maven.surefire>
+    <version.maven.jar>3.4.2</version.maven.jar>
+    <version.maven.source>3.3.1</version.maven.source>
+    <version.maven.javadoc>3.11.2</version.maven.javadoc>
+    <version.maven.shade>3.6.0</version.maven.shade>
+    <version.maven.enforcer>3.5.0</version.maven.enforcer>
+    <version.maven.gpg>3.2.7</version.maven.gpg>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Projeto -->
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-otel</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-ui</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-server</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-aws</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-jdbc</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-lambda</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-spring-boot-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-station</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-testing</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- OpenTelemetry -->
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-bom</artifactId>
+        <version>${version.opentelemetry}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-instrumentation-bom</artifactId>
+        <version>${version.opentelemetry.instrumentation}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.semconv</groupId>
+        <artifactId>opentelemetry-semconv</artifactId>
+        <version>${version.opentelemetry.semconv}</version>
+      </dependency>
+      <!-- Publicada só em canal -alpha (Risco R-04 aplicado à AWS); o BOM estável não a gerencia -->
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-aws-sdk-2.2</artifactId>
+        <version>${version.opentelemetry.instrumentation}-alpha</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.proto</groupId>
+        <artifactId>opentelemetry-proto</artifactId>
+        <version>${version.opentelemetry.proto}</version>
+      </dependency>
+
+      <!-- Spring Boot (usado por starter e exemplo) -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${version.spring-boot}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- AWS -->
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${version.awssdk}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-lambda-java-core</artifactId>
+        <version>${version.aws-lambda-core}</version>
+      </dependency>
+
+      <!-- JSON -->
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${version.jackson}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Testes -->
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${version.junit}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${version.assertj}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${version.mockito}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.jqwik</groupId>
+        <artifactId>jqwik</artifactId>
+        <version>${version.jqwik}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit-junit5</artifactId>
+        <version>${version.archunit}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers</artifactId>
+        <version>${version.testcontainers}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>localstack</artifactId>
+        <version>${version.testcontainers}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>${version.testcontainers}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <plugins>
+      <!-- Portões de build profissional: Maven e JDK mínimos + convergência de versões -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>[3.9.0,)</version>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[21,)</version>
+                  <message>TraceVanta exige JDK 21+ para construir (bytecode baseline 21 — ADR-009/D-1)</message>
+                </requireJavaVersion>
+                <requireUpperBoundDeps>
+                  <excludes>
+                    <!-- byte-buddy é versionado pelo mockito e pelo objenesis-test; o maior vence -->
+                    <exclude>net.bytebuddy:byte-buddy</exclude>
+                    <exclude>net.bytebuddy:byte-buddy-agent</exclude>
+                  </excludes>
+                </requireUpperBoundDeps>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${version.maven.compiler}</version>
+          <configuration>
+            <release>${maven.compiler.release}</release>
+            <parameters>true</parameters>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${version.maven.surefire}</version>
+          <configuration>
+            <useModulePath>false</useModulePath>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${version.maven.jar}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>${version.maven.source}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${version.maven.javadoc}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>${version.maven.shade}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>${version.maven.enforcer}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>${version.maven.gpg}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <profiles>
+    <!-- Publicação (Maven Central): fontes + javadoc + assinatura GPG.
+         mvn -Prelease -DskipTests deploy   (credenciais OSSRH + chave GPG no settings.xml) -->
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <quiet>true</quiet>
+              <doclint>none</doclint>
+              <additionalOptions>--ignore-source-errors</additionalOptions>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

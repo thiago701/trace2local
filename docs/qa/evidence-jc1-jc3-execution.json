@@ -1,0 +1,247 @@
+{
+  "executionId" : "TV-00001",
+  "traceId" : "7fefc441e74ff20e103a17f1303e0a1d",
+  "status" : "COMPLETED",
+  "trigger" : "UI_DISPATCH",
+  "startedAt" : "2026-09-20T01:31:33.704159900Z",
+  "duration" : 1223,
+  "roots" : [ {
+    "nodeId" : "0a48a1803750b058",
+    "parentId" : null,
+    "kind" : "HTTP_CLIENT",
+    "label" : "UI Dispatch: POST /orders",
+    "status" : "OK",
+    "startedAt" : "2026-09-20T01:31:33.704159900Z",
+    "selfTime" : 195,
+    "totalTime" : 1186,
+    "attributes" : {
+      "tv.execution.id" : "TV-00001",
+      "http.response.status_code" : "201",
+      "tv.trigger" : "ui"
+    },
+    "payload" : null,
+    "mutation" : null,
+    "error" : null,
+    "children" : [ {
+      "nodeId" : "d1a49c3d196ebd27",
+      "parentId" : "0a48a1803750b058",
+      "kind" : "HTTP_SERVER",
+      "label" : "POST /orders",
+      "status" : "OK",
+      "startedAt" : "2026-09-20T01:31:33.891810100Z",
+      "selfTime" : 477,
+      "totalTime" : 991,
+      "attributes" : {
+        "http.response.status_code" : "201",
+        "http.route" : "/orders",
+        "http.request.method" : "POST"
+      },
+      "payload" : {
+        "request" : "{\"customerId\":\"C-E2E\",\"total\":250.0,\"password\":\"[TRACEVANTA_REDACTED]\"}",
+        "response" : null
+      },
+      "mutation" : null,
+      "error" : null,
+      "children" : [ {
+        "nodeId" : "cb3fe4bc2b853ae9",
+        "parentId" : "d1a49c3d196ebd27",
+        "kind" : "BUSINESS",
+        "label" : "CreateOrder",
+        "status" : "OK",
+        "startedAt" : "2026-09-20T01:31:34.278917300Z",
+        "selfTime" : 209,
+        "totalTime" : 513,
+        "attributes" : {
+          "code.function" : "create",
+          "tv.business" : "true",
+          "code.namespace" : "OrderService"
+        },
+        "payload" : null,
+        "mutation" : null,
+        "error" : null,
+        "children" : [ {
+          "nodeId" : "f3bf2eb21d977251",
+          "parentId" : "cb3fe4bc2b853ae9",
+          "kind" : "DYNAMODB",
+          "label" : "DynamoDB: orders",
+          "status" : "OK",
+          "startedAt" : "2026-09-20T01:31:34.457472700Z",
+          "selfTime" : 275,
+          "totalTime" : 275,
+          "attributes" : {
+            "aws.dynamodb.table_names" : "[orders]",
+            "http.request.method" : "POST",
+            "rpc.system" : "aws-api",
+            "http.response.status_code" : "200",
+            "server.port" : "62550",
+            "db.operation" : "PutItem",
+            "db.system" : "dynamodb",
+            "rpc.service" : "DynamoDb",
+            "aws.request_id" : "b1198f40-afb2-49ff-ba22-dbc8793ff5d1",
+            "url.full" : "http://127.0.0.1:62550/",
+            "server.address" : "127.0.0.1",
+            "rpc.method" : "PutItem"
+          },
+          "payload" : null,
+          "mutation" : {
+            "kind" : "CREATE",
+            "target" : "orders",
+            "key" : "ORDER#ecfe44ad",
+            "before" : { },
+            "after" : {
+              "customerId" : "C-E2E",
+              "status" : "PENDING",
+              "pk" : "ORDER#ecfe44ad",
+              "total" : 250.0
+            },
+            "deltas" : [ {
+              "path" : "customerId",
+              "before" : null,
+              "after" : "C-E2E"
+            }, {
+              "path" : "status",
+              "before" : null,
+              "after" : "PENDING"
+            }, {
+              "path" : "pk",
+              "before" : null,
+              "after" : "ORDER#ecfe44ad"
+            }, {
+              "path" : "total",
+              "before" : null,
+              "after" : 250.0
+            } ],
+            "fidelity" : "EXACT"
+          },
+          "error" : null,
+          "children" : [ ]
+        }, {
+          "nodeId" : "d947897f34bbe155",
+          "parentId" : "cb3fe4bc2b853ae9",
+          "kind" : "SNS",
+          "label" : "SNS: order-events",
+          "status" : "OK",
+          "startedAt" : "2026-09-20T01:31:34.761112300Z",
+          "selfTime" : 28,
+          "totalTime" : 28,
+          "attributes" : {
+            "rpc.system" : "aws-api",
+            "http.request.method" : "POST",
+            "rpc.service" : "Sns",
+            "messaging.destination.name" : "arn:aws:sns:us-east-1:000000000000:order-events",
+            "aws.sns.topic.arn" : "arn:aws:sns:us-east-1:000000000000:order-events",
+            "server.address" : "127.0.0.1",
+            "server.port" : "62550",
+            "aws.request_id" : "fc769ee6-091a-4bdb-aa78-a34771bde7fd",
+            "url.full" : "http://127.0.0.1:62550",
+            "rpc.method" : "Publish",
+            "http.response.status_code" : "200"
+          },
+          "payload" : null,
+          "mutation" : null,
+          "error" : null,
+          "children" : [ {
+            "nodeId" : "85a850bb7058d8b4",
+            "parentId" : "d947897f34bbe155",
+            "kind" : "SQS",
+            "label" : "SQS: billing-queue",
+            "status" : "OK",
+            "startedAt" : "2026-09-20T01:31:34.854802100Z",
+            "selfTime" : 3,
+            "totalTime" : 73,
+            "attributes" : {
+              "aws.sqs.queue.url" : "http://sqs.us-east-1.localhost:4566/000000000000/billing-queue",
+              "messaging.destination.name" : "billing-queue",
+              "messaging.system" : "aws.sqs"
+            },
+            "payload" : null,
+            "mutation" : null,
+            "error" : null,
+            "children" : [ {
+              "nodeId" : "4df4d5d285f4e6eb",
+              "parentId" : "85a850bb7058d8b4",
+              "kind" : "BUSINESS",
+              "label" : "BillOrder",
+              "status" : "OK",
+              "startedAt" : "2026-09-20T01:31:34.856550900Z",
+              "selfTime" : 16,
+              "totalTime" : 70,
+              "attributes" : {
+                "code.function" : "bill",
+                "tv.business" : "true",
+                "code.namespace" : "OrderService"
+              },
+              "payload" : null,
+              "mutation" : null,
+              "error" : null,
+              "children" : [ {
+                "nodeId" : "19d84112e98147cd",
+                "parentId" : "4df4d5d285f4e6eb",
+                "kind" : "DYNAMODB",
+                "label" : "DynamoDB: orders",
+                "status" : "OK",
+                "startedAt" : "2026-09-20T01:31:34.870886900Z",
+                "selfTime" : 53,
+                "totalTime" : 53,
+                "attributes" : {
+                  "aws.dynamodb.table_names" : "[orders]",
+                  "http.request.method" : "POST",
+                  "rpc.system" : "aws-api",
+                  "http.response.status_code" : "200",
+                  "server.port" : "62550",
+                  "db.operation" : "GetItem",
+                  "db.system" : "dynamodb",
+                  "rpc.service" : "DynamoDb",
+                  "aws.request_id" : "c977bcc3-9840-43a2-9c45-7e588b8ee15e",
+                  "url.full" : "http://127.0.0.1:62550/",
+                  "server.address" : "127.0.0.1",
+                  "rpc.method" : "GetItem"
+                },
+                "payload" : null,
+                "mutation" : {
+                  "kind" : "READ_ONLY",
+                  "target" : "orders",
+                  "key" : "ORDER#ecfe44ad",
+                  "before" : null,
+                  "after" : {
+                    "customerId" : "C-E2E",
+                    "total" : 250.0,
+                    "pk" : "ORDER#ecfe44ad",
+                    "status" : "PENDING"
+                  },
+                  "deltas" : [ {
+                    "path" : "customerId",
+                    "before" : null,
+                    "after" : "C-E2E"
+                  }, {
+                    "path" : "total",
+                    "before" : null,
+                    "after" : 250.0
+                  }, {
+                    "path" : "pk",
+                    "before" : null,
+                    "after" : "ORDER#ecfe44ad"
+                  }, {
+                    "path" : "status",
+                    "before" : null,
+                    "after" : "PENDING"
+                  } ],
+                  "fidelity" : "EXACT"
+                },
+                "error" : null,
+                "children" : [ ]
+              } ]
+            } ]
+          } ]
+        } ]
+      } ]
+    } ]
+  } ],
+  "metrics" : {
+    "nodeCount" : 8,
+    "maxDepth" : 7,
+    "lostSpans" : 0,
+    "droppedEvents" : 0
+  },
+  "warnings" : [ ]
+}

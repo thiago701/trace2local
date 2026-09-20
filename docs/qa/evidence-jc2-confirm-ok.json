@@ -1,0 +1,356 @@
+{
+  "executionId" : "TV-00002",
+  "traceId" : "0efb64df2035023a7eaf115b3a9eddaa",
+  "status" : "COMPLETED",
+  "trigger" : "UI_DISPATCH",
+  "startedAt" : "2026-09-20T01:31:35.178829600Z",
+  "duration" : 399,
+  "roots" : [ {
+    "nodeId" : "f04ac4ba2b0934c9",
+    "parentId" : null,
+    "kind" : "HTTP_CLIENT",
+    "label" : "UI Dispatch: POST /orders/{id}/confirm",
+    "status" : "OK",
+    "startedAt" : "2026-09-20T01:31:35.178829600Z",
+    "selfTime" : 5,
+    "totalTime" : 334,
+    "attributes" : {
+      "tv.execution.id" : "TV-00002",
+      "http.response.status_code" : "200",
+      "tv.trigger" : "ui"
+    },
+    "payload" : null,
+    "mutation" : null,
+    "error" : null,
+    "children" : [ {
+      "nodeId" : "64a11e5b26ac2374",
+      "parentId" : "f04ac4ba2b0934c9",
+      "kind" : "HTTP_SERVER",
+      "label" : "POST /orders/ORDER%23ecfe44ad/confirm",
+      "status" : "OK",
+      "startedAt" : "2026-09-20T01:31:35.182726Z",
+      "selfTime" : 6,
+      "totalTime" : 329,
+      "attributes" : {
+        "http.response.status_code" : "200",
+        "http.route" : "/orders/ORDER%23ecfe44ad/confirm",
+        "http.request.method" : "POST"
+      },
+      "payload" : null,
+      "mutation" : null,
+      "error" : null,
+      "children" : [ {
+        "nodeId" : "8dbed9005b639aa8",
+        "parentId" : "64a11e5b26ac2374",
+        "kind" : "BUSINESS",
+        "label" : "ConfirmOrder",
+        "status" : "OK",
+        "startedAt" : "2026-09-20T01:31:35.185720900Z",
+        "selfTime" : 29,
+        "totalTime" : 322,
+        "attributes" : {
+          "code.function" : "confirm",
+          "tv.business" : "true",
+          "code.namespace" : "OrderService"
+        },
+        "payload" : null,
+        "mutation" : null,
+        "error" : null,
+        "children" : [ {
+          "nodeId" : "46af0099c0d41cb9",
+          "parentId" : "8dbed9005b639aa8",
+          "kind" : "DYNAMODB",
+          "label" : "DynamoDB: orders",
+          "status" : "OK",
+          "startedAt" : "2026-09-20T01:31:35.210227900Z",
+          "selfTime" : 258,
+          "totalTime" : 258,
+          "attributes" : {
+            "aws.dynamodb.table_names" : "[orders]",
+            "http.request.method" : "POST",
+            "rpc.system" : "aws-api",
+            "http.response.status_code" : "200",
+            "server.port" : "62550",
+            "db.operation" : "UpdateItem",
+            "db.system" : "dynamodb",
+            "rpc.service" : "DynamoDb",
+            "aws.request_id" : "0712677d-6c8a-4783-b725-061a2b933d31",
+            "url.full" : "http://127.0.0.1:62550/",
+            "server.address" : "127.0.0.1",
+            "rpc.method" : "UpdateItem"
+          },
+          "payload" : null,
+          "mutation" : {
+            "kind" : "UPDATE",
+            "target" : "orders",
+            "key" : "ORDER#ecfe44ad",
+            "before" : null,
+            "after" : {
+              "customerId" : "C-E2E",
+              "total" : 250.0,
+              "pk" : "ORDER#ecfe44ad",
+              "status" : "CONFIRMED"
+            },
+            "deltas" : [ {
+              "path" : "customerId",
+              "before" : null,
+              "after" : "C-E2E"
+            }, {
+              "path" : "total",
+              "before" : null,
+              "after" : 250.0
+            }, {
+              "path" : "pk",
+              "before" : null,
+              "after" : "ORDER#ecfe44ad"
+            }, {
+              "path" : "status",
+              "before" : null,
+              "after" : "CONFIRMED"
+            } ],
+            "fidelity" : "EXACT"
+          },
+          "error" : null,
+          "children" : [ ]
+        }, {
+          "nodeId" : "5a033b171e9ff272",
+          "parentId" : "8dbed9005b639aa8",
+          "kind" : "DYNAMODB",
+          "label" : "DynamoDB: orders",
+          "status" : "OK",
+          "startedAt" : "2026-09-20T01:31:35.472245200Z",
+          "selfTime" : 18,
+          "totalTime" : 18,
+          "attributes" : {
+            "aws.dynamodb.table_names" : "[orders]",
+            "http.request.method" : "POST",
+            "rpc.system" : "aws-api",
+            "http.response.status_code" : "200",
+            "server.port" : "62550",
+            "db.operation" : "GetItem",
+            "db.system" : "dynamodb",
+            "rpc.service" : "DynamoDb",
+            "aws.request_id" : "4f2dccba-42c8-48a0-b610-b060112a7429",
+            "url.full" : "http://127.0.0.1:62550/",
+            "server.address" : "127.0.0.1",
+            "rpc.method" : "GetItem"
+          },
+          "payload" : null,
+          "mutation" : {
+            "kind" : "READ_ONLY",
+            "target" : "orders",
+            "key" : "ORDER#ecfe44ad",
+            "before" : null,
+            "after" : {
+              "customerId" : "C-E2E",
+              "total" : 250.0,
+              "pk" : "ORDER#ecfe44ad",
+              "status" : "CONFIRMED"
+            },
+            "deltas" : [ {
+              "path" : "customerId",
+              "before" : null,
+              "after" : "C-E2E"
+            }, {
+              "path" : "total",
+              "before" : null,
+              "after" : 250.0
+            }, {
+              "path" : "pk",
+              "before" : null,
+              "after" : "ORDER#ecfe44ad"
+            }, {
+              "path" : "status",
+              "before" : null,
+              "after" : "CONFIRMED"
+            } ],
+            "fidelity" : "EXACT"
+          },
+          "error" : null,
+          "children" : [ ]
+        }, {
+          "nodeId" : "b5bf766ce9d7226b",
+          "parentId" : "8dbed9005b639aa8",
+          "kind" : "SNS",
+          "label" : "SNS: order-events",
+          "status" : "OK",
+          "startedAt" : "2026-09-20T01:31:35.492218700Z",
+          "selfTime" : 15,
+          "totalTime" : 15,
+          "attributes" : {
+            "rpc.system" : "aws-api",
+            "http.request.method" : "POST",
+            "rpc.service" : "Sns",
+            "messaging.destination.name" : "arn:aws:sns:us-east-1:000000000000:order-events",
+            "aws.sns.topic.arn" : "arn:aws:sns:us-east-1:000000000000:order-events",
+            "server.address" : "127.0.0.1",
+            "server.port" : "62550",
+            "aws.request_id" : "25653819-d8e4-4d56-b981-4036fd4b81d3",
+            "url.full" : "http://127.0.0.1:62550",
+            "rpc.method" : "Publish",
+            "http.response.status_code" : "200"
+          },
+          "payload" : null,
+          "mutation" : null,
+          "error" : null,
+          "children" : [ {
+            "nodeId" : "fd0393cdc6fa4ee4",
+            "parentId" : "b5bf766ce9d7226b",
+            "kind" : "SQS",
+            "label" : "SQS: billing-queue",
+            "status" : "OK",
+            "startedAt" : "2026-09-20T01:31:35.515365800Z",
+            "selfTime" : 0,
+            "totalTime" : 62,
+            "attributes" : {
+              "aws.sqs.queue.url" : "http://sqs.us-east-1.localhost:4566/000000000000/billing-queue",
+              "messaging.destination.name" : "billing-queue",
+              "messaging.system" : "aws.sqs"
+            },
+            "payload" : null,
+            "mutation" : null,
+            "error" : null,
+            "children" : [ {
+              "nodeId" : "e0dd4ed82b2755bb",
+              "parentId" : "fd0393cdc6fa4ee4",
+              "kind" : "BUSINESS",
+              "label" : "BillOrder",
+              "status" : "OK",
+              "startedAt" : "2026-09-20T01:31:35.515933900Z",
+              "selfTime" : 2,
+              "totalTime" : 61,
+              "attributes" : {
+                "code.function" : "bill",
+                "tv.business" : "true",
+                "code.namespace" : "OrderService"
+              },
+              "payload" : null,
+              "mutation" : null,
+              "error" : null,
+              "children" : [ {
+                "nodeId" : "1a8228bf6c3542df",
+                "parentId" : "e0dd4ed82b2755bb",
+                "kind" : "DYNAMODB",
+                "label" : "DynamoDB: orders",
+                "status" : "OK",
+                "startedAt" : "2026-09-20T01:31:35.516419300Z",
+                "selfTime" : 19,
+                "totalTime" : 19,
+                "attributes" : {
+                  "aws.dynamodb.table_names" : "[orders]",
+                  "http.request.method" : "POST",
+                  "rpc.system" : "aws-api",
+                  "http.response.status_code" : "200",
+                  "server.port" : "62550",
+                  "db.operation" : "GetItem",
+                  "db.system" : "dynamodb",
+                  "rpc.service" : "DynamoDb",
+                  "aws.request_id" : "f2b556d9-7def-4a00-a6bb-9f356e4e8f64",
+                  "url.full" : "http://127.0.0.1:62550/",
+                  "server.address" : "127.0.0.1",
+                  "rpc.method" : "GetItem"
+                },
+                "payload" : null,
+                "mutation" : {
+                  "kind" : "READ_ONLY",
+                  "target" : "orders",
+                  "key" : "ORDER#ecfe44ad",
+                  "before" : null,
+                  "after" : {
+                    "customerId" : "C-E2E",
+                    "total" : 250.0,
+                    "pk" : "ORDER#ecfe44ad",
+                    "status" : "CONFIRMED"
+                  },
+                  "deltas" : [ {
+                    "path" : "customerId",
+                    "before" : null,
+                    "after" : "C-E2E"
+                  }, {
+                    "path" : "total",
+                    "before" : null,
+                    "after" : 250.0
+                  }, {
+                    "path" : "pk",
+                    "before" : null,
+                    "after" : "ORDER#ecfe44ad"
+                  }, {
+                    "path" : "status",
+                    "before" : null,
+                    "after" : "CONFIRMED"
+                  } ],
+                  "fidelity" : "EXACT"
+                },
+                "error" : null,
+                "children" : [ ]
+              }, {
+                "nodeId" : "836e95bf70d90a34",
+                "parentId" : "e0dd4ed82b2755bb",
+                "kind" : "DYNAMODB",
+                "label" : "DynamoDB: orders",
+                "status" : "OK",
+                "startedAt" : "2026-09-20T01:31:35.537114700Z",
+                "selfTime" : 40,
+                "totalTime" : 40,
+                "attributes" : {
+                  "aws.dynamodb.table_names" : "[orders]",
+                  "http.request.method" : "POST",
+                  "rpc.system" : "aws-api",
+                  "http.response.status_code" : "200",
+                  "server.port" : "62550",
+                  "db.operation" : "UpdateItem",
+                  "db.system" : "dynamodb",
+                  "rpc.service" : "DynamoDb",
+                  "aws.request_id" : "2f44b7d5-b1f8-49f8-8286-32acb60302c4",
+                  "url.full" : "http://127.0.0.1:62550/",
+                  "server.address" : "127.0.0.1",
+                  "rpc.method" : "UpdateItem"
+                },
+                "payload" : null,
+                "mutation" : {
+                  "kind" : "UPDATE",
+                  "target" : "orders",
+                  "key" : "ORDER#ecfe44ad",
+                  "before" : null,
+                  "after" : {
+                    "customerId" : "C-E2E",
+                    "total" : 250.0,
+                    "pk" : "ORDER#ecfe44ad",
+                    "status" : "BILLED"
+                  },
+                  "deltas" : [ {
+                    "path" : "customerId",
+                    "before" : null,
+                    "after" : "C-E2E"
+                  }, {
+                    "path" : "total",
+                    "before" : null,
+                    "after" : 250.0
+                  }, {
+                    "path" : "pk",
+                    "before" : null,
+                    "after" : "ORDER#ecfe44ad"
+                  }, {
+                    "path" : "status",
+                    "before" : null,
+                    "after" : "BILLED"
+                  } ],
+                  "fidelity" : "EXACT"
+                },
+                "error" : null,
+                "children" : [ ]
+              } ]
+            } ]
+          } ]
+        } ]
+      } ]
+    } ]
+  } ],
+  "metrics" : {
+    "nodeCount" : 10,
+    "maxDepth" : 7,
+    "lostSpans" : 0,
+    "droppedEvents" : 0
+  },
+  "warnings" : [ ]
+}

@@ -1,0 +1,21 @@
+Sequência de eventos SSE observada (contrato §5.2):
+execution.started → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.mutation → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.mutation → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+node.upserted → TV-00001
+execution.completed → TV-00001
