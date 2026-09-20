@@ -12,7 +12,7 @@
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](#compatibilidade-v01)
 [![Maven](https://img.shields.io/badge/Maven-3.9%2B-C71A36.svg)](https://maven.apache.org)
 [![Version](https://img.shields.io/badge/version-0.1.0--SNAPSHOT-lightgrey.svg)](CHANGELOG.md)
-[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF.svg)](.github/workflows/ci.yml)
+[![CI](https://github.com/thiago701/tracevanta/actions/workflows/ci.yml/badge.svg)](https://github.com/thiago701/tracevanta/actions/workflows/ci.yml)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 </div>
