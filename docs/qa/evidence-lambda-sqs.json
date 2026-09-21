@@ -1,50 +1,50 @@
 {
   "executionId" : "req-lambda-it-1",
-  "traceId" : "4e32df6026aa9ef5d368b80c44d010cb",
+  "traceId" : "7fab2c1d5f653b24ac500c26ae9fc75a",
   "status" : "COMPLETED",
   "trigger" : "LAMBDA_EVENT",
-  "startedAt" : "2026-09-21T13:10:27.903396800Z",
-  "duration" : 572,
+  "startedAt" : "2026-09-21T13:50:00.251759Z",
+  "duration" : 281,
   "roots" : [ {
-    "nodeId" : "4998e761a36b1634",
+    "nodeId" : "692364e3b2ce241d",
     "parentId" : null,
     "kind" : "LAMBDA",
     "label" : "order-processor",
     "status" : "OK",
-    "startedAt" : "2026-09-21T13:10:27.402876800Z",
-    "selfTime" : 6,
-    "totalTime" : 572,
+    "startedAt" : "2026-09-21T13:50:00.039074Z",
+    "selfTime" : 4,
+    "totalTime" : 281,
     "attributes" : {
-      "faas.invocation_id" : "req-lambda-it-1",
-      "faas.name" : "order-processor",
+      "tv.trigger" : "lambda_event",
       "tv.execution.id" : "req-lambda-it-1",
-      "tv.trigger" : "lambda_event"
+      "faas.name" : "order-processor",
+      "faas.invocation_id" : "req-lambda-it-1"
     },
     "payload" : null,
     "mutation" : null,
     "error" : null,
     "children" : [ {
-      "nodeId" : "14e6874b6df2f2fd",
-      "parentId" : "4998e761a36b1634",
+      "nodeId" : "df47bae650984545",
+      "parentId" : "692364e3b2ce241d",
       "kind" : "DYNAMODB",
       "label" : "DynamoDB: orders",
       "status" : "OK",
-      "startedAt" : "2026-09-21T13:10:27.407010Z",
-      "selfTime" : 496,
-      "totalTime" : 496,
+      "startedAt" : "2026-09-21T13:50:00.041440400Z",
+      "selfTime" : 210,
+      "totalTime" : 210,
       "attributes" : {
-        "rpc.system" : "aws-api",
         "http.request.method" : "POST",
-        "aws.dynamodb.table_names" : "orders",
-        "rpc.method" : "PutItem",
-        "server.address" : "127.0.0.1",
-        "url.full" : "http://127.0.0.1:56511/",
-        "aws.request_id" : "507578d0-7c90-46f8-ad69-78026838f967",
-        "rpc.service" : "DynamoDb",
+        "rpc.system" : "aws-api",
+        "http.response.status_code" : "200",
+        "server.port" : "57221",
         "db.system" : "dynamodb",
         "db.operation" : "PutItem",
-        "server.port" : "56511",
-        "http.response.status_code" : "200"
+        "rpc.service" : "DynamoDb",
+        "aws.request_id" : "a83c0d74-23cb-497b-b95c-b9f5855ab21a",
+        "url.full" : "http://127.0.0.1:57221/",
+        "server.address" : "127.0.0.1",
+        "rpc.method" : "PutItem",
+        "aws.dynamodb.table_names" : "orders"
       },
       "payload" : null,
       "mutation" : {
@@ -53,41 +53,41 @@
         "key" : "ORDER-L1",
         "before" : { },
         "after" : {
-          "customerId" : "C-LAMBDA",
+          "total" : 123.45,
           "pk" : "ORDER-L1",
-          "total" : 123.45
+          "customerId" : "C-LAMBDA"
         },
         "deltas" : [ {
-          "path" : "customerId",
+          "path" : "total",
           "before" : null,
-          "after" : "C-LAMBDA"
+          "after" : 123.45
         }, {
           "path" : "pk",
           "before" : null,
           "after" : "ORDER-L1"
         }, {
-          "path" : "total",
+          "path" : "customerId",
           "before" : null,
-          "after" : 123.45
+          "after" : "C-LAMBDA"
         } ],
         "fidelity" : "EXACT"
       },
       "error" : null,
       "children" : [ ]
     }, {
-      "nodeId" : "30debaed7cde1cbe",
-      "parentId" : "4998e761a36b1634",
+      "nodeId" : "7d32e5fc04dfa816",
+      "parentId" : "692364e3b2ce241d",
       "kind" : "SQS",
       "label" : "SQS: orders-queue",
       "status" : "OK",
-      "startedAt" : "2026-09-21T13:10:27.904345400Z",
-      "selfTime" : 69,
-      "totalTime" : 69,
+      "startedAt" : "2026-09-21T13:50:00.252778200Z",
+      "selfTime" : 66,
+      "totalTime" : 66,
       "attributes" : {
-        "messaging.system" : "aws_sqs",
-        "aws.sqs.queue.url" : "http://127.0.0.1:56511/000000000000/orders-queue",
+        "messaging.operation.type" : "publish",
         "messaging.destination.name" : "orders-queue",
-        "messaging.operation.type" : "publish"
+        "aws.sqs.queue.url" : "http://127.0.0.1:57221/000000000000/orders-queue",
+        "messaging.system" : "aws_sqs"
       },
       "payload" : null,
       "mutation" : null,

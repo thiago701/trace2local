@@ -50,12 +50,14 @@
       <div id="canvas-header">
         <nav id="tabs" aria-label="Modos de visualização">
           <button type="button" id="tab-canvas" class="tab active">CANVAS</button>
+          <button type="button" id="tab-story" class="tab">STORY</button>
           <button type="button" id="tab-dashboard" class="tab">DASHBOARD</button>
           <button type="button" id="tab-compare" class="tab">COMPARAR</button>
         </nav>
         <span id="canvas-title">EXECUTION CANVAS</span>
         <div id="exec-summary" class="hidden"></div>
         <div id="view-buttons">
+          <button type="button" id="btn-notes" class="small" title="Anotações de storytelling ao lado dos nós">NOTAS</button>
           <button type="button" id="btn-legend" class="small" title="Legenda dos tipos de nó">LEGENDA</button>
           <button type="button" id="btn-shortcuts" class="small" title="Atalhos de teclado">ATALHOS</button>
           <button type="button" id="zoom-in" class="icon" title="Aproximar (Ctrl++)">＋</button>
@@ -81,6 +83,7 @@
       </div>
       <div id="dashboard-view" class="view-panel hidden" aria-label="Dashboard"></div>
       <div id="compare-view" class="view-panel hidden" aria-label="Comparação de execuções"></div>
+      <div id="story-view" class="view-panel hidden" aria-label="Storytelling da execução"></div>
     </main>
   </div>
 

@@ -38,6 +38,8 @@ public final class TraceVantaHttpServer implements AutoCloseable {
     private final Supplier<List<EndpointDescriptor>> endpoints;
     private final ExecutionLauncher launcher;
     private final java.util.Map<String, com.sun.net.httpserver.HttpHandler> extraRoutes;
+    /** Storytelling (descoberta de negócio por contexto/docs/engenharia reversa). */
+    private final StoryService storyService = new StoryService();
 
     private TraceVantaHttpServer(Builder builder) {
         this.cfg = builder.cfg;
@@ -179,15 +181,21 @@ public final class TraceVantaHttpServer implements AutoCloseable {
             writeJson(exchange, 200, JsonCodec.MAPPER.valueToTree(store.recent(limit)));
             return;
         }
-        // /api/executions/{id} ou /api/executions/{id}/export
+        // /api/executions/{id} ou /api/executions/{id}/export ou /api/executions/{id}/story
         String id = rest.startsWith("/") ? rest.substring(1) : rest;
         boolean export = id.endsWith("/export");
-        if (export) {
-            id = id.substring(0, id.length() - "/export".length());
+        boolean story = id.endsWith("/story");
+        if (export || story) {
+            id = id.substring(0, id.length() - (export ? "/export".length() : "/story".length()));
         }
         var execution = store.get(id);
         if (execution.isEmpty()) {
             writeJson(exchange, 404, JsonCodec.MAPPER.createObjectNode().put("error", "execução não encontrada"));
+            return;
+        }
+        if (story) {
+            // narrativa de negócio: intro → passos ordenados → desfecho (StoryService)
+            writeJson(exchange, 200, JsonCodec.MAPPER.valueToTree(storyService.storyFor(execution.get())));
             return;
         }
         if (export) {

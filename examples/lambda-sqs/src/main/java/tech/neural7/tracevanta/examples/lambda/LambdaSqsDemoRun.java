@@ -64,16 +64,25 @@ public final class LambdaSqsDemoRun {
                 .endpointOverride(URI.create(endpoint))
                 .build()) {
             String queueUrl = env("ORDERS_QUEUE_URL", endpoint + "/000000000000/orders-queue");
-            var message = sqs.receiveMessage(r -> r.queueUrl(queueUrl)
-                            .maxNumberOfMessages(10)
-                            .messageSystemAttributeNames(
-                                    software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.AWS_TRACE_HEADER))
-                    .messages().stream()
-                    .filter(m -> m.body().contains(orderId))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("mensagem de " + orderId + " não encontrada"));
-            String traceHeader = message.attributes()
-                    .get(software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.AWS_TRACE_HEADER);
+            // a fila acumula mensagens de execuções anteriores: faz polling até
+            // encontrar a MENSAGEM DESTA rodada (por orderId)
+            String traceHeader = null;
+            for (int attempt = 0; attempt < 8 && traceHeader == null; attempt++) {
+                var messages = sqs.receiveMessage(r -> r.queueUrl(queueUrl)
+                                .maxNumberOfMessages(10)
+                                .waitTimeSeconds(2)
+                                .messageSystemAttributeNames(
+                                        software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.AWS_TRACE_HEADER))
+                        .messages();
+                traceHeader = messages.stream()
+                        .filter(m -> m.body().contains(orderId))
+                        .map(m -> m.attributes().get(
+                                software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName.AWS_TRACE_HEADER))
+                        .findFirst().orElse(null);
+            }
+            if (traceHeader == null) {
+                throw new IllegalStateException("mensagem de " + orderId + " não encontrada na fila");
+            }
             System.out.println("[DEMO] AWSTraceHeader do SQS: " + traceHeader);
             OrderBillingProcessor billing = new OrderBillingProcessor(cfg);
             String billed = billing.handleRequest(

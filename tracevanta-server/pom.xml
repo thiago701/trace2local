@@ -20,6 +20,12 @@
     </dependency>
     <dependency>
       <groupId>tech.neural7.tracevanta</groupId>
+      <artifactId>tracevanta-otel</artifactId>
+      <!-- só pelos NOMES de atributo (OtelAttributeNames, ADR-008) — o servidor
+           não fala com o SDK do OTel (regra ONLY_THE_BRIDGE_TALKS_TO_THE_OTEL_SDK) -->
+    </dependency>
+    <dependency>
+      <groupId>tech.neural7.tracevanta</groupId>
       <artifactId>tracevanta-ui</artifactId>
     </dependency>
     <dependency>

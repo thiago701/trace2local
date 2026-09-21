@@ -498,6 +498,84 @@ button.small { padding: 3px 8px; font-size: 11px; }
 .diff-table .tag.gone { background: #3a1a1a; color: #f49a96; }
 .diff-table .tag.same { background: #22303f; color: var(--text-dim); }
 
+/* ---------------------------------------------------------------- storytelling */
+#btn-notes.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.tv-node .note-line {
+  font-size: 11px;
+  fill: var(--text-dim);
+  font-style: italic;
+}
+.tv-node .note-bubble {
+  fill: var(--bg-panel);
+  stroke: var(--border-soft);
+  stroke-dasharray: 3 3;
+  rx: 6;
+}
+.story-header {
+  background: linear-gradient(180deg, #14202e, var(--bg-panel));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.story-header .title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.story-header .intro { font-size: 13px; color: var(--text); }
+.story-step {
+  display: flex;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--border-soft);
+  align-items: flex-start;
+}
+.story-step .n {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  margin-top: 1px;
+}
+.story-step .icon { font-size: 15px; flex: none; margin-top: 2px; }
+.story-step .body { flex: 1; min-width: 0; }
+.story-step .text { font-size: 13px; line-height: 1.45; color: var(--text); }
+.story-step.error .text { color: #f4b4b1; }
+.story-step .meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-faint);
+  flex-wrap: wrap;
+}
+.story-step .meta .mutation { color: var(--violet); }
+.story-step .meta .error-tag { color: var(--err); font-weight: 700; }
+.story-conclusion {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.story-actions { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 12px; }
+
 /* ---------------------------------------------------------------- canvas */
 #canvas-wrap { display: flex; flex-direction: column; min-width: 0; }
 #canvas-header {

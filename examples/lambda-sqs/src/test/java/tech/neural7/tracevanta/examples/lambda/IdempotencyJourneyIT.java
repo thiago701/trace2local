@@ -194,6 +194,18 @@ class IdempotencyJourneyIT {
                 .as("SEM delta na tentativa duplicada — nada foi escrito (a prova visual da idempotência)")
                 .isTrue();
 
+        // ---- STORYTELLING: narrativa de negócio (contexto + glossário do classpath)
+        HttpResponse<String> storyResponse = HTTP.send(HttpRequest.newBuilder()
+                        .uri(URI.create(STATION_URL + "/tracevanta/api/executions/req-idem-2/story"))
+                        .GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertThat(storyResponse.statusCode()).isEqualTo(200);
+        JsonNode story = MAPPER.readTree(storyResponse.body());
+        assertThat(story.path("steps").size()).isEqualTo(3);
+        assertThat(story.toString()).as("glossário aplicado à nota da guarda")
+                .contains("Guarda de idempotência");
+        assertThat(story.path("conclusion").asText()).contains("com erro");
+
         // evidências
         Path dir = Path.of("..", "..", "docs", "qa").toAbsolutePath().normalize();
         Files.createDirectories(dir);

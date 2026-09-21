@@ -4,6 +4,36 @@
 > Restrições respeitadas: **ADR-005** (zero referência externa — `UiOfflineTest` verde)
 > e **CSP `default-src 'self'; style-src 'self'; script-src 'self'`** (zero estilo/script inline).
 
+## v4 — Descoberta de negócio e storytelling (PO/dev/QA na mesma página)
+
+**Como funciona a descoberta** (SPEC §4.12 bis): o `StoryService` combina três
+fontes para explicar cada nó em linguagem de negócio:
+
+1. **Contexto** — semântica do nó (kind) + atributos OTel (HTTP, banco,
+   mensageria, Lambda) + mutação de dados + status/erro;
+2. **Engenharia reversa** — nomes em camelCase humanizados com mapa de verbos
+   de negócio (`CreateOrder` → "cria o recurso", `ConfirmOrder` → "aplica a
+   regra de confirmação (condição de estado)…");
+3. **Docs** — `tracevanta-business.md` opcional no classpath: o glossário do
+   time sobrescreve a nota quando o termo é documentado (ex.: a guarda de
+   idempotência virou "a mesma chave só grava uma vez; duplicados são
+   recusados sem efeito colateral").
+
+**O que a UI ganhou**:
+
+| Recurso | O que faz |
+|---|---|
+| **Aba STORY** | narrativa completa da execução: título, intro (trigger), passos numerados com ícone/kind/duração/mutação/erro e desfecho — linha do tempo legível para qualquer papel |
+| **COPIAR COMO MARKDOWN** | a narrativa vira texto pronto para slides, PR ou relatório de QA |
+| **Toggle NOTAS** no canvas | anotações de storytelling **ao lado de cada nó** (balões tracejados), ativável com um clique — a árvore vira slide |
+
+Validação v4 (script de captura): `storySteps=5 · intro/conclusão em PT de
+negócio · copyBtn · noteLines=13 com NOTAS on · notesOff limpo` — **todas
+passaram ✓**. Narrativa real capturada: *"A execução começou quando o evento
+chegou à função Lambda… No fim, a jornada terminou com sucesso em 1.98 s.
+2 passo(s) alteraram dados — os deltas estão nos inspectors."* Telas:
+[`17-story.png`](screenshots/17-story.png) e [`18-canvas-notes.png`](screenshots/18-canvas-notes.png).
+
 ## Pesquisa de ferramentas similares (v3)
 
 Referências estudadas: [.NET Aspire Dashboard](https://learn.microsoft.com/pt-br/dotnet/aspire/fundamentals/dashboard/overview)

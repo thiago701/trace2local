@@ -5,6 +5,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### v4 — Descoberta de negócio e storytelling (canvas para PO, dev e QA)
+
+- **`StoryService` + `BusinessGlossary`** (tracevanta-server): descoberta da especificação/regras de negócio por **contexto** (kind + atributos OTel + mutação + erro), **engenharia reversa** (camelCase humanizado com mapa de verbos de negócio PT-BR) e **docs** (glossário opcional `tracevanta-business.md` no classpath — o time documenta o termo e a nota é sobrescrita).
+- **`GET /api/executions/{id}/story`**: narrativa completa — intro (trigger), passos ordenados com ícone/kind/duração/mutação/erro e desfecho com status, duração e contagem de mutações.
+- **Aba STORY na UI**: linha do tempo da narrativa + **COPIAR COMO MARKDOWN** (slides/PR/QA); **toggle NOTAS** desenha as anotações AO LADO de cada nó no canvas (balões tracejados) — a árvore vira ferramenta de apresentação sem sair do modo técnico.
+- Glossários de demonstração no order-service e no lambda-sqs (guarda de idempotência explicada em linguagem de negócio); IT valida a nota do glossário e a conclusão da narrativa.
+- Simplicidade preservada: sem glossário funciona por inferência; 2 botões novos; CSP/ADR-005 intactos. Validação no script de captura (storySteps, intro/conclusão, copyBtn, noteLines) + telas 17/18 + build completo verde.
+
 ### v3 — Dashboard, comparação e deep links (pesquisa de ferramentas similares)
 
 - **Pesquisa aplicada**: estudadas .NET Aspire Dashboard (análogo local mais próximo), Jaeger (diff de traces), SigNoz/Grafana (vista unificada) — ver `docs/qa/EVIDENCIA-UX.md` com as referências.

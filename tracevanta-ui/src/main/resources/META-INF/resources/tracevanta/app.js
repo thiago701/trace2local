@@ -17,6 +17,8 @@ const state = {
   activeTab: "canvas",
   pendingDeepLink: null,
   compare: { a: null, b: null },
+  notesOn: false,
+  story: null,
   view: { x: 60, y: 40, scale: 1 },
   dragging: false,
   dragStart: null,
@@ -267,6 +269,7 @@ function fmtDuration(d) {
 async function selectExecution(executionId) {
   state.selectedExecutionId = executionId;
   state.selectedNodeId = null;
+  state.story = null; // narrativa é por execução — invalida o cache
   state.fittedFor = null; // novo contexto: re-encaixar a árvore na primeira renderização
   // deep link compartilhável: ?execution=<id> reflete a seleção sem recarregar
   try {
@@ -364,10 +367,12 @@ function switchTab(tab) {
   $("canvas").classList.toggle("hidden", tab !== "canvas");
   $("dashboard-view").classList.toggle("hidden", tab !== "dashboard");
   $("compare-view").classList.toggle("hidden", tab !== "compare");
-  ["canvas", "dashboard", "compare"].forEach((t) =>
+  $("story-view").classList.toggle("hidden", tab !== "story");
+  ["canvas", "dashboard", "compare", "story"].forEach((t) =>
     $("tab-" + t).classList.toggle("active", t === tab));
   if (tab === "dashboard") renderDashboard();
   if (tab === "compare") renderCompare();
+  if (tab === "story") renderStory();
 }
 
 function executionList() {
@@ -606,6 +611,96 @@ async function loadFull(executionId) {
 function shortId(id) {
   return String(id).length > 10 ? String(id).slice(0, 10) + "…" : id;
 }
+
+/* ------------------------------------------------------------- storytelling (negócio) */
+async function loadStory(executionId) {
+  if (state.story && state.story.executionId === executionId) {
+    return state.story;
+  }
+  try {
+    state.story = await (await api("/executions/" + encodeURIComponent(executionId) + "/story")).json();
+  } catch (e) {
+    state.story = null;
+  }
+  return state.story;
+}
+
+async function renderStory() {
+  const container = $("story-view");
+  const id = state.selectedExecutionId;
+  if (!id) {
+    container.innerHTML = '<h2>STORY <span class="pill">narrativa de negócio</span></h2>' +
+      '<div class="empty-note dash">Selecione uma execução para ver a narrativa.</div>';
+    return;
+  }
+  container.innerHTML = '<h2>STORY <span class="pill">narrativa de negócio</span></h2>' +
+    '<div class="empty-note dash">montando a narrativa…</div>';
+  const story = await loadStory(id);
+  if (!story || !story.steps) {
+    container.innerHTML = '<h2>STORY <span class="pill">narrativa de negócio</span></h2>' +
+      '<div class="empty-note dash">Narrativa indisponível para esta execução.</div>';
+    return;
+  }
+  container.innerHTML =
+    '<h2>STORY <span class="pill">' + esc(fmtDuration(story.durationMs)) + " · " + esc(story.status) + "</span></h2>" +
+    '<div class="story-actions">' +
+      '<button type="button" class="small" id="btn-copy-story">COPIAR COMO MARKDOWN</button>' +
+    "</div>" +
+    '<div class="story-header"><div class="title">' + esc(story.title || "Jornada") + "</div>" +
+    '<div class="intro">' + esc(story.intro || "") + "</div></div>" +
+    story.steps.map(stepHtml).join("") +
+    '<div class="story-conclusion">' + esc(story.conclusion || "") + "</div>";
+  $("btn-copy-story").addEventListener("click", () => {
+    navigator.clipboard.writeText(storyToMarkdown(story))
+      .then(() => toast("Narrativa copiada como Markdown — pronta para slides/PR", "ok"))
+      .catch(() => toast("Não foi possível copiar", "error"));
+  });
+}
+
+function stepHtml(s) {
+  return '<div class="story-step' + (s.error ? " error" : "") + '">' +
+    '<span class="n">' + s.order + "</span>" +
+    '<span class="icon">' + esc(s.icon || "·") + "</span>" +
+    '<div class="body"><div class="text">' + esc(s.text) + "</div>" +
+    '<div class="meta">' +
+      "<span>" + esc(s.kind) + "</span>" +
+      "<span>" + esc(fmtDuration(s.durationMs)) + "</span>" +
+      (s.mutationSummary ? '<span class="mutation">Δ ' + esc(s.mutationSummary) + "</span>" : "") +
+      (s.error ? '<span class="error-tag">⚠ FALHOU</span>' : "") +
+    "</div></div></div>";
+}
+
+function storyToMarkdown(story) {
+  const lines = [];
+  lines.push("# " + (story.title || "Jornada TraceVanta"));
+  lines.push("");
+  lines.push(story.intro || "");
+  lines.push("");
+  for (const s of story.steps || []) {
+    lines.push(s.order + ". **" + (s.text || "") + "** — " + s.kind + " · " + fmtDuration(s.durationMs)
+      + (s.mutationSummary ? " · Δ " + s.mutationSummary : "") + (s.error ? " · ⚠ FALHOU" : ""));
+  }
+  lines.push("");
+  lines.push("> " + (story.conclusion || ""));
+  return lines.join("\n");
+}
+
+function wrapText(text, width) {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let cur = "";
+  for (const w of words) {
+    const candidate = (cur + " " + w).trim();
+    if (candidate.length > width) {
+      if (cur) lines.push(cur);
+      cur = w;
+    } else {
+      cur = candidate;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
 function treeRoots(exec) {
   const nodes = exec ? exec.nodes : new Map();
   const byParent = new Map();
@@ -826,11 +921,35 @@ function renderCanvas() {
 
     g.addEventListener("click", () => selectNode(n.nodeId));
     svg.appendChild(g);
+
+    // storytelling: anotação de negócio AO LADO do nó (toggle NOTAS)
+    if (state.notesOn && state.story && state.story.steps) {
+      const step = state.story.steps.find((s) => s.nodeId === n.nodeId);
+      if (step && step.text) {
+        const lines = wrapText(step.text, 40);
+        const bw = 252, lh = 14, bh = lines.length * lh + 10;
+        const bubble = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        bubble.setAttribute("class", "note-bubble");
+        bubble.setAttribute("x", W + 12); bubble.setAttribute("y", 4);
+        bubble.setAttribute("width", bw); bubble.setAttribute("height", bh);
+        g.appendChild(bubble);
+        lines.forEach((line, i) => {
+          const noteText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          noteText.setAttribute("class", "note-line");
+          noteText.setAttribute("x", W + 20); noteText.setAttribute("y", 18 + i * lh);
+          noteText.textContent = line;
+          g.appendChild(noteText);
+        });
+      }
+    }
   }
 
-  // dimensões do viewBox
+  // dimensões do viewBox (considera as notas ao lado quando ligadas)
   let maxX = 0, maxY = 0;
-  for (const p of all) { maxX = Math.max(maxX, p.x + W); maxY = Math.max(maxY, p.y + H); }
+  for (const p of all) {
+    maxX = Math.max(maxX, p.x + W + (state.notesOn ? 280 : 0));
+    maxY = Math.max(maxY, p.y + H);
+  }
   svg.setAttribute("viewBox", "0 0 " + Math.max(400, maxX + 60) + " " + Math.max(300, maxY + 60));
 
   // auto-fit: primeira renderização de cada execução encaixa a árvore na viewport
@@ -1089,10 +1208,21 @@ function wireCanvas() {
     renderRecent();
   });
 
-  // abas de visão (canvas / dashboard / comparar)
+  // abas de visão (canvas / dashboard / comparar / story)
   $("tab-canvas").addEventListener("click", () => switchTab("canvas"));
   $("tab-dashboard").addEventListener("click", () => switchTab("dashboard"));
   $("tab-compare").addEventListener("click", () => switchTab("compare"));
+  $("tab-story").addEventListener("click", () => switchTab("story"));
+
+  // notas de storytelling ao lado dos nós (descoberta de negócio)
+  $("btn-notes").addEventListener("click", async () => {
+    state.notesOn = !state.notesOn;
+    $("btn-notes").classList.toggle("active", state.notesOn);
+    if (state.notesOn && state.selectedExecutionId) {
+      await loadStory(state.selectedExecutionId);
+    }
+    renderCanvas();
+  });
 
   // legenda + atalhos (popovers)
   $("btn-legend").addEventListener("click", (e) => {

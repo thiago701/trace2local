@@ -101,7 +101,18 @@ async function selectRecentFailed(page) {
     if (selected) return true;
     await sleep(500);
   }
-  return false;
+  // fallback pela API (a lista de cards pode re-renderizar durante eventos SSE)
+  return page.evaluate(async () => {
+    const list = await (await fetch("/tracevanta/api/executions?limit=50")).json();
+    const failed = list.filter((s) => s.status === "FAILED");
+    const s = failed.find((x) => (x.rootLabel || "").includes("order-processor")) || failed[0];
+    if (!s) return false;
+    const item = [...document.querySelectorAll(".exec-card")]
+      .find((r) => r.textContent.includes(s.executionId));
+    if (!item) return false;
+    item.click();
+    return true;
+  });
 }
 
 async function selectExecutionWithNode(page, label, excludeLabel) {
@@ -255,6 +266,20 @@ console.log("16-compare.png");
 await page.evaluate(() => document.getElementById("tab-canvas").click());
 await sleep(300);
 
+// ---- v4: storytelling (telas)
+await page.evaluate(() => document.getElementById("tab-story").click());
+await sleep(1000);
+await page.screenshot({ path: out("17-story.png") });
+console.log("17-story.png");
+await page.evaluate(() => document.getElementById("tab-canvas").click());
+await sleep(400);
+await page.evaluate(() => document.getElementById("btn-notes").click());
+await sleep(1000);
+await page.screenshot({ path: out("18-canvas-notes.png") });
+console.log("18-canvas-notes.png");
+await page.evaluate(() => document.getElementById("btn-notes").click());
+await sleep(300);
+
 // ---- checagens de UX v2 (evidência funcional, além das telas)
 console.log("checagens de UX v2…");
 const ux = await page.evaluate(() => {
@@ -334,6 +359,39 @@ const v3Ok =
   && v3.canvasVisible;
 console.log(v3Ok ? "  v3: todas as checagens passaram ✓" : "  v3: FALHA em uma ou mais checagens ✗");
 
+await page.evaluate(() => document.getElementById("tab-canvas").click());
+await sleep(300);
+
+// ---- v4: storytelling (STORY tab + notas no canvas)
+console.log("checagens de v4 (storytelling)…");
+const v4 = await page.evaluate(async () => {
+  const results = {};
+  document.getElementById("tab-story").click();
+  await new Promise((r) => setTimeout(r, 900));
+  results.storySteps = document.querySelectorAll("#story-view .story-step").length;
+  results.storyIntro = document.querySelector("#story-view .story-header .intro")?.textContent || "";
+  results.storyConclusion = document.querySelector("#story-view .story-conclusion")?.textContent || "";
+  results.copyBtn = document.querySelector("#story-view #btn-copy-story") !== null;
+  document.getElementById("tab-canvas").click();
+  await new Promise((r) => setTimeout(r, 300));
+  document.getElementById("btn-notes").click();
+  await new Promise((r) => setTimeout(r, 900));
+  results.noteLines = document.querySelectorAll("g.tv-node .note-line").length;
+  document.getElementById("btn-notes").click();
+  await new Promise((r) => setTimeout(r, 300));
+  results.notesOff = document.querySelectorAll("g.tv-node .note-line").length === 0;
+  return results;
+});
+console.log("  " + JSON.stringify(v4, null, 2).replace(/\n/g, "\n  "));
+const v4Ok =
+  v4.storySteps >= 3
+  && v4.storyIntro.length > 0
+  && v4.storyConclusion.length > 0
+  && v4.copyBtn
+  && v4.noteLines >= 3
+  && v4.notesOff;
+console.log(v4Ok ? "  v4: storytelling validado ✓" : "  v4: FALHA em uma ou mais checagens ✗");
+
 await browser.close();
 if (!allConsistent) {
   console.log("FALHA DE CONSISTÊNCIA: UI diverge da API — ver relatório acima.");
@@ -347,4 +405,8 @@ if (!v3Ok) {
   console.log("FALHA DE v3 (dashboard/comparar/deep-link) — ver checagens acima.");
   process.exit(4);
 }
-console.log("pronto → docs/qa/screenshots/ (consistência UI↔API + UX v2 + v3 validados)");
+if (!v4Ok) {
+  console.log("FALHA DE v4 (storytelling) — ver checagens acima.");
+  process.exit(5);
+}
+console.log("pronto → docs/qa/screenshots/ (consistência UI↔API + UX v2/v3/v4 validados)");
