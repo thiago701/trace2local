@@ -20,6 +20,8 @@ const state = {
   notesOn: false,
   story: null,
   pulseNodeId: null,
+  infra: null,
+  infraFilter: "",
   view: { x: 60, y: 40, scale: 1 },
   dragging: false,
   dragStart: null,
@@ -362,18 +364,20 @@ function renderWarnings() {
     '<div class="warning-item" role="listitem">⚠ ' + esc(w.message) + "</div>").join("");
 }
 
-/* ------------------------------------------------------------- tabs: dashboard e comparação */
+/* ------------------------------------------------------------- tabs: dashboard, comparação e infra */
 function switchTab(tab) {
   state.activeTab = tab;
   $("canvas").classList.toggle("hidden", tab !== "canvas");
   $("dashboard-view").classList.toggle("hidden", tab !== "dashboard");
   $("compare-view").classList.toggle("hidden", tab !== "compare");
   $("story-view").classList.toggle("hidden", tab !== "story");
-  ["canvas", "dashboard", "compare", "story"].forEach((t) =>
+  $("infra-view").classList.toggle("hidden", tab !== "infra");
+  ["canvas", "dashboard", "compare", "story", "infra"].forEach((t) =>
     $("tab-" + t).classList.toggle("active", t === tab));
   if (tab === "dashboard") renderDashboard();
   if (tab === "compare") renderCompare();
   if (tab === "story") renderStory();
+  if (tab === "infra") renderInfra();
 }
 
 function executionList() {
@@ -729,6 +733,116 @@ function wrapText(text, width) {
   }
   if (cur) lines.push(cur);
   return lines;
+}
+
+/* ------------------------------------------------------------- infra/devops */
+async function renderInfra() {
+  const container = $("infra-view");
+  container.innerHTML = '<h2>INFRA & DEVOPS <span class="pill">URLs, variáveis e recursos — com local na infra</span></h2>' +
+    '<div class="empty-note dash">escaneando o projeto…</div>';
+  let infra;
+  try {
+    infra = await (await api("/infra")).json();
+    state.infra = infra;
+  } catch (e) {
+    container.innerHTML = '<h2>INFRA & DEVOPS</h2><div class="empty-note dash">' +
+      "Catálogo indisponível. Verifique trace2local.infra.scan-dirs (ou TRACE2LOCAL_INFRA_SCAN_DIRS).</div>";
+    return;
+  }
+  const entries = infra.entries || [];
+  const countBy = (t) => entries.filter((e) => e.type === t).length;
+  const sources = new Set();
+  entries.forEach((e) => (e.sources || []).forEach((s) => sources.add(s.file)));
+  if (!entries.length) {
+    container.innerHTML = '<h2>INFRA & DEVOPS <span class="pill">' + esc((infra.scannedDirs || []).join(", ")) + "</span></h2>" +
+      '<div class="infra-empty">Nenhum arquivo de infra encontrado nos diretórios escaneados.<br>' +
+      'Aponte <code>trace2local.infra.scan-dirs</code> (ou a env <code>TRACE2LOCAL_INFRA_SCAN_DIRS</code>) ' +
+      'para a pasta com terraform/compose/.env e recarregue a aba.</div>';
+    return;
+  }
+  state.infraFilter = "";
+  container.innerHTML =
+    '<h2>INFRA & DEVOPS <span class="pill">' + esc((infra.scannedDirs || []).join(", ")) + "</span></h2>" +
+    '<div class="infra-summary">' +
+      '<span class="chip">' + countBy("URL") + " URLs</span>" +
+      '<span class="chip">' + countBy("ARN") + " ARNs</span>" +
+      '<span class="chip">' + countBy("ENV") + " variáveis</span>" +
+      '<span class="chip">' + countBy("RECURSO_TERRAFORM") + " recursos Terraform</span>" +
+      '<span class="chip">' + sources.size + " fontes</span>" +
+    "</div>" +
+    '<div class="search-wrap"><input id="infra-filter" class="search-input" type="search" ' +
+    'placeholder="Filtrar por nome, valor, tipo ou arquivo…" autocomplete="off"></div>' +
+    '<div id="infra-list"></div>';
+  $("infra-filter").addEventListener("input", (e) => {
+    state.infraFilter = e.target.value;
+    renderInfraList(entries);
+  });
+  renderInfraList(entries);
+}
+
+function renderInfraList(entries) {
+  const q = (state.infraFilter || "").trim().toLowerCase();
+  const list = $("infra-list");
+  list.innerHTML = "";
+  for (const e of entries) {
+    const hay = (e.type + " " + e.name + " " + e.value + " "
+        + (e.sources || []).map((s) => s.file).join(" ")).toLowerCase();
+    if (q && !hay.includes(q)) continue;
+    const card = document.createElement("div");
+    card.className = "infra-card";
+    const srcChips = (e.sources || []).map((s) =>
+      '<span class="src-chip ' + esc(s.kind) + '" data-copy="' + esc(s.file + ":" + s.line) + '" title="Copiar local (arquivo:linha)">' +
+      esc(s.kind) + " " + esc(s.file) + ":" + s.line + "</span>").join("");
+    const uses = e.usedBy || [];
+    const usesId = "uses-" + cssEscape(e.type + e.name + e.value);
+    card.innerHTML =
+      '<div class="row1">' +
+        '<span class="infra-type ' + esc(e.type) + '">' + esc(e.type === "RECURSO_TERRAFORM" ? "TF" : e.type) + "</span>" +
+        '<span class="infra-name">' + esc(e.name) + "</span>" +
+        '<span class="infra-value" title="' + esc(e.value) + '">' + esc(e.value) + "</span>" +
+        '<button type="button" class="copy-btn small" data-copy="' + esc(e.value) + '">COPIAR VALOR</button>' +
+      "</div>" +
+      '<div class="row2">' + srcChips +
+        '<span class="infra-uses' + (uses.length ? " has" : "") + '">' +
+          (uses.length ? uses.length + (e.usedByTotal > uses.length ? "+" : "") + " uso(s) no acervo" : "sem usos no acervo") +
+        "</span>" +
+        (uses.length ? '<button type="button" class="small btn-uses" data-id="' + usesId + '">VER USOS</button>' : "") +
+      "</div>" +
+      '<div class="uses-list hidden" id="' + usesId + '">' +
+        uses.map((u) => '<div class="uses-item" data-exec="' + esc(u.executionId) + '" data-node="' + esc(u.nodeId) + '">' +
+          '<span class="u-kind">' + esc(u.kind) + "</span>" +
+          '<span class="u-label">' + esc(u.label) + "</span>" +
+          '<span class="u-kind">' + esc(shortId(u.executionId)) + "</span></div>").join("") +
+      "</div>";
+    list.appendChild(card);
+    card.querySelectorAll(".src-chip").forEach((chip) =>
+      chip.addEventListener("click", () => copyText(chip.dataset.copy, "Local copiado")));
+    card.querySelectorAll(".copy-btn").forEach((btn) =>
+      btn.addEventListener("click", () => copyText(btn.dataset.copy, "Valor copiado")));
+    card.querySelectorAll(".btn-uses").forEach((btn) =>
+      btn.addEventListener("click", () => $(btn.dataset.id).classList.toggle("hidden")));
+    card.querySelectorAll(".uses-item").forEach((item) =>
+      item.addEventListener("click", () => focusUsage(item.dataset.exec, item.dataset.node)));
+  }
+}
+
+function copyText(text, okMsg) {
+  navigator.clipboard.writeText(text || "")
+    .then(() => toast(okMsg, "ok"))
+    .catch(() => toast("Não foi possível copiar", "error"));
+}
+
+async function focusUsage(executionId, nodeId) {
+  switchTab("canvas");
+  await selectExecution(executionId);
+  selectNode(nodeId);
+}
+
+function infraMatchesNode(entry, node) {
+  const value = entry.value || "";
+  const name = entry.name || "";
+  const haystack = (node.label || "") + "|" + Object.values(node.attributes || {}).join("|");
+  return (value && haystack.includes(value)) || (name && (node.label || "").includes(name));
 }
 function treeRoots(exec) {
   const nodes = exec ? exec.nodes : new Map();
@@ -1086,9 +1200,30 @@ function renderInspector() {
       '<div class="k">latency</div><div class="v">' + fmtDuration(node.totalTime) + " (self " + fmtDuration(node.selfTime) + ")</div>" +
       '<div class="k">kind</div><div class="v">' + esc(kindName[node.kind] || node.kind || "?") + "</div>" +
     "</div></section>" +
-    attrsHtml + mutationHtml + payloadHtml + errorHtml;
+    attrsHtml + mutationHtml + payloadHtml + errorHtml + infraSectionFor(node);
 
   wireInspectorInteractions();
+}
+
+/** INFRA & DEVOPS no inspector: recursos do catálogo que este nó utilizou. */
+function infraSectionFor(node) {
+  if (!state.infra || !state.infra.entries || !state.infra.entries.length) {
+    return "";
+  }
+  const matched = state.infra.entries.filter((e) => infraMatchesNode(e, node)).slice(0, 4);
+  if (!matched.length) {
+    return "";
+  }
+  return '<section class="insp-section"><h3 class="clickable"><span class="chev">▼</span> INFRA & DEVOPS</h3><div class="sec-body">' +
+    matched.map((e) => {
+      const s = (e.sources || [])[0];
+      return '<div class="kv-pair"><div class="k">' + esc(e.type) + '</div><div class="v">' +
+        esc(e.name) + " · " + esc(e.value) +
+        (s ? ' <span class="src-chip ' + esc(s.kind) + '">' + esc(s.file) + ":" + s.line + "</span>" : "") +
+        "</div></div>";
+    }).join("") +
+    '<button type="button" class="small" id="btn-open-infra">VER NA ABA INFRA</button>' +
+    "</div></section>";
 }
 
 function attributesSection(attrs) {
@@ -1133,6 +1268,10 @@ function wireInspectorInteractions() {
         .catch(() => toast("Não foi possível copiar", "error"));
     });
   });
+  const openInfra = body.querySelector("#btn-open-infra");
+  if (openInfra) {
+    openInfra.addEventListener("click", () => switchTab("infra"));
+  }
 }
 
 function mutationSection(m) {
@@ -1306,6 +1445,7 @@ function wireCanvas() {
   $("tab-dashboard").addEventListener("click", () => switchTab("dashboard"));
   $("tab-compare").addEventListener("click", () => switchTab("compare"));
   $("tab-story").addEventListener("click", () => switchTab("story"));
+  $("tab-infra").addEventListener("click", () => switchTab("infra"));
 
   // notas de storytelling ao lado dos nós (descoberta de negócio)
   $("btn-notes").addEventListener("click", async () => {

@@ -30,6 +30,7 @@ class PropertyBindingContractTest {
                     "trace2local.station.endpoint=http://127.0.0.1:19876",
                     "trace2local.station.token=sekrit-token-123",
                     "trace2local.flush-timeout-ms=333",
+                    "trace2local.infra.scan-dirs=terraform,infra",
                     "trace2local.allow-non-loopback=false");
 
     @Test
@@ -46,6 +47,7 @@ class PropertyBindingContractTest {
             assertThat(cfg.stationEndpoint()).isEqualTo("http://127.0.0.1:19876");
             assertThat(cfg.stationToken()).isEqualTo("sekrit-token-123");
             assertThat(cfg.flushTimeoutMs()).isEqualTo(333);
+            assertThat(cfg.infraScanDirs()).isEqualTo("terraform,infra");
             assertThat(cfg.allowNonLoopback()).isFalse();
         });
     }

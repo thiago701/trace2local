@@ -20,7 +20,8 @@ public record Trace2LocalConfig(
         String stationEndpoint,
         String stationToken,
         long flushTimeoutMs,
-        long quiescenceMs) {
+        long quiescenceMs,
+        String infraScanDirs) {
 
     public static Builder builder() {
         return new Builder();
@@ -46,6 +47,7 @@ public record Trace2LocalConfig(
         private String stationToken;
         private long flushTimeoutMs = 200;
         private long quiescenceMs = 5_000;
+        private String infraScanDirs = "";
 
         public Builder enabled(boolean v) { this.enabled = v; return this; }
         public Builder basePath(String v) { this.basePath = v; return this; }
@@ -68,12 +70,18 @@ public record Trace2LocalConfig(
         public Builder stationToken(String v) { this.stationToken = v; return this; }
         public Builder flushTimeoutMs(long v) { this.flushTimeoutMs = v; return this; }
         public Builder quiescenceMs(long v) { this.quiescenceMs = v; return this; }
+        /**
+         * Diretórios varridos pelo catálogo de infra da UI (aba INFRA):
+         * lista separada por vírgula relativa ao diretório de trabalho
+         * (ex.: {@code terraform,infra,.}) — env {@code TRACE2LOCAL_INFRA_SCAN_DIRS}.
+         */
+        public Builder infraScanDirs(String v) { this.infraScanDirs = v == null ? "" : v; return this; }
 
         public Trace2LocalConfig build() {
             return new Trace2LocalConfig(enabled, basePath, port, bindAddress, allowNonLoopback,
                     bufferCapacity, retentionMaxExecutions, payloadMaxBytes, redactionMode,
                     dynamoDbCaptureBefore, jdbcMutationCapture, stationEndpoint, stationToken,
-                    flushTimeoutMs, quiescenceMs);
+                    flushTimeoutMs, quiescenceMs, infraScanDirs);
         }
     }
 }

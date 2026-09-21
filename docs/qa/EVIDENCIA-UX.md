@@ -4,6 +4,42 @@
 > Restrições respeitadas: **ADR-005** (zero referência externa — `UiOfflineTest` verde)
 > e **CSP `default-src 'self'; style-src 'self'; script-src 'self'`** (zero estilo/script inline).
 
+## v6 — Ações de detalhamento de INFRA/DEVOPS (UX revisada)
+
+**Objetivo**: botões/links que detalham ONDE cada URL, variável e recurso vive
+na infra (terraform/compose/.env/config), com usabilidade máxima.
+
+**O que foi entregue**:
+- **Aba INFRA** — catálogo gerado por engenharia reversa dos ARQUIVOS
+  (`InfraIndexer`: `*.tf`, `docker-compose*.yml`, `.env*`, `application*.yml`):
+  - **Cards por recurso** com badge de tipo (URL/ARN/ENV/TF), valor monoespaçado
+    truncado com título completo, e **fonte exata** (chip `terraform main.tf:3`)
+    — cada chip **copia o local `arquivo:linha`** com 1 clique;
+  - **COPIAR VALOR** por card; **resumo** (n URLs · n ARNs · n variáveis ·
+    n recursos Terraform · n fontes); **busca/filtro**;
+  - **"N usos no acervo"** com **VER USOS** → lista clicável que **leva ao nó
+    no canvas** (drill-down infra → execução → nó);
+  - **Segurança**: variável de chave sensível (senha/token/chave…) aparece com
+    valor `[OCULTO]` — o mesmo critério do Redactor (ADR-007).
+- **Inspector do nó** ganha a seção **INFRA & DEVOPS**: os recursos do
+  catálogo que AQUELE nó utilizou, com fonte, e botão **VER NA ABA INFRA**.
+- **Config mínima**: `trace2local.infra.scan-dirs` (ou env
+  `TRACE2LOCAL_INFRA_SCAN_DIRS`) — sem config, varre `terraform,infra`.
+
+**Validação de usabilidade (script de captura + checagens)**:
+```
+INFRA UI: cards=7 · types=[TF,TF,URL,URL,ENV,ENV,ENV] · srcChips=8 · copyBtns=7
+          uses=3 (com drill-down) · summary=5 · segredo [OCULTO] ✓
+drill-down: clique no uso → canvas visível + nó "DynamoDB: payments" SELECIONADO ✓
+zero erros de JS ✓
+```
+Tela: [`screenshots/22-infra.png`](screenshots/22-infra.png).
+
+**Decisões de UX**: sem modais (tudo em cards inline com expansão), 1 clique
+para copiar valor/local, drill-down com 1 clique (linking & brushing, padrão
+das visões coordenadas), segredos nunca exibidos, estado vazio didático
+("aponte trace2local.infra.scan-dirs…").
+
 ## v4 — Descoberta de negócio e storytelling (PO/dev/QA na mesma página)
 
 **Como funciona a descoberta** (SPEC §4.12 bis): o `StoryService` combina três

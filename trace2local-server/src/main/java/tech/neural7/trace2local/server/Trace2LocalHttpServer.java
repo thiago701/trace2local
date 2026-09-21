@@ -40,6 +40,8 @@ public final class Trace2LocalHttpServer implements AutoCloseable {
     private final java.util.Map<String, com.sun.net.httpserver.HttpHandler> extraRoutes;
     /** Storytelling (descoberta de negócio por contexto/docs/engenharia reversa). */
     private final StoryService storyService = new StoryService();
+    /** Catálogo de infra/DevOps (URLs, ARNs, envs, Terraform — com fonte e usos). */
+    private final InfraService infraService;
 
     private Trace2LocalHttpServer(Builder builder) {
         this.cfg = builder.cfg;
@@ -54,6 +56,7 @@ public final class Trace2LocalHttpServer implements AutoCloseable {
         this.endpoints = builder.endpoints;
         this.launcher = builder.launcher;
         this.extraRoutes = builder.extraRoutes;
+        this.infraService = new InfraService(builder.pipeline.store(), cfg);
         this.hub = new SseHub(store);
         // o hub SSE é o único consumidor dos LiveEvents do assembler (SPEC §4.4, etapa 4)
         builder.pipeline.addListener(hub::accept);
@@ -91,6 +94,7 @@ public final class Trace2LocalHttpServer implements AutoCloseable {
         server.createContext(prefix + "/api/execute", this::handleExecute);
         server.createContext(prefix + "/api/executions", this::handleExecutions);
         server.createContext(prefix + "/api/health", this::handleHealth);
+        server.createContext(prefix + "/api/infra", this::handleInfra);
         server.createContext(prefix + "/api/stream", this::handleStream);
         server.createContext(prefix + "/", this::handleStatic);
         if (!prefix.isEmpty()) {
@@ -223,6 +227,15 @@ public final class Trace2LocalHttpServer implements AutoCloseable {
         health.put("liveExecutions", store.liveExecutions());
         health.put("connectedClients", hub.connectedClients());
         writeJson(exchange, 200, health);
+    }
+
+    /** Catálogo de infra/DevOps: URLs, ARNs, envs e recursos Terraform com fonte e usos. */
+    private void handleInfra(HttpExchange exchange) throws IOException {
+        if (!"GET".equals(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange);
+            return;
+        }
+        writeJson(exchange, 200, infraService.snapshot());
     }
 
     private void handleStream(HttpExchange exchange) throws IOException {

@@ -5,6 +5,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### Ações de detalhamento de INFRA/DEVOPS (aba INFRA)
+
+- **`InfraIndexer`** (server): engenharia reversa dos arquivos de infra — `*.tf` (recursos AWS + URLs/ARNs), `docker-compose*.yml`, `.env*` e `application*.yml` — cataloga URLs, ARNs, variáveis de ambiente e recursos Terraform com a **fonte exata (arquivo:linha)**; valores de chaves sensíveis são mascarados com `[OCULTO]` (critério do Redactor, ADR-007).
+- **`GET /api/infra`**: catálogo + **cruzamento com o acervo** — para cada recurso, quais execuções/nós o utilizaram (drill-down infra → execução → nó).
+- **Aba INFRA na UI** (UX revisada): cards com badge de tipo, valor copiável, chips de fonte que copiam `arquivo:linha`, resumo, busca/filtro, "N usos" com **VER USOS** clicável que seleciona o nó no canvas; **inspector** ganha a seção INFRA & DEVOPS por nó com botão VER NA ABA INFRA; estado vazio didático.
+- Config: `trace2local.infra.scan-dirs` (env `TRACE2LOCAL_INFRA_SCAN_DIRS`); demo com `terraform/main.tf` + `.env` no payment-service.
+- Testes: `InfraIndexerTest` (fonte linha-a-linha + máscara de segredo), contrato de propriedades; validação de usabilidade no script de captura (7 cards, 8 chips de fonte, drill-down até o nó selecionado, 0 erros JS) + tela 22.
+
 ### Renomeação do projeto: TraceVanta → Trace2Local (refatoramento em cascata)
 
 - **Maven**: groupId `tech.neural7.tracevanta` → `tech.neural7.trace2local`; artifactIds `tracevanta-*` → `trace2local-*` (todos os módulos da lib + plugin); diretórios dos módulos renomeados.

@@ -40,6 +40,9 @@ public class Trace2LocalProperties {
     /** Janela de quiescência do assembler, ms (fluxos só-OTLP e produtor aguardando consumidor). */
     private long quiescenceMs = 3000;
 
+    /** Diretórios do catálogo de infra da UI (aba INFRA), separados por vírgula. */
+    private String infraScanDirs = "";
+
     /** Escape consciente para produção (SPEC §8.4). */
     private boolean iKnowWhatImDoing = false;
 
@@ -50,6 +53,7 @@ public class Trace2LocalProperties {
     private final Aws aws = new Aws();
     private final Jdbc jdbc = new Jdbc();
     private final Station station = new Station();
+    private final Infra infra = new Infra();
 
     // ------------------------------------------------------------- grupos (nomes dotted da SPEC §5.4)
 
@@ -104,6 +108,13 @@ public class Trace2LocalProperties {
         public void setToken(String token) { this.token = token; }
     }
 
+    public static class Infra {
+        /** Diretórios do catálogo de infra (aba INFRA), separados por vírgula. */
+        private String scanDirs = "";
+        public String getScanDirs() { return scanDirs; }
+        public void setScanDirs(String scanDirs) { this.scanDirs = scanDirs; }
+    }
+
     // ------------------------------------------------------------- accessors flat (compatibilidade)
 
     public Trace2LocalConfig toConfig() {
@@ -123,6 +134,7 @@ public class Trace2LocalProperties {
                 .stationToken(station.token)
                 .flushTimeoutMs(flushTimeoutMs)
                 .quiescenceMs(quiescenceMs)
+                .infraScanDirs(infra.scanDirs)
                 .build();
     }
 
@@ -140,6 +152,8 @@ public class Trace2LocalProperties {
     public void setFlushTimeoutMs(long flushTimeoutMs) { this.flushTimeoutMs = flushTimeoutMs; }
     public long getQuiescenceMs() { return quiescenceMs; }
     public void setQuiescenceMs(long quiescenceMs) { this.quiescenceMs = quiescenceMs; }
+    public String getInfraScanDirs() { return infra.scanDirs; }
+    public void setInfraScanDirs(String infraScanDirs) { this.infra.scanDirs = infraScanDirs; }
     public boolean isIKnowWhatImDoing() { return iKnowWhatImDoing; }
     public void setIKnowWhatImDoing(boolean iKnowWhatImDoing) { this.iKnowWhatImDoing = iKnowWhatImDoing; }
 
@@ -150,6 +164,7 @@ public class Trace2LocalProperties {
     public Aws getAws() { return aws; }
     public Jdbc getJdbc() { return jdbc; }
     public Station getStation() { return station; }
+    public Infra getInfra() { return infra; }
 
     public int getBufferCapacity() { return buffer.capacity; }
     public void setBufferCapacity(int v) { buffer.capacity = v; }

@@ -59,6 +59,7 @@ public final class StationMain {
                 .bufferCapacity(intEnv("TRACE2LOCAL_BUFFER_CAPACITY", 4096))
                 .retentionMaxExecutions(intEnv("TRACE2LOCAL_RETENTION_MAX_EXECUTIONS", 100))
                 .stationToken(env("TRACE2LOCAL_STATION_TOKEN", null))
+                .infraScanDirs(env("TRACE2LOCAL_INFRA_SCAN_DIRS", ""))
                 .build();
     }
 
