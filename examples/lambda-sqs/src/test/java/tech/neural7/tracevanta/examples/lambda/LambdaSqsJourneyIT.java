@@ -301,6 +301,11 @@ class LambdaSqsJourneyIT {
         assertThat(update).as("update do consumidor sob o ramo SQS").isNotNull();
         assertThat(update.path("mutation").path("kind").asText()).isEqualTo("UPDATE");
         assertThat(update.path("mutation").path("fidelity").asText()).isEqualTo("EXACT");
+        // read-back (§4.10 fechada): before do ALL_OLD + after exato da releitura
+        assertThat(update.path("mutation").path("before").isObject()).as("before presente").isTrue();
+        assertThat(update.path("mutation").path("before").path("pk").asText()).isEqualTo("ORDER-L3");
+        assertThat(update.path("mutation").path("after").path("status").asText()).isEqualTo("BILLED");
+        assertThat(update.path("mutation").path("deltas").toString()).contains("status");
 
         int nodeCount = exec.path("metrics").path("nodeCount").asInt();
         assertThat(nodeCount).isEqualTo(5); // LAMBDA + DYNAMODB + SQS + LAMBDA + DYNAMODB

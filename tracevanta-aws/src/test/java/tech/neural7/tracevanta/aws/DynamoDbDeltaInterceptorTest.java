@@ -207,6 +207,85 @@ class DynamoDbDeltaInterceptorTest {
     }
 
     @Test
+    void capturesUpdateItemBeforeAndAfterExactWithReadBack() {
+        List<MutationEvent> published = new ArrayList<>();
+        DataMutationChannel.setSink(published::add);
+        Tracer tracer = tracer();
+
+        UpdateItemRequest request = UpdateItemRequest.builder()
+                .tableName("orders")
+                .key(Map.of("pk", AttributeValue.fromS("ORDER#9")))
+                .returnValues(ReturnValue.ALL_OLD) // elevado pelo interceptor com read-back
+                .build();
+        UpdateItemResponse response = UpdateItemResponse.builder()
+                .attributes(Map.of("pk", AttributeValue.fromS("ORDER#9"),
+                        "status", AttributeValue.fromS("PENDING"))) // before (ALL_OLD)
+                .build();
+        Context.ModifyResponse ctx = mock(Context.ModifyResponse.class);
+        when(ctx.request()).thenReturn(request);
+        when(ctx.response()).thenReturn(response);
+
+        // read-back: a releitura pós-update devolve o after EXATO (desvio §4.10 fechado)
+        var interceptor = new DynamoDbDeltaInterceptor(TraceVantaConfig.defaults(),
+                (table, key) -> Map.of("pk", AttributeValue.fromS("ORDER#9"),
+                        "status", AttributeValue.fromS("CONFIRMED")));
+
+        Span span = tracer.spanBuilder("DynamoDb.UpdateItem").startSpan();
+        try (Scope ignored = span.makeCurrent()) {
+            interceptor.modifyResponse(ctx, ExecutionAttributes.builder()
+                    .put(DynamoDbDeltaInterceptor.TV_ELEVATED, true).build());
+        } finally {
+            span.end();
+        }
+
+        assertThat(published).hasSize(1);
+        var mutation = published.get(0).mutation();
+        assertThat(mutation.kind()).isEqualTo(MutationKind.UPDATE);
+        assertThat(mutation.fidelity()).isEqualTo(MutationFidelity.EXACT);
+        assertThat(mutation.before().get("status").asText()).isEqualTo("PENDING");
+        assertThat(mutation.after().get("status").asText()).isEqualTo("CONFIRMED");
+        assertThat(mutation.deltas()).extracting(tech.neural7.tracevanta.model.FieldDelta::path)
+                .contains("status");
+        assertThat(published.get(0).spanId()).isEqualTo(span.getSpanContext().getSpanId());
+    }
+
+    @Test
+    void updateReadBackFailureKeepsBeforeExactWithoutAfter() {
+        List<MutationEvent> published = new ArrayList<>();
+        DataMutationChannel.setSink(published::add);
+        Tracer tracer = tracer();
+
+        UpdateItemRequest request = UpdateItemRequest.builder()
+                .tableName("orders")
+                .key(Map.of("pk", AttributeValue.fromS("ORDER#9")))
+                .returnValues(ReturnValue.ALL_OLD)
+                .build();
+        UpdateItemResponse response = UpdateItemResponse.builder()
+                .attributes(Map.of("pk", AttributeValue.fromS("ORDER#9"), "status", AttributeValue.fromS("PENDING")))
+                .build();
+        Context.ModifyResponse ctx = mock(Context.ModifyResponse.class);
+        when(ctx.request()).thenReturn(request);
+        when(ctx.response()).thenReturn(response);
+
+        var interceptor = new DynamoDbDeltaInterceptor(TraceVantaConfig.defaults(),
+                (table, key) -> { throw new IllegalStateException("read indisponível"); });
+
+        Span span = tracer.spanBuilder("DynamoDb.UpdateItem").startSpan();
+        try (Scope ignored = span.makeCurrent()) {
+            interceptor.modifyResponse(ctx, ExecutionAttributes.builder()
+                    .put(DynamoDbDeltaInterceptor.TV_ELEVATED, true).build());
+        } finally {
+            span.end();
+        }
+
+        assertThat(published).hasSize(1);
+        var mutation = published.get(0).mutation();
+        assertThat(mutation.before().get("status").asText()).isEqualTo("PENDING");
+        assertThat(mutation.after()).isNull(); // ausência declarada — releitura best-effort
+        assertThat(mutation.fidelity()).isEqualTo(MutationFidelity.EXACT);
+    }
+
+    @Test
     void keepsResponseWhenDevAskedForAttributesHimself() {
         PutItemResponse withAttributes = PutItemResponse.builder()
                 .attributes(Map.of("pk", AttributeValue.fromS("ORDER#1")))

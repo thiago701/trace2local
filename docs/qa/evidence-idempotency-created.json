@@ -1,19 +1,19 @@
 {
   "executionId" : "req-idem-1",
-  "traceId" : "2bd30cbb08ec35630d785494947cf15b",
+  "traceId" : "78652848fb53572afc35d209e7f5fd69",
   "status" : "COMPLETED",
   "trigger" : "LAMBDA_EVENT",
-  "startedAt" : "2026-09-21T01:47:40.272184100Z",
-  "duration" : 925,
+  "startedAt" : "2026-09-21T13:10:02.879823600Z",
+  "duration" : 1593,
   "roots" : [ {
-    "nodeId" : "df23b8ac3b9278ce",
+    "nodeId" : "ee519e350afb5136",
     "parentId" : null,
     "kind" : "LAMBDA",
     "label" : "idempotent-processor",
     "status" : "OK",
-    "startedAt" : "2026-09-21T01:47:39.354221200Z",
+    "startedAt" : "2026-09-21T13:10:01.476080300Z",
     "selfTime" : 10,
-    "totalTime" : 925,
+    "totalTime" : 1593,
     "attributes" : {
       "faas.invocation_id" : "req-idem-1",
       "faas.name" : "idempotent-processor",
@@ -24,14 +24,14 @@
     "mutation" : null,
     "error" : null,
     "children" : [ {
-      "nodeId" : "e23145a511ce79d9",
-      "parentId" : "df23b8ac3b9278ce",
+      "nodeId" : "0dd9e697a6ebd645",
+      "parentId" : "ee519e350afb5136",
       "kind" : "BUSINESS",
       "label" : "IdempotencyGuard",
       "status" : "OK",
-      "startedAt" : "2026-09-21T01:47:39.357531300Z",
-      "selfTime" : 392,
-      "totalTime" : 914,
+      "startedAt" : "2026-09-21T13:10:01.481874400Z",
+      "selfTime" : 440,
+      "totalTime" : 1582,
       "attributes" : {
         "tv.business" : "true"
       },
@@ -39,27 +39,27 @@
       "mutation" : null,
       "error" : null,
       "children" : [ {
-        "nodeId" : "40d517e0dea6c5d9",
-        "parentId" : "e23145a511ce79d9",
+        "nodeId" : "bfb973c0e7b4f6d9",
+        "parentId" : "0dd9e697a6ebd645",
         "kind" : "DYNAMODB",
         "label" : "DynamoDB: idempotency",
         "status" : "OK",
-        "startedAt" : "2026-09-21T01:47:39.613286500Z",
-        "selfTime" : 521,
-        "totalTime" : 521,
+        "startedAt" : "2026-09-21T13:10:01.737194800Z",
+        "selfTime" : 1142,
+        "totalTime" : 1142,
         "attributes" : {
+          "rpc.system" : "aws-api",
           "http.request.method" : "POST",
           "aws.dynamodb.table_names" : "idempotency",
           "rpc.method" : "PutItem",
           "server.address" : "127.0.0.1",
-          "url.full" : "http://127.0.0.1:55960/",
-          "aws.request_id" : "5cbc8dc8-4fa4-4545-b904-7a90ffbbceaa",
+          "url.full" : "http://127.0.0.1:56495/",
+          "aws.request_id" : "03304e37-73a8-4f6a-a4cc-bb2c6de2e52e",
           "rpc.service" : "DynamoDb",
           "db.system" : "dynamodb",
           "db.operation" : "PutItem",
-          "server.port" : "55960",
-          "http.response.status_code" : "200",
-          "rpc.system" : "aws-api"
+          "server.port" : "56495",
+          "http.response.status_code" : "200"
         },
         "payload" : null,
         "mutation" : {
@@ -68,14 +68,14 @@
           "key" : "IDEM-1",
           "before" : { },
           "after" : {
-            "createdAt" : "2026-09-21T01:47:39.381705600Z",
+            "createdAt" : "2026-09-21T13:10:01.516469Z",
             "pk" : "IDEM-1",
             "payload" : "{\"amount\":100}"
           },
           "deltas" : [ {
             "path" : "createdAt",
             "before" : null,
-            "after" : "2026-09-21T01:47:39.381705600Z"
+            "after" : "2026-09-21T13:10:01.516469Z"
           }, {
             "path" : "pk",
             "before" : null,

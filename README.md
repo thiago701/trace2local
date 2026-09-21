@@ -315,13 +315,13 @@ Visões DAG/Waterfall/Sequence e exportação OTLP entram na v0.2 — detalhes e
 
 | Item | SPEC | v0.1 |
 | :--- | :--- | :--- |
-| `UpdateItem` before/after | §4.10: ambos em uma chamada | `after` EXACT via `ALL_NEW`, `before=null` **declarado na UI** |
-| `tracevanta.port=0` | §5.4: "mesma porta da app" | porta efêmera (mesmo-que-a-app na v0.2) |
-| SSE `execution.completed` | §5.2: campos flat | `{"executionId","execution":{…}}`; `duration` em ms |
-| Schema por springdoc | §4.8 estratégia 1 | records via `RecordComponent` (springdoc na v0.2) |
+| `UpdateItem` before/after | §4.10: ambos em uma chamada | **FECHADO** com `TraceVantaAws.instrumentWithReadBack` (opcional: `before` do `ALL_OLD` + `after` exato por releitura dentro do span); o padrão `instrument` mantém `after` EXACT com `before=null` **declarado na UI** (a API do DynamoDB devolve UM conjunto por chamada) |
+| SSE `execution.completed` | §5.2: campos flat (`status`, `duration`, `metrics`) | **FECHADO**: `{"executionId","status","duration" (ISO-8601),"metrics","execution":{…}}` — flat conforme a SPEC, payload completo aninhado como extensão compatível |
+| `tracevanta.port=0` | §5.4: "mesma porta da app" | porta efêmera; **`GET /api/meta` expõe a porta real** (descoberta programática); mesmo-que-a-app fica para v0.2 (exige servir a UI junto do DispatcherServlet) |
+| Schema por springdoc | §4.8 estratégia 1 | records via `RecordComponent` (integração springdoc na v0.2 — versão compatível com Boot 4 em auditoria) |
 | Catálogo Lambda | §4.8: parse de `template.yaml` | catálogo vazio (somente-observação), registrado como gap |
 | `jdbc.mutation-capture=before-image` | §4.10: opt-in com aviso | **rejeitado com erro explícito** (nunca rebaixado em silêncio) |
-| `ScopedValue` | §4.11: interno para executionId | não usado no núcleo (baseline 21) |
+| `ScopedValue` | §4.11: interno para executionId | não usado no núcleo (baseline 21 — ADR-009/D-1; migra quando o baseline subir para 23+) |
 
 ---
 

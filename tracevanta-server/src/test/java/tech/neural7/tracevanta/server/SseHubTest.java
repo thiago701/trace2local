@@ -32,6 +32,28 @@ class SseHubTest {
     private static final Execution NODE_UPSERT_SAMPLE = sampleExecution();
 
     @Test
+    void executionCompletedCarriesFlatFieldsPerSpec52() {
+        SseHub hub = new SseHub(new StubStore(List.of()), 50, 60_000);
+        hub.start();
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            hub.subscribe(out, () -> {});
+            hub.accept(new LiveEvent.ExecutionCompleted("TV-00002", sampleExecution()));
+            sleep(250);
+            String payload = out.toString(StandardCharsets.UTF_8);
+            assertThat(payload).contains("event: execution.completed");
+            // §5.2: campos FLAT + duration ISO-8601 (PT..S) + metrics + payload aninhado compatível
+            assertThat(payload).contains("\"executionId\":\"TV-00002\"");
+            assertThat(payload).contains("\"status\":\"COMPLETED\"");
+            assertThat(payload).contains("\"duration\":\"PT");
+            assertThat(payload).contains("\"metrics\":{");
+            assertThat(payload).contains("\"execution\":{");
+        } finally {
+            hub.close();
+        }
+    }
+
+    @Test
     void coalescesManyUpsertsOfSameNodeIntoSingleFrame() throws Exception {
         SseHub hub = new SseHub(new StubStore(List.of(NODE_UPSERT_SAMPLE)), 60, 60_000);
         hub.start();

@@ -31,6 +31,26 @@ public final class TraceVantaAws {
                 .addExecutionInterceptor(new DynamoDbDeltaInterceptor(cfg)));
     }
 
+    /**
+     * DynamoDB com READ-BACK pós-update (fecha o desvio "UpdateItem before+after"
+     * da §4.10): a API do DynamoDB devolve UM conjunto por chamada — aqui o
+     * {@code before} vem do {@code ALL_OLD} da resposta e o {@code after} EXATO
+     * vem de uma releitura feita DENTRO do span do update (correlação correta,
+     * sem span aninhado: o cliente de releitura é cru, sem interceptores).
+     * Custo declarado: 1 GetItem extra por UpdateItem (capacidade de leitura).
+     *
+     * <p><b>Use POR ÚLTIMO na cadeia do builder</b> (o wrapper grava
+     * {@code endpointOverride}/{@code region}/{@code credentialsProvider}
+     * definidos DEPOIS dele); sem configuração explícita, a releitura usa a
+     * mesma cadeia de resolução padrão do SDK (env vars/system properties).
+     */
+    public static DynamoDbClientBuilder instrumentWithReadBack(DynamoDbClientBuilder builder, TraceVantaConfig cfg) {
+        return (DynamoDbClientBuilder) java.lang.reflect.Proxy.newProxyInstance(
+                DynamoDbClientBuilder.class.getClassLoader(),
+                new Class<?>[] { DynamoDbClientBuilder.class },
+                new ReadBackBuilder(builder, cfg));
+    }
+
     /** SNS: spans OTel (a correlação SNS→SQS via AWSTraceHeader é do próprio OTel). */
     public static SnsClientBuilder instrument(SnsClientBuilder builder) {
         return builder.overrideConfiguration(o -> o.addExecutionInterceptor(otelAwsInterceptor()));
@@ -50,6 +70,57 @@ public final class TraceVantaAws {
      */
     public static ExecutionInterceptor otelAwsInterceptor() {
         return new LazyAwsSdkTelemetryInterceptor();
+    }
+
+    private static final class ReadBackBuilder implements java.lang.reflect.InvocationHandler {
+
+        private final DynamoDbClientBuilder delegate;
+        private final TraceVantaConfig cfg;
+        private java.net.URI endpoint;
+        private software.amazon.awssdk.regions.Region region;
+        private software.amazon.awssdk.identity.spi.IdentityProvider<software.amazon.awssdk.identity.spi.AwsCredentialsIdentity> credentials;
+
+        ReadBackBuilder(DynamoDbClientBuilder delegate, TraceVantaConfig cfg) {
+            this.delegate = delegate;
+            this.cfg = cfg;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
+            switch (method.getName()) {
+                case "endpointOverride" -> endpoint = (java.net.URI) args[0];
+                case "region" -> region = (software.amazon.awssdk.regions.Region) args[0];
+                case "credentialsProvider" ->
+                        credentials = (software.amazon.awssdk.identity.spi.IdentityProvider<software.amazon.awssdk.identity.spi.AwsCredentialsIdentity>) args[0];
+                case "build" -> {
+                    // cliente CRU de releitura: mesma config, SEM interceptores (sem span aninhado)
+                    software.amazon.awssdk.services.dynamodb.DynamoDbClient raw = rawClient();
+                    delegate.overrideConfiguration(o -> o
+                            .addExecutionInterceptor(otelAwsInterceptor())
+                            .addExecutionInterceptor(new DynamoDbDeltaInterceptor(cfg,
+                                    (table, key) -> raw.getItem(r -> r.tableName(table).key(key)).item())));
+                    return method.invoke(delegate, args);
+                }
+                default -> { /* apenas delega */ }
+            }
+            Object result = method.invoke(delegate, args);
+            return result == delegate ? proxy : result;
+        }
+
+        private software.amazon.awssdk.services.dynamodb.DynamoDbClient rawClient() {
+            DynamoDbClientBuilder builder = software.amazon.awssdk.services.dynamodb.DynamoDbClient.builder();
+            if (endpoint != null) {
+                builder.endpointOverride(endpoint);
+            }
+            if (region != null) {
+                builder.region(region);
+            }
+            if (credentials != null) {
+                builder.credentialsProvider(credentials);
+            }
+            return builder.build();
+        }
     }
 
     private static final class LazyAwsSdkTelemetryInterceptor implements ExecutionInterceptor {

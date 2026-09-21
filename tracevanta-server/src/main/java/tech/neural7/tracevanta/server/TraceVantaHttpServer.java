@@ -106,7 +106,11 @@ public final class TraceVantaHttpServer implements AutoCloseable {
             methodNotAllowed(exchange);
             return;
         }
-        writeJson(exchange, 200, JsonCodec.MAPPER.valueToTree(meta.get()));
+        // port REAL (importante quando tracevanta.port=0): descoberta programática
+        var metaNode = (com.fasterxml.jackson.databind.node.ObjectNode)
+                JsonCodec.MAPPER.valueToTree(meta.get());
+        metaNode.put("port", server.getAddress().getPort());
+        writeJson(exchange, 200, metaNode);
     }
 
     private void handleEndpoints(HttpExchange exchange) throws IOException {

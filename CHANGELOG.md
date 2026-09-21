@@ -5,6 +5,13 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### Fechamento de desvios da SPEC (uso corporativo)
+
+- **`UpdateItem` before+after — DESVIO FECHADO** (`TraceVantaAws.instrumentWithReadBack`, opcional): a API do DynamoDB devolve UM conjunto por chamada; o novo modo faz `ALL_OLD` (before) + releitura pós-update **dentro do span** via cliente cru (sem span aninhado, correlação correta) → delta EXACT com before E after e deltas de campo. Validado no LocalStack real (J3: `before.pk` + `after.status=BILLED` + delta `status`). O padrão `instrument` permanece como antes (after EXACT, before declarado).
+- **SSE `execution.completed` — DESVIO FECHADO** (§5.2): payload agora carrega campos FLAT `status`/`duration` (ISO-8601 `PT0.042S`)/`metrics` + o payload completo aninhado em `execution` (extensão compatível — a UI atual continua funcionando sem mudança).
+- **`port=0` — descoberta programática**: `GET /api/meta` agora inclui a porta REAL (`"port": N`), essencial em ambientes corporativos com porta efêmera (CI, múltiplas instâncias).
+- Tabela de desvios do README reescrita com status claro: FECHADO × rota de fechamento × adiado (springdoc, catálogo Lambda, before-image, ScopedValue — cada um com justificativa).
+
 ### Monitoramento de idempotência (E2E)
 
 - **Cenário E2E de idempotência** (`examples/lambda-sqs`): `IdempotentProcessor` com guarda de idempotência (BUSINESS span `IdempotencyGuard` + escrita condicional `attribute_not_exists`) — 1ª chamada cria (delta `CREATE/EXACT`), 2ª chamada com a MESMA chave é recusada **sem efeito colateral** (3 chamadas → 2 itens no DynamoDB), e o canvas conta a história: guarda OK + nó DynamoDB **VERMELHO** com `ConditionalCheckFailedException` e **sem delta** (a prova visual de que nada foi escrito).

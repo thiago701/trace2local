@@ -46,6 +46,8 @@ class TraceVantaHttpServerTest {
                 HttpResponse<String> meta = httpGet(base + "/tracevanta/api/meta");
                 assertThat(meta.statusCode()).isEqualTo(200);
                 assertThat(meta.body()).contains("order-service").contains("embedded");
+                // descoberta programática da porta REAL (importante com tracevanta.port=0)
+                assertThat(meta.body()).contains("\"port\":" + server.port());
 
                 // endpoints
                 HttpResponse<String> endpoints = httpGet(base + "/tracevanta/api/endpoints");

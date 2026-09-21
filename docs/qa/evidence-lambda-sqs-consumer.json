@@ -1,19 +1,19 @@
 {
   "executionId" : "req-lambda-it-3",
-  "traceId" : "8724f58e5f6f91c9acf66b80567d8425",
+  "traceId" : "d9a534a384503136629f0af725b76baa",
   "status" : "COMPLETED",
   "trigger" : "LAMBDA_EVENT",
-  "startedAt" : "2026-09-21T01:48:12.865308Z",
-  "duration" : 398,
+  "startedAt" : "2026-09-21T13:10:36.773374600Z",
+  "duration" : 377,
   "roots" : [ {
-    "nodeId" : "de5cf3d4cc49777a",
+    "nodeId" : "2c3a0e894e59a036",
     "parentId" : null,
     "kind" : "LAMBDA",
     "label" : "order-processor",
     "status" : "OK",
-    "startedAt" : "2026-09-21T01:48:12.822827100Z",
-    "selfTime" : 4,
-    "totalTime" : 62,
+    "startedAt" : "2026-09-21T13:10:36.738737200Z",
+    "selfTime" : 2,
+    "totalTime" : 49,
     "attributes" : {
       "faas.invocation_id" : "req-lambda-it-3",
       "faas.name" : "order-processor",
@@ -24,27 +24,27 @@
     "mutation" : null,
     "error" : null,
     "children" : [ {
-      "nodeId" : "b40b315c53ab4be3",
-      "parentId" : "de5cf3d4cc49777a",
+      "nodeId" : "c4fef5e261bd3caf",
+      "parentId" : "2c3a0e894e59a036",
       "kind" : "DYNAMODB",
       "label" : "DynamoDB: orders",
       "status" : "OK",
-      "startedAt" : "2026-09-21T01:48:12.825821600Z",
-      "selfTime" : 39,
-      "totalTime" : 39,
+      "startedAt" : "2026-09-21T13:10:36.739971800Z",
+      "selfTime" : 33,
+      "totalTime" : 33,
       "attributes" : {
+        "rpc.system" : "aws-api",
         "http.request.method" : "POST",
         "aws.dynamodb.table_names" : "orders",
         "rpc.method" : "PutItem",
         "server.address" : "127.0.0.1",
-        "url.full" : "http://127.0.0.1:55975/",
-        "aws.request_id" : "b812fe74-9e77-40fc-807d-f5b2285fa328",
+        "url.full" : "http://127.0.0.1:56511/",
+        "aws.request_id" : "96d0c098-4ae9-4c2d-b245-e86c9903e27d",
         "rpc.service" : "DynamoDb",
         "db.system" : "dynamodb",
         "db.operation" : "PutItem",
-        "server.port" : "55975",
-        "http.response.status_code" : "200",
-        "rpc.system" : "aws-api"
+        "server.port" : "56511",
+        "http.response.status_code" : "200"
       },
       "payload" : null,
       "mutation" : {
@@ -75,17 +75,17 @@
       "error" : null,
       "children" : [ ]
     }, {
-      "nodeId" : "c9fecb8f926fd56e",
-      "parentId" : "de5cf3d4cc49777a",
+      "nodeId" : "85b153a1f25512f3",
+      "parentId" : "2c3a0e894e59a036",
       "kind" : "SQS",
       "label" : "SQS: orders-queue",
       "status" : "OK",
-      "startedAt" : "2026-09-21T01:48:12.866004500Z",
-      "selfTime" : 19,
-      "totalTime" : 19,
+      "startedAt" : "2026-09-21T13:10:36.774067400Z",
+      "selfTime" : 13,
+      "totalTime" : 13,
       "attributes" : {
         "messaging.system" : "aws_sqs",
-        "aws.sqs.queue.url" : "http://127.0.0.1:55975/000000000000/orders-queue",
+        "aws.sqs.queue.url" : "http://127.0.0.1:56511/000000000000/orders-queue",
         "messaging.destination.name" : "orders-queue",
         "messaging.operation.type" : "publish"
       },
@@ -93,14 +93,14 @@
       "mutation" : null,
       "error" : null,
       "children" : [ {
-        "nodeId" : "1da14c0e6790b4c5",
-        "parentId" : "c9fecb8f926fd56e",
+        "nodeId" : "2864d8b7ae4d610a",
+        "parentId" : "85b153a1f25512f3",
         "kind" : "LAMBDA",
         "label" : "order-billing",
         "status" : "OK",
-        "startedAt" : "2026-09-21T01:48:12.941103400Z",
-        "selfTime" : 33,
-        "totalTime" : 280,
+        "startedAt" : "2026-09-21T13:10:36.877507500Z",
+        "selfTime" : 16,
+        "totalTime" : 238,
         "attributes" : {
           "faas.invocation_id" : "req-lambda-it-4",
           "faas.name" : "order-billing",
@@ -111,34 +111,38 @@
         "mutation" : null,
         "error" : null,
         "children" : [ {
-          "nodeId" : "a0da3b56087e3e8d",
-          "parentId" : "1da14c0e6790b4c5",
+          "nodeId" : "39f406e60e2330db",
+          "parentId" : "2864d8b7ae4d610a",
           "kind" : "DYNAMODB",
           "label" : "DynamoDB: orders",
           "status" : "OK",
-          "startedAt" : "2026-09-21T01:48:12.973764900Z",
-          "selfTime" : 246,
-          "totalTime" : 246,
+          "startedAt" : "2026-09-21T13:10:36.893113300Z",
+          "selfTime" : 221,
+          "totalTime" : 221,
           "attributes" : {
+            "rpc.system" : "aws-api",
             "http.request.method" : "POST",
             "aws.dynamodb.table_names" : "orders",
             "rpc.method" : "UpdateItem",
             "server.address" : "127.0.0.1",
-            "url.full" : "http://127.0.0.1:55975/",
-            "aws.request_id" : "6024c70d-99ec-4fb3-a773-69ac8ac41d67",
+            "url.full" : "http://127.0.0.1:56511/",
+            "aws.request_id" : "04b9d4b6-de12-4755-8913-3fa1ed792f83",
             "rpc.service" : "DynamoDb",
             "db.system" : "dynamodb",
             "db.operation" : "UpdateItem",
-            "server.port" : "55975",
-            "http.response.status_code" : "200",
-            "rpc.system" : "aws-api"
+            "server.port" : "56511",
+            "http.response.status_code" : "200"
           },
           "payload" : null,
           "mutation" : {
             "kind" : "UPDATE",
             "target" : "orders",
             "key" : "ORDER-L3",
-            "before" : null,
+            "before" : {
+              "customerId" : "C-J3",
+              "total" : 77.7,
+              "pk" : "ORDER-L3"
+            },
             "after" : {
               "customerId" : "C-J3",
               "total" : 77.7,
@@ -146,18 +150,6 @@
               "status" : "BILLED"
             },
             "deltas" : [ {
-              "path" : "customerId",
-              "before" : null,
-              "after" : "C-J3"
-            }, {
-              "path" : "total",
-              "before" : null,
-              "after" : 77.7
-            }, {
-              "path" : "pk",
-              "before" : null,
-              "after" : "ORDER-L3"
-            }, {
               "path" : "status",
               "before" : null,
               "after" : "BILLED"

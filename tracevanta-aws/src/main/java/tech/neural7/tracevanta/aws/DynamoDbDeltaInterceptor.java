@@ -59,14 +59,34 @@ public final class DynamoDbDeltaInterceptor implements ExecutionInterceptor {
     static final software.amazon.awssdk.core.interceptor.ExecutionAttribute<Boolean> TV_ELEVATED =
             new software.amazon.awssdk.core.interceptor.ExecutionAttribute<>("tracevanta.aws.dynamodb.elevated");
 
+    /**
+     * Leitura de retorno pós-update (opcional, dentro do span do update — a
+     * correlação do delta permanece correta): a API do DynamoDB devolve UM
+     * conjunto de valores por chamada; com o hook, o {@code before} vem do
+     * {@code ALL_OLD} da resposta e o {@code after} exato vem da releitura —
+     * fechando o desvio "UpdateItem before+after" (§4.10) via
+     * {@link TraceVantaAws#instrumentWithReadBack}.
+     */
+    @FunctionalInterface
+    public interface UpdateReadBack {
+        java.util.Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> read(
+                String tableName, java.util.Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> key);
+    }
+
     private final boolean captureBefore;
     private final RedactionMode redactionMode;
     private final int payloadMaxBytes;
+    private final UpdateReadBack readBack;
 
     public DynamoDbDeltaInterceptor(TraceVantaConfig cfg) {
+        this(cfg, null);
+    }
+
+    public DynamoDbDeltaInterceptor(TraceVantaConfig cfg, UpdateReadBack readBack) {
         this.captureBefore = cfg.dynamoDbCaptureBefore();
         this.redactionMode = cfg.redactionMode();
         this.payloadMaxBytes = cfg.payloadMaxBytes();
+        this.readBack = readBack;
     }
 
     @Override
@@ -83,9 +103,11 @@ public final class DynamoDbDeltaInterceptor implements ExecutionInterceptor {
         if (request instanceof UpdateItemRequest update
                 && (update.returnValues() == null || update.returnValues() == ReturnValue.NONE)) {
             executionAttributes.putAttribute(TV_ELEVATED, true);
-            // a API do DynamoDB devolve UM conjunto de valores por chamada;
-            // ALL_NEW dá o `after` exato — o `before` fica null, declarado na UI (I3)
-            return update.toBuilder().returnValues(ReturnValue.ALL_NEW).build();
+            // com read-back: ALL_OLD dá o before e a releitura dá o after EXATO;
+            // sem read-back: ALL_NEW dá o after — o before fica null, declarado na UI (I3)
+            return update.toBuilder()
+                    .returnValues(readBack != null ? ReturnValue.ALL_OLD : ReturnValue.ALL_NEW)
+                    .build();
         }
         if (request instanceof DeleteItemRequest delete
                 && (delete.returnValues() == null || delete.returnValues() == ReturnValue.NONE)) {
@@ -140,9 +162,14 @@ public final class DynamoDbDeltaInterceptor implements ExecutionInterceptor {
             } else if (request instanceof UpdateItemRequest update && response instanceof UpdateItemResponse updateResp) {
                 ReturnValue requested = update.returnValues();
                 if (requested == ReturnValue.ALL_OLD) {
-                    // o dev pediu o before: é o que a resposta tem
+                    // o dev pediu o before (ou foi elevado por nós com read-back):
+                    // o after vem da releitura quando o hook existe — EXACT dos dois lados
+                    var before = captureBefore ? updateResp.attributes() : null;
+                    var after = readBack != null ? readBackSafe(update.tableName(), update.key()) : null;
                     mutation = mutation(MutationKind.UPDATE, update.tableName(), AttributeValues.keyOf(update.key()),
-                            AttributeValues.toJson(updateResp.attributes()), null, MutationFidelity.EXACT);
+                            AttributeValues.toJson(before),
+                            after != null ? AttributeValues.toJson(after) : null,
+                            MutationFidelity.EXACT);
                 } else if (requested == ReturnValue.ALL_NEW) {
                     // after exato (elevado por nós ou pedido pelo dev); before declarado ausente (I3)
                     mutation = mutation(MutationKind.UPDATE, update.tableName(), AttributeValues.keyOf(update.key()),
@@ -180,6 +207,16 @@ public final class DynamoDbDeltaInterceptor implements ExecutionInterceptor {
                     Instant.now()));
         } catch (Throwable ignored) {
             // a captura jamais pode afetar a operação do dev (SPEC §7.3)
+        }
+    }
+
+    private java.util.Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> readBackSafe(
+            String tableName, java.util.Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> key) {
+        try {
+            return readBack.read(tableName, key);
+        } catch (Throwable ignored) {
+            // releitura best-effort: o before continua exato; o after fica declarado ausente
+            return null;
         }
     }
 

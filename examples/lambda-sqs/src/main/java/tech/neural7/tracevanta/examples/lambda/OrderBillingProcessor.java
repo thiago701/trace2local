@@ -35,11 +35,13 @@ public final class OrderBillingProcessor extends TraceVantaLambdaHandler<Map<Str
     public OrderBillingProcessor(TraceVantaConfig cfg) {
         super(cfg);
         String endpoint = OrderProcessor.localstackEndpoint();
-        this.dynamoDb = TraceVantaAws.instrument(
-                        DynamoDbClient.builder()
-                                .region(Region.US_EAST_1)
-                                .endpointOverride(URI.create(endpoint)),
-                        cfg)
+        // instrumentWithReadBack POR PRIMEIRO na cadeia: o wrapper grava
+        // endpointOverride/region definidos depois — o UpdateItem do billing
+        // ganha before (ALL_OLD) + after (releitura) EXACT (§4.10)
+        this.dynamoDb = TraceVantaAws.instrumentWithReadBack(
+                        DynamoDbClient.builder(), cfg)
+                .region(Region.US_EAST_1)
+                .endpointOverride(URI.create(endpoint))
                 .build();
         this.tableName = System.getenv().getOrDefault("ORDERS_TABLE", "orders");
     }

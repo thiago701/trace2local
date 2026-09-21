@@ -84,8 +84,19 @@ public final class SseHub implements java.util.function.Consumer<LiveEvent>, Aut
                     JsonCodec.MAPPER.valueToTree(u), u.executionId());
             case LiveEvent.NodeMutation m -> new Frame("node.mutation",
                     JsonCodec.MAPPER.valueToTree(m), m.executionId());
-            case LiveEvent.ExecutionCompleted c -> new Frame("execution.completed",
-                    JsonCodec.MAPPER.valueToTree(c), c.executionId());
+            case LiveEvent.ExecutionCompleted c -> {
+                // §5.2: campos FLAT + duration ISO-8601 (PT0.042S); o payload
+                // completo segue aninhado em `execution` (extensão compatível)
+                var node = JsonCodec.MAPPER.createObjectNode();
+                node.put("executionId", c.executionId());
+                node.put("status", c.execution().status().name());
+                node.put("duration", c.execution().duration() != null
+                        ? c.execution().duration().toString()
+                        : java.time.Duration.ZERO.toString());
+                node.set("metrics", JsonCodec.MAPPER.valueToTree(c.execution().metrics()));
+                node.set("execution", JsonCodec.MAPPER.valueToTree(c.execution()));
+                yield new Frame("execution.completed", node, c.executionId());
+            }
             case LiveEvent.SystemWarning w -> new Frame("system.warning",
                     JsonCodec.MAPPER.valueToTree(w.warning()), "*");
         };
