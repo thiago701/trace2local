@@ -140,6 +140,13 @@ html, body {
   border-radius: 999px;
   padding: 1px 8px;
 }
+#btn-clear { margin-left: 6px; }
+#btn-clear.danger {
+  border-color: var(--err);
+  color: var(--err);
+  background: #2a1414;
+  font-weight: 700;
+}
 .list { display: flex; flex-direction: column; gap: 6px; }
 
 .sidebar-note {

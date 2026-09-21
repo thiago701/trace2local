@@ -1208,6 +1208,48 @@ function wireCanvas() {
     renderRecent();
   });
 
+  // limpar histórico (destrutivo: dois cliques, segundo dentro de 3 s)
+  let clearArmed = false;
+  let clearTimer = null;
+  const resetClearBtn = () => {
+    clearArmed = false;
+    clearTimeout(clearTimer);
+    $("btn-clear").classList.remove("danger");
+    $("btn-clear").textContent = "LIMPAR";
+  };
+  $("btn-clear").addEventListener("click", async () => {
+    if (!clearArmed) {
+      clearArmed = true;
+      $("btn-clear").classList.add("danger");
+      $("btn-clear").textContent = "CONFIRMAR?";
+      clearTimer = setTimeout(resetClearBtn, 3000);
+      return;
+    }
+    resetClearBtn();
+    try {
+      await api("/executions", { method: "DELETE" });
+      state.executions.clear();
+      state.selectedExecutionId = null;
+      state.selectedNodeId = null;
+      state.story = null;
+      state.pendingDeepLink = null;
+      $("btn-export").disabled = true;
+      try {
+        history.replaceState(null, "", location.pathname);
+      } catch (e) { /* ignore */ }
+      renderRecent();
+      renderWarnings();
+      renderCanvas();
+      renderSummary(null);
+      if (state.activeTab === "dashboard") renderDashboard();
+      if (state.activeTab === "compare") renderCompare();
+      if (state.activeTab === "story") renderStory();
+      toast("Histórico de execuções limpo", "ok");
+    } catch (e) {
+      toast("Falha ao limpar: " + e.message, "error");
+    }
+  });
+
   // abas de visão (canvas / dashboard / comparar / story)
   $("tab-canvas").addEventListener("click", () => switchTab("canvas"));
   $("tab-dashboard").addEventListener("click", () => switchTab("dashboard"));
