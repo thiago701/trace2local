@@ -74,6 +74,62 @@ class OtlpTraceReceiverTest {
     }
 
     @Test
+    void parsesExceptionEventsIntoErrorInfo() throws Exception {
+        TraceVantaConfig cfg = TraceVantaConfig.builder().quiescenceMs(2_000).build();
+        try (TraceVantaPipeline pipeline = TraceVantaPipeline.start(cfg)) {
+            HttpServer http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 4);
+            http.createContext("/v1/traces", new OtlpTraceReceiver(pipeline, cfg));
+            http.setExecutor(java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor());
+            http.start();
+            try {
+                String traceId = "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd";
+                Span failing = Span.newBuilder()
+                        .setTraceId(ByteString.copyFrom(hex(traceId)))
+                        .setSpanId(ByteString.copyFrom(hex("dddddddddddddddd")))
+                        .setName("DynamoDb.PutItem")
+                        .setKind(Span.SpanKind.SPAN_KIND_CLIENT)
+                        .setStartTimeUnixNano(0)
+                        .setEndTimeUnixNano(10_000_000L)
+                        .setStatus(io.opentelemetry.proto.trace.v1.Status.newBuilder()
+                                .setCode(io.opentelemetry.proto.trace.v1.Status.StatusCode.STATUS_CODE_ERROR))
+                        .addAttributes(kv(tech.neural7.tracevanta.otel.OtelAttributeNames.RPC_SYSTEM, "aws-api"))
+                        .addAttributes(kv(tech.neural7.tracevanta.otel.OtelAttributeNames.RPC_SERVICE, "DynamoDb"))
+                        .addEvents(Span.Event.newBuilder()
+                                .setName("exception")
+                                .setTimeUnixNano(5_000_000L)
+                                .addAttributes(kv("exception.type",
+                                        "software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException"))
+                                .addAttributes(kv("exception.message", "The conditional request failed"))
+                                .build())
+                        .build();
+
+                ExportTraceServiceRequest request = ExportTraceServiceRequest.newBuilder()
+                        .addResourceSpans(ResourceSpans.newBuilder()
+                                .addScopeSpans(ScopeSpans.newBuilder().addSpans(failing)))
+                        .build();
+                HttpResponse<String> response = HttpClient.newHttpClient().send(HttpRequest.newBuilder()
+                                .uri(URI.create("http://127.0.0.1:" + http.getAddress().getPort() + "/v1/traces"))
+                                .header("Content-Type", "application/x-protobuf")
+                                .POST(HttpRequest.BodyPublishers.ofByteArray(request.toByteArray()))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString());
+                assertThat(response.statusCode()).isEqualTo(200);
+
+                Execution execution = awaitExecution(pipeline, traceId, Duration.ofSeconds(5));
+                // o erro vem do EVENTO exception — sem isso a árvore ficaria vermelha muda
+                assertThat(execution.roots().get(0).status())
+                        .isEqualTo(tech.neural7.tracevanta.model.NodeStatus.ERROR);
+                assertThat(execution.roots().get(0).error().type())
+                        .isEqualTo("software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException");
+                assertThat(execution.roots().get(0).error().message())
+                        .contains("conditional request failed");
+            } finally {
+                http.stop(0);
+            }
+        }
+    }
+
+    @Test
     void rejectsMalformedProtobuf() throws Exception {
         try (TraceVantaPipeline pipeline = TraceVantaPipeline.start(TraceVantaConfig.defaults())) {
             HttpServer http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 4);

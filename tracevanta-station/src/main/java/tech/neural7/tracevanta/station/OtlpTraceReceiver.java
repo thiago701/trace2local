@@ -94,9 +94,27 @@ public final class OtlpTraceReceiver implements HttpHandler {
         boolean error = span.getStatus().getCode().name().equals("STATUS_CODE_ERROR");
         tech.neural7.tracevanta.model.ErrorInfo errorInfo = null;
         if (error) {
+            // a mensagem de status pode ser vazia (instrumentações só gravam o
+            // evento `exception`); o ErrorInfo completo vem dos eventos do span —
+            // sem isso, a árvore ficaria vermelha SEM dizer por quê
+            String type = "OTLP:" + span.getStatus().getCode();
+            String message = span.getStatus().getMessage();
+            String stack = null;
+            for (var event : span.getEventsList()) {
+                if (!"exception".equals(event.getName())) {
+                    continue;
+                }
+                for (var kv : event.getAttributesList()) {
+                    switch (kv.getKey()) {
+                        case "exception.type" -> type = stringValue(kv.getValue());
+                        case "exception.message" -> message = stringValue(kv.getValue());
+                        case "exception.stacktrace" -> stack = stringValue(kv.getValue());
+                        default -> { /* demais atributos do evento são ignorados */ }
+                    }
+                }
+            }
             errorInfo = new tech.neural7.tracevanta.model.ErrorInfo(
-                    "OTLP:" + span.getStatus().getCode(),
-                    span.getStatus().getMessage(), null);
+                    type, message == null || message.isBlank() ? String.valueOf(type) : message, stack);
         }
         // links do mesmo trace: o assembler reparenta o consumidor sob o produtor (§4.11)
         List<String> linkedSpanIds = span.getLinksList().stream()

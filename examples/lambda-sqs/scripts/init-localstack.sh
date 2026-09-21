@@ -15,6 +15,13 @@ aws --endpoint-url=http://localstack:4566 dynamodb create-table \
   --key-schema AttributeName=pk,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST || true
 
+echo "[init] tabela DynamoDB (idempotency — cenário de monitoramento de idempotência)..."
+aws --endpoint-url=http://localstack:4566 dynamodb create-table \
+  --table-name idempotency \
+  --attribute-definitions AttributeName=pk,AttributeType=S \
+  --key-schema AttributeName=pk,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST || true
+
 echo "[init] fila SQS (orders-queue)..."
 aws --endpoint-url=http://localstack:4566 sqs create-queue \
   --queue-name orders-queue || true

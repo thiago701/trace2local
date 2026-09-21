@@ -23,6 +23,7 @@ invoke ──▶ Lambda order-processor ──▶ DynamoDB PutItem (delta EXACT)
 | Nó SQS (produtor) | span PRODUCER manual com `AWSTraceHeader` (a instrumentação automática do AWS SDK **não** injeta o header no SendMessage direto — descoberto no loop de validação) |
 | **J2 — jornada de erro** | input `fail=true` lança após o PutItem → execução **FAILED** com a raiz vermelha e o ramo DynamoDB OK (sucesso parcial visível) |
 | **J3 — consumidor continua a MESMA árvore** | `OrderBillingProcessor` devolve o parent remoto (`remoteParentOf`) a partir do `AWSTraceHeader` → `LAMBDA → SQS → LAMBDA → DYNAMODB (UPDATE)` em UMA árvore (§4.11) |
+| **Monitoramento de IDEMPOTÊNCIA** | `IdempotentProcessor`: guarda condicional (`attribute_not_exists`) + nó BUSINESS — duplicado recusado aparece como DynamoDB **ERROR sem delta**, com o banco provando o não-efeito (3 chamadas → 2 itens). IT `IdempotencyJourneyIT` + demo `IdempotencyDemoRun` + telas 13/14 |
 | Flush síncrono | ADR-002/§4.2: o runtime força o flush no fim da invocação (teto 200 ms, configurável) |
 | Lambda REAL no LocalStack | fat jar + runtime `java21` + `aws lambda create-function`/`invoke` |
 

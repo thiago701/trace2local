@@ -1,0 +1,102 @@
+{
+  "executionId" : "req-idem-1",
+  "traceId" : "2bd30cbb08ec35630d785494947cf15b",
+  "status" : "COMPLETED",
+  "trigger" : "LAMBDA_EVENT",
+  "startedAt" : "2026-09-21T01:47:40.272184100Z",
+  "duration" : 925,
+  "roots" : [ {
+    "nodeId" : "df23b8ac3b9278ce",
+    "parentId" : null,
+    "kind" : "LAMBDA",
+    "label" : "idempotent-processor",
+    "status" : "OK",
+    "startedAt" : "2026-09-21T01:47:39.354221200Z",
+    "selfTime" : 10,
+    "totalTime" : 925,
+    "attributes" : {
+      "faas.invocation_id" : "req-idem-1",
+      "faas.name" : "idempotent-processor",
+      "tv.execution.id" : "req-idem-1",
+      "tv.trigger" : "lambda_event"
+    },
+    "payload" : null,
+    "mutation" : null,
+    "error" : null,
+    "children" : [ {
+      "nodeId" : "e23145a511ce79d9",
+      "parentId" : "df23b8ac3b9278ce",
+      "kind" : "BUSINESS",
+      "label" : "IdempotencyGuard",
+      "status" : "OK",
+      "startedAt" : "2026-09-21T01:47:39.357531300Z",
+      "selfTime" : 392,
+      "totalTime" : 914,
+      "attributes" : {
+        "tv.business" : "true"
+      },
+      "payload" : null,
+      "mutation" : null,
+      "error" : null,
+      "children" : [ {
+        "nodeId" : "40d517e0dea6c5d9",
+        "parentId" : "e23145a511ce79d9",
+        "kind" : "DYNAMODB",
+        "label" : "DynamoDB: idempotency",
+        "status" : "OK",
+        "startedAt" : "2026-09-21T01:47:39.613286500Z",
+        "selfTime" : 521,
+        "totalTime" : 521,
+        "attributes" : {
+          "http.request.method" : "POST",
+          "aws.dynamodb.table_names" : "idempotency",
+          "rpc.method" : "PutItem",
+          "server.address" : "127.0.0.1",
+          "url.full" : "http://127.0.0.1:55960/",
+          "aws.request_id" : "5cbc8dc8-4fa4-4545-b904-7a90ffbbceaa",
+          "rpc.service" : "DynamoDb",
+          "db.system" : "dynamodb",
+          "db.operation" : "PutItem",
+          "server.port" : "55960",
+          "http.response.status_code" : "200",
+          "rpc.system" : "aws-api"
+        },
+        "payload" : null,
+        "mutation" : {
+          "kind" : "CREATE",
+          "target" : "idempotency",
+          "key" : "IDEM-1",
+          "before" : { },
+          "after" : {
+            "createdAt" : "2026-09-21T01:47:39.381705600Z",
+            "pk" : "IDEM-1",
+            "payload" : "{\"amount\":100}"
+          },
+          "deltas" : [ {
+            "path" : "createdAt",
+            "before" : null,
+            "after" : "2026-09-21T01:47:39.381705600Z"
+          }, {
+            "path" : "pk",
+            "before" : null,
+            "after" : "IDEM-1"
+          }, {
+            "path" : "payload",
+            "before" : null,
+            "after" : "{\"amount\":100}"
+          } ],
+          "fidelity" : "EXACT"
+        },
+        "error" : null,
+        "children" : [ ]
+      } ]
+    } ]
+  } ],
+  "metrics" : {
+    "nodeCount" : 3,
+    "maxDepth" : 3,
+    "lostSpans" : 0,
+    "droppedEvents" : 0
+  },
+  "warnings" : [ ]
+}

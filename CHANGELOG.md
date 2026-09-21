@@ -5,6 +5,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### Monitoramento de idempotência (E2E)
+
+- **Cenário E2E de idempotência** (`examples/lambda-sqs`): `IdempotentProcessor` com guarda de idempotência (BUSINESS span `IdempotencyGuard` + escrita condicional `attribute_not_exists`) — 1ª chamada cria (delta `CREATE/EXACT`), 2ª chamada com a MESMA chave é recusada **sem efeito colateral** (3 chamadas → 2 itens no DynamoDB), e o canvas conta a história: guarda OK + nó DynamoDB **VERMELHO** com `ConditionalCheckFailedException` e **sem delta** (a prova visual de que nada foi escrito).
+- **Ingest OTLP lê eventos `exception`**: `OtlpTraceReceiver` extrai `exception.type`/`exception.message`/`exception.stacktrace` dos eventos do span — antes, spans de terceiros (AWS SDK etc.) ficavam vermelhos SEM mensagem; agora o `ErrorInfo` chega completo ao inspector. Teste unitário + `IdempotencyJourneyIT` (4/4 ITs verdes no módulo).
+- Evidências: `docs/qa/EVIDENCIA-IDEMPOTENCIA.md`, `evidence-idempotency-*.json`, telas 13/14.
+
 ### Estrutura profissional de repositório (OSS-ready)
 
 - **Auditoria de domínio**: confirmado que nenhum módulo da lib carrega conceito de negócio (nada de "pedido"/"cliente" fora dos exemplos) — o núcleo é domínio-agnóstico por construção; documentado em `docs/ARQUITETURA.md`.

@@ -1,0 +1,90 @@
+﻿{
+    "executionId":  "req-idem-demo-2",
+    "traceId":  "59d305bc15e82212f0eed04c9ac93a43",
+    "status":  "FAILED",
+    "trigger":  "LAMBDA_EVENT",
+    "startedAt":  "2026-09-21T01:50:12.353937500Z",
+    "duration":  1139,
+    "roots":  [
+                  {
+                      "nodeId":  "1e98e88d88fd1b66",
+                      "parentId":  null,
+                      "kind":  "LAMBDA",
+                      "label":  "idempotent-processor",
+                      "status":  "OK",
+                      "startedAt":  "2026-09-21T01:50:11.215133400Z",
+                      "selfTime":  0,
+                      "totalTime":  1139,
+                      "attributes":  {
+                                         "faas.invocation_id":  "req-idem-demo-2",
+                                         "tv.trigger":  "lambda_event",
+                                         "tv.execution.id":  "req-idem-demo-2",
+                                         "faas.name":  "idempotent-processor"
+                                     },
+                      "payload":  null,
+                      "mutation":  null,
+                      "error":  null,
+                      "children":  [
+                                       {
+                                           "nodeId":  "7d383af83d7705c0",
+                                           "parentId":  "1e98e88d88fd1b66",
+                                           "kind":  "BUSINESS",
+                                           "label":  "IdempotencyGuard",
+                                           "status":  "OK",
+                                           "startedAt":  "2026-09-21T01:50:11.215199500Z",
+                                           "selfTime":  5,
+                                           "totalTime":  1138,
+                                           "attributes":  {
+                                                              "tv.business":  "true"
+                                                          },
+                                           "payload":  null,
+                                           "mutation":  null,
+                                           "error":  null,
+                                           "children":  [
+                                                            {
+                                                                "nodeId":  "c6bde18643e33340",
+                                                                "parentId":  "7d383af83d7705c0",
+                                                                "kind":  "DYNAMODB",
+                                                                "label":  "DynamoDB: idempotency",
+                                                                "status":  "ERROR",
+                                                                "startedAt":  "2026-09-21T01:50:11.217011100Z",
+                                                                "selfTime":  1132,
+                                                                "totalTime":  1132,
+                                                                "attributes":  {
+                                                                                   "rpc.system":  "aws-api",
+                                                                                   "aws.dynamodb.table_names":  "idempotency",
+                                                                                   "url.full":  "http://localhost:4567/",
+                                                                                   "server.port":  "4567",
+                                                                                   "http.request.method":  "POST",
+                                                                                   "db.system":  "dynamodb",
+                                                                                   "rpc.service":  "DynamoDb",
+                                                                                   "server.address":  "localhost",
+                                                                                   "rpc.method":  "PutItem",
+                                                                                   "db.operation":  "PutItem"
+                                                                               },
+                                                                "payload":  null,
+                                                                "mutation":  null,
+                                                                "error":  {
+                                                                              "type":  "OTLP:STATUS_CODE_ERROR",
+                                                                              "message":  "",
+                                                                              "stack":  null
+                                                                          },
+                                                                "children":  [
+
+                                                                             ]
+                                                            }
+                                                        ]
+                                       }
+                                   ]
+                  }
+              ],
+    "metrics":  {
+                    "nodeCount":  3,
+                    "maxDepth":  3,
+                    "lostSpans":  0,
+                    "droppedEvents":  0
+                },
+    "warnings":  [
+
+                 ]
+}
