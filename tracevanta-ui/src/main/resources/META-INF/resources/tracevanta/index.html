@@ -48,6 +48,11 @@
 
     <main id="canvas-wrap">
       <div id="canvas-header">
+        <nav id="tabs" aria-label="Modos de visualização">
+          <button type="button" id="tab-canvas" class="tab active">CANVAS</button>
+          <button type="button" id="tab-dashboard" class="tab">DASHBOARD</button>
+          <button type="button" id="tab-compare" class="tab">COMPARAR</button>
+        </nav>
         <span id="canvas-title">EXECUTION CANVAS</span>
         <div id="exec-summary" class="hidden"></div>
         <div id="view-buttons">
@@ -74,6 +79,8 @@
         <div id="legend-pop" class="pop hidden" role="dialog" aria-label="Legenda"></div>
         <div id="shortcuts-pop" class="pop hidden" role="dialog" aria-label="Atalhos de teclado"></div>
       </div>
+      <div id="dashboard-view" class="view-panel hidden" aria-label="Dashboard"></div>
+      <div id="compare-view" class="view-panel hidden" aria-label="Comparação de execuções"></div>
     </main>
   </div>
 

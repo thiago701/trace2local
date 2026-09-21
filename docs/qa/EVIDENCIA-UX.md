@@ -1,8 +1,24 @@
-# EVIDÊNCIAS UX — GUI v2 do TraceVanta (estudo, plano e implementação)
+# EVIDÊNCIAS UX — GUI do TraceVanta (estudo, plano e implementação)
 
-> Data: 2026-09-20 · Escopo: `tracevanta-ui` (index.html, app.css, app.js)
+> Data: 2026-09-20/21 · Escopo: `tracevanta-ui` (index.html, app.css, app.js)
 > Restrições respeitadas: **ADR-005** (zero referência externa — `UiOfflineTest` verde)
 > e **CSP `default-src 'self'; style-src 'self'; script-src 'self'`** (zero estilo/script inline).
+
+## Pesquisa de ferramentas similares (v3)
+
+Referências estudadas: [.NET Aspire Dashboard](https://learn.microsoft.com/pt-br/dotnet/aspire/fundamentals/dashboard/overview)
+(o análogo mais próximo: dashboard local com recursos, métricas e traces),
+Jaeger (busca de traces, waterfall e **diff entre traces**), SigNoz/Grafana
+(vista unificada de métricas+traces+logs) e o padrão de **deep links
+compartilháveis** dessas ferramentas. Da pesquisa saíram três funcionalidades
+de alto valor que cabem na filosofia do TraceVanta (zero-config, local-first,
+client-side) — implementadas SEM mudar a operação existente:
+
+| Funcionalidade | Inspiração | O que faz |
+|---|---|---|
+| **Dashboard** (aba) | Aspire Dashboard / SigNoz | agregados do acervo: execuções, falhas (n + %), duração média, nós observados, avisos, top-5 mais lentas, falhas recentes (clicáveis) e execuções por trigger |
+| **Comparar execuções** (aba) | Jaeger diff / Aspire | A/B entre duas execuções: Δ de duração (abs + %), Δ de nº de nós, tabela de spans por rótulo (NOVO/REMOVIDO/=) e mutações presentes só em A ou só em B — regressão de performance/código visível em segundos |
+| **Deep link** `?execution=<id>` | Jaeger/SigNoz | URL compartilhável que abre direto na execução; a seleção reflete na URL (`history.replaceState`) |
 
 ## Estado "antes" (documentado no diagnóstico)
 
@@ -54,3 +70,17 @@ continuam idênticos aos da API, agora com waterfall e cards ricos).
 | [`screenshots/10-lambda-tree-failure.png`](screenshots/10-lambda-tree-failure.png) | árvore vermelha com waterfall |
 | [`screenshots/11-lambda-inspector-error.png`](screenshots/11-lambda-inspector-error.png) | inspector do erro com botão COPIAR |
 | [`screenshots/12-lambda-tree-consumer.png`](screenshots/12-lambda-tree-consumer.png) | árvore fundida de 5 nós com waterfall |
+| [`screenshots/15-dashboard.png`](screenshots/15-dashboard.png) | aba DASHBOARD: stat cards + top-5 lentas + falhas recentes |
+| [`screenshots/16-compare.png`](screenshots/16-compare.png) | aba COMPARAR: diff de spans/durações/mutações entre duas execuções |
+
+## Validação (script `capture-lambda-station.mjs` estendido)
+
+```
+consistência (3 árvores): UI=3/2/5 nós, API=idem → labels idênticos
+UX v2: waterfallBars=5 · summaryVisible=true · richCards=6 · triggerChips=6
+       statusBadges=6 · filterEmptyShown=true · legendItems=9
+       inspectorSections=3 · inspectorCollapsibleHeaders=2 · inspectorCopyButtons=2
+v3: statCards=6 · slowRows=7 · dashboardTotal=6 · compareRows=4
+    compareSummaryItems=6 · deepLinkInUrl=true · canvasVisible=true
+→ todas as checagens passaram ✓ (zero erros de console)
+```

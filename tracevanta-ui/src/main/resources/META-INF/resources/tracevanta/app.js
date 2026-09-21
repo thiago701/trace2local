@@ -14,6 +14,9 @@ const state = {
   selectedExecutionId: null,
   selectedNodeId: null,
   lastEventId: null,
+  activeTab: "canvas",
+  pendingDeepLink: null,
+  compare: { a: null, b: null },
   view: { x: 60, y: 40, scale: 1 },
   dragging: false,
   dragStart: null,
@@ -93,6 +96,12 @@ async function loadRecent() {
       }
     }
     renderRecent();
+    // deep link: ?execution=<id> abre direto na execução (compartilhável)
+    if (state.pendingDeepLink && state.executions.has(state.pendingDeepLink)) {
+      const id = state.pendingDeepLink;
+      state.pendingDeepLink = null;
+      selectExecution(id);
+    }
   } catch (e) { /* ignore */ }
 }
 
@@ -259,6 +268,10 @@ async function selectExecution(executionId) {
   state.selectedExecutionId = executionId;
   state.selectedNodeId = null;
   state.fittedFor = null; // novo contexto: re-encaixar a árvore na primeira renderização
+  // deep link compartilhável: ?execution=<id> reflete a seleção sem recarregar
+  try {
+    history.replaceState(null, "", "?execution=" + encodeURIComponent(executionId));
+  } catch (e) { /* ignore */ }
   renderRecent();
   const exec = state.executions.get(executionId);
   if (!exec || !exec.completed) {
@@ -306,6 +319,9 @@ function ingestExecution(execution, fromSnapshot) {
   }
   // a lista de execuções recentes SEMPRE reflete o acervo (independente da seleção)
   renderRecent();
+  if (state.activeTab === "dashboard") {
+    renderDashboard();
+  }
   if (fromSnapshot || state.selectedExecutionId === execution.executionId) {
     renderCanvas();
   }
@@ -342,7 +358,254 @@ function renderWarnings() {
     '<div class="warning-item" role="listitem">⚠ ' + esc(w.message) + "</div>").join("");
 }
 
-/* ------------------------------------------------------------- canvas */
+/* ------------------------------------------------------------- tabs: dashboard e comparação */
+function switchTab(tab) {
+  state.activeTab = tab;
+  $("canvas").classList.toggle("hidden", tab !== "canvas");
+  $("dashboard-view").classList.toggle("hidden", tab !== "dashboard");
+  $("compare-view").classList.toggle("hidden", tab !== "compare");
+  ["canvas", "dashboard", "compare"].forEach((t) =>
+    $("tab-" + t).classList.toggle("active", t === tab));
+  if (tab === "dashboard") renderDashboard();
+  if (tab === "compare") renderCompare();
+}
+
+function executionList() {
+  return [...state.executions.values()]
+    .map((e) => e.summary)
+    .filter(Boolean)
+    .sort((a, b) => (b.startedAt || "").localeCompare(a.startedAt || ""));
+}
+
+function renderDashboard() {
+  const container = $("dashboard-view");
+  const all = executionList();
+  if (!all.length) {
+    container.innerHTML = '<h2>DASHBOARD</h2><div class="empty-note dash">' +
+      "Nenhuma execução ainda — dispare a aplicação e os agregados aparecem aqui.</div>";
+    return;
+  }
+  const finished = all.filter((s) => s.status !== "RUNNING");
+  const failed = finished.filter((s) => s.status === "FAILED");
+  const partial = finished.filter((s) => s.status === "PARTIAL" || s.status === "ORPHANED");
+  const total = finished.length || 1;
+  const avgMs = finished.reduce((acc, s) => acc + (typeof s.duration === "number" ? s.duration : 0), 0) / total;
+  const nodes = finished.reduce((acc, s) => acc + (s.nodeCount || 0), 0);
+  const warnings = state.executions.size > 0
+    ? [...state.executions.values()].reduce((acc, e) => acc + (e.warnings || []).length, 0)
+    : 0;
+  const slowest = [...finished].sort((a, b) => (b.duration || 0) - (a.duration || 0)).slice(0, 5);
+  const byTrigger = {};
+  for (const s of finished) {
+    const t = s.trigger || "EXTERNAL";
+    byTrigger[t] = (byTrigger[t] || 0) + 1;
+  }
+
+  container.innerHTML =
+    '<h2>DASHBOARD <span class="pill">visão geral do acervo</span></h2>' +
+    '<div class="stat-grid">' +
+      statCard("EXECUÇÕES", String(finished.length), "sub", "concluídas no acervo", "ok") +
+      statCard("FALHAS", String(failed.length), "sub", pct(failed.length, total) + " · " + partial.length + " parcial(is)", failed.length ? "err" : "ok") +
+      statCard("DURAÇÃO MÉDIA", fmtDuration(avgMs), "sub", "por execução concluída", "") +
+      statCard("NÓS OBSERVADOS", String(nodes), "sub", "total no acervo", "") +
+      statCard("AVISOS", String(warnings), "sub", "honestidade ativa (I1–I3)", warnings ? "err" : "") +
+    "</div>" +
+    '<div class="dash-section"><h3>MAIS LENTAS (TOP 5)</h3>' +
+      slowest.map((s) => dashRow(s, fmtDuration(s.duration))).join("") +
+    "</div>" +
+    '<div class="dash-section"><h3>FALHAS RECENTES</h3>' +
+      (failed.length
+        ? failed.slice(0, 8).map((s) => dashRow(s, statusLabel[s.status] || s.status, "bad")).join("")
+        : '<div class="empty-note dash">Nenhuma falha registrada 🎉</div>') +
+    "</div>" +
+    '<div class="dash-section"><h3>POR TRIGGER</h3><div class="stat-grid">' +
+      Object.keys(byTrigger).map((t) =>
+        statCard(triggerLabel[t] || t, String(byTrigger[t]), "sub", "execuções", "")).join("") +
+    "</div></div>";
+
+  container.querySelectorAll(".dash-row").forEach((row) => {
+    row.addEventListener("click", () => {
+      switchTab("canvas");
+      selectExecution(row.dataset.executionId);
+    });
+  });
+}
+
+function statCard(label, value, subClass, sub, tone) {
+  return '<div class="stat-card"><div class="label">' + esc(label) + '</div>' +
+    '<div class="value ' + tone + '">' + esc(value) + "</div>" +
+    (sub ? '<div class="' + subClass + '">' + esc(sub) + "</div>" : "") + "</div>";
+}
+
+function dashRow(s, value, valueTone) {
+  return '<div class="dash-row" data-execution-id="' + esc(s.executionId) + '">' +
+    '<span class="st ' + esc(s.status) + '"></span>' +
+    '<span class="root-label">' + esc(s.rootLabel || s.executionId) + "</span>" +
+    '<span class="chip ' + esc(s.trigger || "EXTERNAL") + '">' + esc(triggerLabel[s.trigger] || "EXTERNAL") + "</span>" +
+    '<span class="val' + (valueTone ? " " + valueTone : "") + '">' + esc(value) + "</span>" +
+  "</div>";
+}
+
+function pct(part, whole) {
+  return Math.round((part / whole) * 100) + "%";
+}
+
+/* ------------------------------------------------------------- comparar (A/B diff) */
+function renderCompare() {
+  const container = $("compare-view");
+  const all = executionList();
+  if (all.length < 2) {
+    container.innerHTML = '<h2>COMPARAR</h2><div class="empty-note dash">' +
+      "São necessárias pelo menos 2 execuções concluídas para comparar.</div>";
+    return;
+  }
+  const options = all.map((s) =>
+    '<option value="' + esc(s.executionId) + '">' +
+    esc(shortId(s.executionId)) + " · " + esc(s.rootLabel || "?") + " · " +
+    esc(statusLabel[s.status] || s.status) + " · " + esc(fmtDuration(s.duration)) + "</option>").join("");
+  state.compare.a = state.compare.a && state.executions.has(state.compare.a) ? state.compare.a : all[1].executionId;
+  state.compare.b = state.compare.b && state.executions.has(state.compare.b) ? state.compare.b : all[0].executionId;
+
+  container.innerHTML =
+    '<h2>COMPARAR EXECUÇÕES <span class="pill">diff de spans, durações e mutações</span></h2>' +
+    '<div class="compare-bar">' +
+      '<select id="cmp-a" aria-label="Execução A">' + options + "</select>" +
+      '<span class="vs">VS</span>' +
+      '<select id="cmp-b" aria-label="Execução B">' + options + "</select>" +
+      '<button type="button" class="primary" id="btn-compare">COMPARAR</button>' +
+    "</div>" +
+    '<div id="compare-result"></div>';
+
+  $("cmp-a").value = state.compare.a;
+  $("cmp-b").value = state.compare.b;
+  $("cmp-a").addEventListener("change", (e) => { state.compare.a = e.target.value; });
+  $("cmp-b").addEventListener("change", (e) => { state.compare.b = e.target.value; });
+  $("btn-compare").addEventListener("click", () => runCompare(state.compare.a, state.compare.b));
+  runCompare(state.compare.a, state.compare.b);
+}
+
+async function runCompare(idA, idB) {
+  const result = $("compare-result");
+  if (!idA || !idB || idA === idB) {
+    result.innerHTML = '<div class="empty-note dash">Escolha duas execuções diferentes.</div>';
+    return;
+  }
+  result.innerHTML = '<div class="empty-note dash">carregando…</div>';
+  const execA = await loadFull(idA);
+  const execB = await loadFull(idB);
+  if (!execA || !execB) {
+    result.innerHTML = '<div class="empty-note dash">Execução não encontrada no acervo.</div>';
+    return;
+  }
+
+  // spans por rótulo (recorrência conta: "label ×n")
+  const labelCount = (nodes) => {
+    const m = new Map();
+    const walk = (list) => {
+      for (const n of list) {
+        const key = n.label || "?";
+        m.set(key, (m.get(key) || 0) + 1);
+        walk(n.children || []);
+      }
+    };
+    walk(nodes);
+    return m;
+  };
+  const spanA = labelCount(execA.roots || []);
+  const spanB = labelCount(execB.roots || []);
+  const durOf = (nodes) => {
+    const m = new Map();
+    const walk = (list) => {
+      for (const n of list) {
+        const ms = typeof n.totalTime === "number" ? n.totalTime : 0;
+        m.set(n.label || "?", ms);
+        walk(n.children || []);
+      }
+    };
+    walk(nodes);
+    return m;
+  };
+  const durA = durOf(execA.roots || []);
+  const durB = durOf(execB.roots || []);
+  const mutKeys = (nodes) => {
+    const out = [];
+    const walk = (list) => {
+      for (const n of list) {
+        if (n.mutation && n.mutation.key) out.push(n.mutation.key);
+        walk(n.children || []);
+      }
+    };
+    walk(nodes);
+    return out;
+  };
+  const keysA = mutKeys(execA.roots || []);
+  const keysB = mutKeys(execB.roots || []);
+
+  const labels = new Set([...spanA.keys(), ...spanB.keys()]);
+  const rows = [];
+  for (const label of [...labels].sort()) {
+    const ca = spanA.get(label) || 0;
+    const cb = spanB.get(label) || 0;
+    const da = durA.get(label) || 0;
+    const db = durB.get(label) || 0;
+    const delta = db - da;
+    let tag = "same";
+    let deltaHtml = "—";
+    if (ca && !cb) {
+      tag = "gone";
+      deltaHtml = '<span class="tag gone">REMOVIDO</span>';
+    } else if (!ca && cb) {
+      tag = "added";
+      deltaHtml = '<span class="tag new">NOVO</span>';
+    } else if (delta !== 0) {
+      const cls = delta > 0 ? "delta-bad" : "delta-good";
+      deltaHtml = '<span class="' + cls + '">' + (delta > 0 ? "+" : "") + fmtDuration(Math.abs(delta)) + "</span>";
+    } else {
+      deltaHtml = '<span class="tag same">=</span>';
+    }
+    rows.push('<tr class="' + tag + '"><td>' + esc(label) + "</td>" +
+      '<td class="mono">' + esc(ca ? fmtDuration(da) + " ×" + ca : "—") + "</td>" +
+      '<td class="mono">' + esc(cb ? fmtDuration(db) + " ×" + cb : "—") + "</td>" +
+      "<td>" + deltaHtml + "</td></tr>");
+  }
+
+  const durDelta = (execB.duration || 0) - (execA.duration || 0);
+  const addedMutations = keysB.filter((k) => !keysA.includes(k));
+  const removedMutations = keysA.filter((k) => !keysB.includes(k));
+
+  result.innerHTML =
+    '<div class="compare-summary">' +
+      '<div class="cs-item">duração A <strong>' + esc(fmtDuration(execA.duration)) + "</strong></div>" +
+      '<div class="cs-item">duração B <strong>' + esc(fmtDuration(execB.duration)) + "</strong></div>" +
+      '<div class="cs-item">Δ <strong class="' + (durDelta > 0 ? "delta-bad" : "delta-good") + '">' +
+        (durDelta > 0 ? "+" : "") + esc(fmtDuration(Math.abs(durDelta))) + "</strong>" +
+        " (" + (durDelta > 0 ? "+" : "") + pct(Math.abs(durDelta), Math.max(1, execA.duration || 0)) + ")</div>" +
+      '<div class="cs-item">nós A <strong>' + execA.metrics.nodeCount + "</strong> → B <strong>" + execB.metrics.nodeCount + "</strong></div>" +
+      (addedMutations.length ? '<div class="cs-item">mutações novas em B: <strong>' + addedMutations.join(", ") + "</strong></div>" : "") +
+      (removedMutations.length ? '<div class="cs-item">mutações só em A: <strong>' + removedMutations.join(", ") + "</strong></div>" : "") +
+    "</div>" +
+    '<div class="dash-section"><h3>SPANS — ' + labels.size + " rótulo(s) distintos</h3>" +
+    '<table class="diff-table"><thead><tr><th>span</th><th>execução A</th><th>execução B</th><th>delta</th></tr></thead>' +
+    "<tbody>" + rows.join("") + "</tbody></table></div>";
+}
+
+async function loadFull(executionId) {
+  const exec = state.executions.get(executionId);
+  if (exec && exec.completed && exec.nodes.size) {
+    return { roots: [...exec.nodes.values()], duration: exec.summary.duration,
+             metrics: { nodeCount: exec.summary.nodeCount } };
+  }
+  try {
+    const full = await (await api("/executions/" + encodeURIComponent(executionId))).json();
+    return full;
+  } catch (e) {
+    return null;
+  }
+}
+
+function shortId(id) {
+  return String(id).length > 10 ? String(id).slice(0, 10) + "…" : id;
+}
 function treeRoots(exec) {
   const nodes = exec ? exec.nodes : new Map();
   const byParent = new Map();
@@ -826,6 +1089,11 @@ function wireCanvas() {
     renderRecent();
   });
 
+  // abas de visão (canvas / dashboard / comparar)
+  $("tab-canvas").addEventListener("click", () => switchTab("canvas"));
+  $("tab-dashboard").addEventListener("click", () => switchTab("dashboard"));
+  $("tab-compare").addEventListener("click", () => switchTab("compare"));
+
   // legenda + atalhos (popovers)
   $("btn-legend").addEventListener("click", (e) => {
     e.stopPropagation();
@@ -875,6 +1143,9 @@ function shortcutsHtml() {
 }
 
 /* ------------------------------------------------------------- boot */
+// deep link: ?execution=<id> seleciona a execução compartilhada ao abrir
+const bootParams = new URLSearchParams(location.search);
+state.pendingDeepLink = bootParams.get("execution");
 loadMeta().then(loadEndpoints).then(loadRecent);
 connectStream();
 wireCanvas();

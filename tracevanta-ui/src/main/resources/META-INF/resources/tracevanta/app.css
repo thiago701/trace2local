@@ -353,6 +353,151 @@ button.small { padding: 3px 8px; font-size: 11px; }
   background: var(--bg-raised);
 }
 
+/* ---------------------------------------------------------------- tabs */
+#tabs { display: flex; gap: 4px; }
+.tab {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.tab:hover { color: var(--text); border-color: var(--border); }
+.tab.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: rgba(79, 195, 247, 0.35);
+}
+
+/* ---------------------------------------------------------------- painéis de visão */
+.view-panel {
+  flex: 1;
+  overflow: auto;
+  padding: 18px 22px;
+}
+.view-panel h2 {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.stat-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.stat-card .label {
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: var(--text-faint);
+  margin-bottom: 6px;
+}
+.stat-card .value { font-size: 26px; font-weight: 700; color: var(--text); }
+.stat-card .value.err { color: var(--err); }
+.stat-card .value.ok { color: var(--ok); }
+.stat-card .sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.dash-section {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.dash-section h3 {
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: var(--text-dim);
+  margin: 0 0 9px;
+}
+.dash-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.dash-row:last-child { border-bottom: none; }
+.dash-row:hover { background: var(--bg-hover); }
+.dash-row .root-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-row .val { font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); }
+.dash-row .val.bad { color: var(--err); }
+.dash-row .val.good { color: var(--ok); }
+.empty-note.dash { border-style: dashed; }
+
+/* ---------------------------------------------------------------- comparar */
+.compare-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.compare-bar select {
+  background: var(--bg-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 12px;
+  max-width: 340px;
+}
+.compare-bar .vs { color: var(--text-faint); font-weight: 700; letter-spacing: 1px; }
+.compare-summary {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.compare-summary .cs-item {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 12px;
+}
+.compare-summary .cs-item strong { font-size: 16px; margin-right: 6px; }
+.cs-item .delta-bad { color: var(--err); }
+.cs-item .delta-good { color: var(--ok); }
+.diff-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.diff-table th {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--text-faint);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.diff-table td { padding: 6px 8px; border-bottom: 1px solid var(--border-soft); }
+.diff-table td.mono { font-family: var(--mono); }
+.diff-table tr.added td { background: rgba(88, 214, 141, 0.07); }
+.diff-table tr.removed td { background: rgba(244, 113, 108, 0.08); }
+.diff-table .tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 6px;
+  letter-spacing: 0.5px;
+}
+.diff-table .tag.new { background: #14331f; color: #7ee2a5; }
+.diff-table .tag.gone { background: #3a1a1a; color: #f49a96; }
+.diff-table .tag.same { background: #22303f; color: var(--text-dim); }
+
 /* ---------------------------------------------------------------- canvas */
 #canvas-wrap { display: flex; flex-direction: column; min-width: 0; }
 #canvas-header {

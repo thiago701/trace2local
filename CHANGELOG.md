@@ -5,6 +5,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### v3 — Dashboard, comparação e deep links (pesquisa de ferramentas similares)
+
+- **Pesquisa aplicada**: estudadas .NET Aspire Dashboard (análogo local mais próximo), Jaeger (diff de traces), SigNoz/Grafana (vista unificada) — ver `docs/qa/EVIDENCIA-UX.md` com as referências.
+- **Aba DASHBOARD**: agregados do acervo em tempo real — execuções concluídas, falhas (n + %), duração média, nós observados, avisos, top-5 mais lentas e falhas recentes clicáveis, distribuição por trigger. Tudo client-side a partir dos summaries existentes (zero configuração nova).
+- **Aba COMPARAR (A/B diff)**: duas execuções lado a lado — Δ de duração (abs + %), Δ de nós, tabela de spans por rótulo com marcas NOVO/REMOVIDO/=, e mutações presentes só em A ou só em B. Regressões de performance/código saltam aos olhos em segundos.
+- **Deep link `?execution=<id>`**: URL compartilhável que abre direto na execução; a seleção reflete na URL sem recarregar.
+- Simplicidade preservada: 3 abas, zero propriedade nova, zero dependência nova, CSP/ADR-005 intactos; o fluxo CANVAS continua o padrão. Validação no script de captura (statCards/slowRows/compareRows/deep-link) + telas 15/16 + build completo verde.
+
 ### Fechamento de desvios da SPEC (uso corporativo)
 
 - **`UpdateItem` before+after — DESVIO FECHADO** (`TraceVantaAws.instrumentWithReadBack`, opcional): a API do DynamoDB devolve UM conjunto por chamada; o novo modo faz `ALL_OLD` (before) + releitura pós-update **dentro do span** via cliente cru (sem span aninhado, correlação correta) → delta EXACT com before E after e deltas de campo. Validado no LocalStack real (J3: `before.pk` + `after.status=BILLED` + delta `status`). O padrão `instrument` permanece como antes (after EXACT, before declarado).

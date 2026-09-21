@@ -91,7 +91,9 @@ async function selectRecentFailed(page) {
   for (let attempt = 0; attempt < 40; attempt++) {
     const selected = await page.evaluate(() => {
       const items = [...document.querySelectorAll(".exec-card")];
-      const item = items.find((r) => r.querySelector(".st")?.classList.contains("FAILED"));
+      const failed = items.filter((r) => r.querySelector(".st")?.classList.contains("FAILED"));
+      // prefere a jornada de erro da função order-processor (há FAILEDs de outros cenários)
+      const item = failed.find((r) => r.textContent.includes("order-processor")) || failed[0];
       if (!item) return false;
       item.click();
       return true;
@@ -241,6 +243,18 @@ allConsistent = printReport(mergedReport) && allConsistent;
 await page.screenshot({ path: out("12-lambda-tree-consumer.png") });
 console.log("12-lambda-tree-consumer.png");
 
+// ---- v3: dashboard e comparação (telas)
+await page.evaluate(() => document.getElementById("tab-dashboard").click());
+await sleep(900);
+await page.screenshot({ path: out("15-dashboard.png") });
+console.log("15-dashboard.png");
+await page.evaluate(() => document.getElementById("tab-compare").click());
+await sleep(1400);
+await page.screenshot({ path: out("16-compare.png") });
+console.log("16-compare.png");
+await page.evaluate(() => document.getElementById("tab-canvas").click());
+await sleep(300);
+
 // ---- checagens de UX v2 (evidência funcional, além das telas)
 console.log("checagens de UX v2…");
 const ux = await page.evaluate(() => {
@@ -286,6 +300,40 @@ const uxOk =
   && ux.inspectorCollapsibleHeaders >= 1;
 console.log(uxOk ? "  UX v2: todas as checagens passaram ✓" : "  UX v2: FALHA em uma ou mais checagens ✗");
 
+// ---- checagens de v3 (dashboard, comparar, deep link)
+console.log("checagens de v3 (dashboard/comparar/deep-link)…");
+const v3 = await page.evaluate(async () => {
+  const results = {};
+  document.getElementById("tab-dashboard").click();
+  await new Promise((r) => setTimeout(r, 400));
+  results.statCards = document.querySelectorAll("#dashboard-view .stat-card").length;
+  results.slowRows = document.querySelectorAll("#dashboard-view .dash-row").length;
+  results.dashboardTotal = document.querySelector("#dashboard-view .stat-card .value")?.textContent || "";
+
+  document.getElementById("tab-compare").click();
+  await new Promise((r) => setTimeout(r, 800));
+  results.compareRows = document.querySelectorAll("#compare-view .diff-table tbody tr").length;
+  results.compareSummaryItems = document.querySelectorAll("#compare-view .compare-summary .cs-item").length;
+
+  const firstId = window.__tvState?.selectedExecutionId;
+  history.replaceState(null, "", "?execution=" + encodeURIComponent(firstId));
+  results.deepLinkInUrl = location.search.includes("execution=");
+
+  document.getElementById("tab-canvas").click();
+  await new Promise((r) => setTimeout(r, 200));
+  results.canvasVisible = !document.getElementById("canvas").classList.contains("hidden");
+  return results;
+});
+console.log("  " + JSON.stringify(v3, null, 2).replace(/\n/g, "\n  "));
+const v3Ok =
+  v3.statCards >= 5
+  && v3.slowRows >= 1
+  && v3.compareRows > 0
+  && v3.compareSummaryItems >= 3
+  && v3.deepLinkInUrl
+  && v3.canvasVisible;
+console.log(v3Ok ? "  v3: todas as checagens passaram ✓" : "  v3: FALHA em uma ou mais checagens ✗");
+
 await browser.close();
 if (!allConsistent) {
   console.log("FALHA DE CONSISTÊNCIA: UI diverge da API — ver relatório acima.");
@@ -295,4 +343,8 @@ if (!uxOk) {
   console.log("FALHA DE UX v2 — ver checagens acima.");
   process.exit(3);
 }
-console.log("pronto → docs/qa/screenshots/ (consistência UI↔API + UX v2 validados)");
+if (!v3Ok) {
+  console.log("FALHA DE v3 (dashboard/comparar/deep-link) — ver checagens acima.");
+  process.exit(4);
+}
+console.log("pronto → docs/qa/screenshots/ (consistência UI↔API + UX v2 + v3 validados)");
