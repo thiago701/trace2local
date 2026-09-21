@@ -75,6 +75,13 @@ class StoryServiceTest {
         assertThat(story.conclusion()).contains("com erro");
     }
 
+    @Test
+    void cleansSdkTechnicalNoiseFromErrorMessages() {
+        String raw = "The conditional request failed (Service: DynamoDb, Status Code: 400, "
+                + "Request ID: 6d5ae8db-b7f4-4904-b76b-41224ef618e0) (SDK Attempt Count: 1)";
+        assertThat(StoryService.cleanErrorMessage(raw)).isEqualTo("The conditional request failed");
+    }
+
     private static Execution sample() {
         Node root = new Node("root", null, NodeKind.HTTP_SERVER, "POST /orders", NodeStatus.OK,
                 Instant.now(), Duration.ofMillis(2), Duration.ofMillis(42),

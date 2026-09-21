@@ -59,6 +59,43 @@ COPIAR COMO MARKDOWN, 15 linhas de nota no canvas com NOTAS.
 | Escrita recusada e leitura ficavam com a MESMA nota | sufixo **"(somente leitura)"** para READ_ONLY |
 | Título/intro não citavam o endpoint | **"Jornada externa — POST /pix"** e intro com a rota |
 
+## 4. Simulação cognitiva (loop de revisão da associação história↔nó)
+
+**Métodos pesquisados e aplicados** — a literatura de avaliação de UX de
+ferramentas de desenvolvedor recomenda *heuristic walkthroughs*
+([ScienceDirect: heuristic walkthroughs para dev tools](https://www.sciencedirect.com/science/article/pii/S0950584923000745)),
+*linking & brushing* para associação entre visões coordenadas
+([VRVis: linking & brushing em CMV](https://www.vrvis.at/publications/pdfs/PB-VRVis-2023-026.pdf))
+e métricas de eficiência estilo GOMS/Cognitive Task Analysis. Aplicados como
+**simulações por persona automatizadas** no script de captura:
+
+| Persona | Tarefa simulada | Resultado |
+|---|---|---|
+| **PO** (não técnico) | lê a história em 2 cliques; passos sem ruído técnico (UUIDs/Request IDs) | ✅ `poNoUuidNoise=true` |
+| **DEV** (linking & brushing) | **1 clique** no passo 2 da STORY leva ao nó correspondente no canvas (selecionado + pulso) | ✅ `devOneClickLinksNode=true`, `devPulseOnClick=true` |
+| **QA** | acha o passo com ⚠ FALHOU, abre o inspector com o erro, tag de erro presente | ✅ 3/3 |
+
+### Encadeamento história↔nó implementado (a partir da simulação)
+
+1. **Numeração compartilhada**: o balão de nota no canvas exibe o MESMO número
+   do passo na aba STORY — o vínculo é visível sem ler o texto;
+2. **Conector tracejado**: cada balão de nota é ligado ao seu cartão de nó por
+   uma linha tracejada;
+3. **Passos clicáveis**: clicar (ou Enter/Espaço) num passo muda para o canvas,
+   seleciona o nó e aplica um **pulso visual** de 1,9 s — o usuário nunca
+   perde o fio do trace;
+4. **Brushing reverso**: selecionar um nó no canvas destaca o passo
+   correspondente na narrativa;
+5. **Swatch de cor do kind** em cada passo (mesmas cores da legenda da árvore).
+
+### Correção de clareza achada pela persona PO no loop
+
+A narrativa do passo com falha exibia o erro CRU do SDK
+("…Request ID: 6d5ae8db-… (SDK Attempt Count: 1)") — ruído técnico indecifrável
+para um PO. Corrigido no `StoryService.cleanErrorMessage`: agora o passo diz
+apenas **"este passo FALHOU: The conditional request failed."** (com teste
+unitário novo).
+
 ## Telas
 
 | Tela | Conteúdo |

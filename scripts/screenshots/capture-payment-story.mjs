@@ -173,6 +173,60 @@ console.log("NOTAS:", JSON.stringify(notes));
 await page.screenshot({ path: out("21-payment-notes.png") });
 console.log("21-payment-notes.png");
 
+// ---- SIMULAÇÃO COGNITIVA (cognitive walkthrough + linking & brushing + métricas)
+console.log("SIMULAÇÃO COGNITIVA (personas)…");
+const walk = await page.evaluate(async () => {
+  const results = {};
+  const execId = window.__tvState?.selectedExecutionId;
+  const exec = await (await fetch("/tracevanta/api/executions/" + execId)).json();
+  const byId = {};
+  const walkNodes = (nodes) => {
+    for (const n of nodes) {
+      byId[n.nodeId] = n.label;
+      walkNodes(n.children || []);
+    }
+  };
+  walkNodes(exec.roots || []);
+
+  // PERSONA PO (não técnico): lê a história — sem ruído técnico nos passos
+  document.getElementById("tab-story").click();
+  await new Promise((r) => setTimeout(r, 700));
+  const steps = [...document.querySelectorAll("#story-view .story-step")];
+  results.poSteps = steps.length;
+  results.poNoUuidNoise = steps.every((s) =>
+    !/[0-9a-f]{8}-[0-9a-f]{4}-/i.test(s.querySelector(".text")?.textContent || ""));
+  results.poClicks = 2; // 1 selecionar execução + 1 aba STORY
+
+  // PERSONA DEV (linking & brushing): 1 clique no passo 2 leva ao nó no canvas
+  const step2 = steps[1];
+  const nodeId = step2.dataset.nodeId;
+  const expectedLabel = byId[nodeId];
+  step2.click();
+  await new Promise((r) => setTimeout(r, 450));
+  const selectedLabel = document.querySelector("g.tv-node.selected .label")?.textContent || "";
+  results.devOneClickLinksNode = !document.getElementById("canvas").classList.contains("hidden")
+    && selectedLabel === expectedLabel && !!expectedLabel;
+  results.devPulseOnClick = document.querySelector("g.tv-node.selected .box")
+    ?.getAttribute("class")?.includes("pulse") || false;
+  results.devClicks = 1;
+
+  // PERSONA QA: acha o passo com falha → inspector com o erro + tag ⚠
+  document.getElementById("tab-story").click();
+  await new Promise((r) => setTimeout(r, 700));
+  const failedStep = [...document.querySelectorAll("#story-view .story-step")]
+    .find((s) => s.textContent.includes("FALHOU"));
+  results.qaFoundFailedStep = !!failedStep;
+  results.qaErrorTag = failedStep ? failedStep.querySelector(".error-tag") !== null : false;
+  if (failedStep) {
+    failedStep.click();
+    await new Promise((r) => setTimeout(r, 500));
+    results.qaInspectorShowsError = document.body.textContent.includes("conditional request failed");
+  }
+  results.qaClicks = 2;
+  return results;
+});
+console.log("  " + JSON.stringify(walk, null, 2).replace(/\n/g, "\n  "));
+
 const passed =
   consistency.labelsEqual
   && simplicity.endpoints.length >= 3
@@ -181,7 +235,13 @@ const passed =
   && clarity.hasBusinessVerb
   && clarity.hasConclusionStatus
   && notes.noteLines >= 3
-  && jsErrors.length === 0;
+  && jsErrors.length === 0
+  && walk.poNoUuidNoise
+  && walk.devOneClickLinksNode
+  && walk.devPulseOnClick
+  && walk.qaFoundFailedStep
+  && walk.qaErrorTag
+  && walk.qaInspectorShowsError;
 
 console.log("RESULTADO:", passed ? "TODAS AS VALIDAÇÕES PASSARAM ✓" : "FALHAS DETECTADAS ✗");
 if (jsErrors.length) {

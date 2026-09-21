@@ -1,23 +1,23 @@
 {
   "executionId" : "TV-00003",
-  "traceId" : "f712a40c26cc3e5876695abf8ab7de83",
+  "traceId" : "c1874dd73187f9df5ad9b0c42c90e980",
   "status" : "FAILED",
   "trigger" : "UI_DISPATCH",
-  "startedAt" : "2026-09-20T01:31:35.751396500Z",
-  "duration" : 115,
+  "startedAt" : "2026-09-21T15:21:42.628394200Z",
+  "duration" : 144,
   "roots" : [ {
-    "nodeId" : "94b8b3ea7462e4c8",
+    "nodeId" : "7ec6a3ec49f02ec6",
     "parentId" : null,
     "kind" : "HTTP_CLIENT",
     "label" : "UI Dispatch: POST /orders/{id}/confirm",
     "status" : "ERROR",
-    "startedAt" : "2026-09-20T01:31:35.751396500Z",
+    "startedAt" : "2026-09-21T15:21:42.628394200Z",
     "selfTime" : 5,
-    "totalTime" : 115,
+    "totalTime" : 144,
     "attributes" : {
-      "tv.execution.id" : "TV-00003",
       "http.response.status_code" : "409",
-      "tv.trigger" : "ui"
+      "tv.trigger" : "ui",
+      "tv.execution.id" : "TV-00003"
     },
     "payload" : null,
     "mutation" : null,
@@ -27,18 +27,18 @@
       "stack" : null
     },
     "children" : [ {
-      "nodeId" : "cbb04597a82063d3",
-      "parentId" : "94b8b3ea7462e4c8",
+      "nodeId" : "7dcf1b68552c7c98",
+      "parentId" : "7ec6a3ec49f02ec6",
       "kind" : "HTTP_SERVER",
-      "label" : "POST /orders/ORDER%23ecfe44ad/confirm",
+      "label" : "POST /orders/ORDER%238d6afae4/confirm",
       "status" : "ERROR",
-      "startedAt" : "2026-09-20T01:31:35.755380100Z",
-      "selfTime" : 13,
-      "totalTime" : 110,
+      "startedAt" : "2026-09-21T15:21:42.632393900Z",
+      "selfTime" : 26,
+      "totalTime" : 138,
       "attributes" : {
-        "http.response.status_code" : "409",
-        "http.route" : "/orders/ORDER%23ecfe44ad/confirm",
-        "http.request.method" : "POST"
+        "http.route" : "/orders/ORDER%238d6afae4/confirm",
+        "http.request.method" : "POST",
+        "http.response.status_code" : "409"
       },
       "payload" : null,
       "mutation" : null,
@@ -48,53 +48,53 @@
         "stack" : null
       },
       "children" : [ {
-        "nodeId" : "34dcb3e1f6bcdb68",
-        "parentId" : "cbb04597a82063d3",
+        "nodeId" : "32c7114ceb657613",
+        "parentId" : "7dcf1b68552c7c98",
         "kind" : "BUSINESS",
         "label" : "ConfirmOrder",
         "status" : "ERROR",
-        "startedAt" : "2026-09-20T01:31:35.756645200Z",
-        "selfTime" : 4,
-        "totalTime" : 97,
+        "startedAt" : "2026-09-21T15:21:42.644522200Z",
+        "selfTime" : 11,
+        "totalTime" : 112,
         "attributes" : {
+          "code.namespace" : "OrderService",
           "code.function" : "confirm",
-          "tv.business" : "true",
-          "code.namespace" : "OrderService"
+          "tv.business" : "true"
         },
         "payload" : null,
         "mutation" : null,
         "error" : {
           "type" : "tech.neural7.tracevanta.examples.orders.OrderConflictException",
-          "message" : "pedido ORDER#ecfe44ad não está PENDING — condição violada",
-          "stack" : "tech.neural7.tracevanta.examples.orders.OrderConflictException: pedido ORDER#ecfe44ad não está PENDING — condição violada\r\n\tat tech.neural7.tracevanta.examples.orders.OrderRepository.confirm(OrderRepository.java:56)\r\n\tat tech.neural7.tracevanta.examples.orders.OrderService.confirm(OrderService.java:46)\r\n\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)\r\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n\tat org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359)\r\n\tat org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190)\r\n\tat org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158)\r\n\tat org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint.proceed(MethodInvocationProceedingJoinPoint.java:82)\r\n\tat tech.neural7.tracevanta.spring.TraceVantaAspect.aroundBusinessMethod(TraceVantaAspect.java:43)\r\n\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)\r\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n\tat org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethodWithGivenArgs(AbstractAspectJAdvice.java:648)\r\n\tat org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethod(AbstractAspectJAdvice.java:630)\r\n\tat org.springframework.aop.aspectj.AspectJAroundAdvice.invoke(AspectJAroundAdvice.java:70)\r\n\tat org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:168)\r\n\tat org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:96)\r\n\tat org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)\r\n\tat org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719)\r\n\tat tech.neural7.tracevanta.examples.orders.OrderService$$SpringCGLIB$$0.confirm(<generated>)\r\n\tat tech.neural7.tracevanta.examples.orders.OrderController.confirm(OrderController.java:35)\r\n\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)\r\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n\tat org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:252)\r\n\tat org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:184)\r\n\tat org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117)\r\n\tat org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:934)\r\n\tat org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:853)\r\n\tat org[TRACEVANTA_TRUNCATED]"
+          "message" : "pedido ORDER#8d6afae4 não está PENDING — condição violada",
+          "stack" : "tech.neural7.tracevanta.examples.orders.OrderConflictException: pedido ORDER#8d6afae4 não está PENDING — condição violada\r\n\tat tech.neural7.tracevanta.examples.orders.OrderRepository.confirm(OrderRepository.java:56)\r\n\tat tech.neural7.tracevanta.examples.orders.OrderService.confirm(OrderService.java:46)\r\n\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)\r\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n\tat org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359)\r\n\tat org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190)\r\n\tat org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158)\r\n\tat org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint.proceed(MethodInvocationProceedingJoinPoint.java:82)\r\n\tat tech.neural7.tracevanta.spring.TraceVantaAspect.aroundBusinessMethod(TraceVantaAspect.java:43)\r\n\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)\r\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n\tat org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethodWithGivenArgs(AbstractAspectJAdvice.java:648)\r\n\tat org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethod(AbstractAspectJAdvice.java:630)\r\n\tat org.springframework.aop.aspectj.AspectJAroundAdvice.invoke(AspectJAroundAdvice.java:70)\r\n\tat org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:168)\r\n\tat org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:96)\r\n\tat org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179)\r\n\tat org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719)\r\n\tat tech.neural7.tracevanta.examples.orders.OrderService$$SpringCGLIB$$0.confirm(<generated>)\r\n\tat tech.neural7.tracevanta.examples.orders.OrderController.confirm(OrderController.java:35)\r\n\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)\r\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:565)\r\n\tat org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:252)\r\n\tat org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:184)\r\n\tat org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117)\r\n\tat org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:934)\r\n\tat org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:853)\r\n\tat org[TRACEVANTA_TRUNCATED]"
         },
         "children" : [ {
-          "nodeId" : "fa4c99b7825c3c50",
-          "parentId" : "34dcb3e1f6bcdb68",
+          "nodeId" : "9886265ca756142e",
+          "parentId" : "32c7114ceb657613",
           "kind" : "DYNAMODB",
           "label" : "DynamoDB: orders",
           "status" : "ERROR",
-          "startedAt" : "2026-09-20T01:31:35.757302300Z",
-          "selfTime" : 92,
-          "totalTime" : 92,
+          "startedAt" : "2026-09-21T15:21:42.653115Z",
+          "selfTime" : 100,
+          "totalTime" : 100,
           "attributes" : {
-            "rpc.system" : "aws-api",
-            "aws.dynamodb.table_names" : "[orders]",
-            "url.full" : "http://127.0.0.1:62550/",
-            "server.port" : "62550",
             "http.request.method" : "POST",
             "db.system" : "dynamodb",
             "rpc.service" : "DynamoDb",
             "server.address" : "127.0.0.1",
             "rpc.method" : "UpdateItem",
-            "db.operation" : "UpdateItem"
+            "db.operation" : "UpdateItem",
+            "rpc.system" : "aws-api",
+            "aws.dynamodb.table_names" : "[orders]",
+            "url.full" : "http://127.0.0.1:60421/",
+            "server.port" : "60421"
           },
           "payload" : null,
           "mutation" : null,
           "error" : {
             "type" : "software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException",
-            "message" : "The conditional request failed (Service: DynamoDb, Status Code: 400, Request ID: 007ba954-4b51-4146-b08a-cb4c205753eb) (SDK Attempt Count: 1)",
-            "stack" : "software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException: The conditional request failed (Service: DynamoDb, Status Code: 400, Request ID: 007ba954-4b51-4146-b08a-cb4c205753eb) (SDK Attempt Count: 1)\r\n\tat software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException$BuilderImpl.build(ConditionalCheckFailedException.java:250)\r\n\tat software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException$BuilderImpl.build(ConditionalCheckFailedException.java:177)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.utils.RetryableStageHelper.retryPolicyDisallowedRetryException(RetryableStageHelper.java:251)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.RetryableStage.execute(RetryableStage.java:86)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.RetryableStage.execute(RetryableStage.java:39)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.RequestPipelineBuilder$ComposingRequestPipelineStage.execute(RequestPipelineBuilder.java:206)\r\n\tat software.amazon.awssdk.core.internal.http.StreamManagingStage.execute(StreamManagingStage.java:53)\r\n\tat software.amazon.awssdk.core.internal.http.StreamManagingStage.execute(StreamManagingStage.java:35)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ApiCallTimeoutTrackingStage.executeWithTimer(ApiCallTimeoutTrackingStage.java:82)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ApiCallTimeoutTrackingStage.execute(ApiCallTimeoutTrackingStage.java:62)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ApiCallTimeoutTrackingStage.execute(ApiCallTimeoutTrackingStage.java:43)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.RequestPipelineBuilder$ComposingRequestPipelineStage.execute(RequestPipelineBuilder.java:206)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.RequestPipelineBuilder$ComposingRequestPipelineStage.execute(RequestPipelineBuilder.java:206)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ExecutionFailureExceptionReportingStage.execute(ExecutionFailureExceptionReportingStage.java:37)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ExecutionFailureExceptionReportingStage.execute(ExecutionFailureExceptionReportingStage.java:26)\r\n\tat software.amazon.awssdk.core.internal.http.AmazonSyncHttpClient$RequestExecutionBuilderImpl.execute(AmazonSyncHttpClient.java:213)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.invoke(BaseSyncClientHandler.java:105)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.doExecute(BaseSyncClientHandler.java:176)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.lambda$execute$1(BaseSyncClientHandler.java:82)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.measureApiCall(BaseSyncClientHandler.java:200)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.execute(BaseSyncClientHandler.java:76)\r\n\tat sof[TRACEVANTA_TRUNCATED]"
+            "message" : "The conditional request failed (Service: DynamoDb, Status Code: 400, Request ID: 35515609-f4a9-4746-8fd4-387e200804b4) (SDK Attempt Count: 1)",
+            "stack" : "software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException: The conditional request failed (Service: DynamoDb, Status Code: 400, Request ID: 35515609-f4a9-4746-8fd4-387e200804b4) (SDK Attempt Count: 1)\r\n\tat software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException$BuilderImpl.build(ConditionalCheckFailedException.java:250)\r\n\tat software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException$BuilderImpl.build(ConditionalCheckFailedException.java:177)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.utils.RetryableStageHelper.retryPolicyDisallowedRetryException(RetryableStageHelper.java:251)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.RetryableStage.execute(RetryableStage.java:86)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.RetryableStage.execute(RetryableStage.java:39)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.RequestPipelineBuilder$ComposingRequestPipelineStage.execute(RequestPipelineBuilder.java:206)\r\n\tat software.amazon.awssdk.core.internal.http.StreamManagingStage.execute(StreamManagingStage.java:53)\r\n\tat software.amazon.awssdk.core.internal.http.StreamManagingStage.execute(StreamManagingStage.java:35)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ApiCallTimeoutTrackingStage.executeWithTimer(ApiCallTimeoutTrackingStage.java:82)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ApiCallTimeoutTrackingStage.execute(ApiCallTimeoutTrackingStage.java:62)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ApiCallTimeoutTrackingStage.execute(ApiCallTimeoutTrackingStage.java:43)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.RequestPipelineBuilder$ComposingRequestPipelineStage.execute(RequestPipelineBuilder.java:206)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.RequestPipelineBuilder$ComposingRequestPipelineStage.execute(RequestPipelineBuilder.java:206)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ExecutionFailureExceptionReportingStage.execute(ExecutionFailureExceptionReportingStage.java:37)\r\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ExecutionFailureExceptionReportingStage.execute(ExecutionFailureExceptionReportingStage.java:26)\r\n\tat software.amazon.awssdk.core.internal.http.AmazonSyncHttpClient$RequestExecutionBuilderImpl.execute(AmazonSyncHttpClient.java:213)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.invoke(BaseSyncClientHandler.java:105)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.doExecute(BaseSyncClientHandler.java:176)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.lambda$execute$1(BaseSyncClientHandler.java:82)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.measureApiCall(BaseSyncClientHandler.java:200)\r\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.execute(BaseSyncClientHandler.java:76)\r\n\tat sof[TRACEVANTA_TRUNCATED]"
           },
           "children" : [ ]
         } ]

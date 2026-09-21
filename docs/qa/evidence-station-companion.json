@@ -1,93 +1,93 @@
 {
   "executionId" : "TV-00005",
-  "traceId" : "0e69f41378b470299916f58944001ae9",
+  "traceId" : "1d78fb98acf68bf37f12c66c957dd7f6",
   "status" : "PARTIAL",
   "trigger" : "EXTERNAL",
-  "startedAt" : "2026-09-20T01:31:55.694791400Z",
-  "duration" : 36,
+  "startedAt" : "2026-09-21T15:22:02.094633300Z",
+  "duration" : 374,
   "roots" : [ {
-    "nodeId" : "f0cd7d665bb45a57",
+    "nodeId" : "994642ddfda9dd25",
     "parentId" : null,
     "kind" : "HTTP_SERVER",
     "label" : "POST /orders",
     "status" : "OK",
-    "startedAt" : "2026-09-20T01:31:55.347646400Z",
-    "selfTime" : 24,
-    "totalTime" : 383,
+    "startedAt" : "2026-09-21T15:22:01.748789800Z",
+    "selfTime" : 48,
+    "totalTime" : 374,
     "attributes" : {
+      "http.request.method" : "POST",
       "http.route" : "/orders",
       "http.response.status_code" : "201",
-      "tv.payload.request" : "{\"customerId\":\"C-COMPANION\",\"total\":99.9}",
-      "http.request.method" : "POST"
+      "tv.payload.request" : "{\"customerId\":\"C-COMPANION\",\"total\":99.9}"
     },
     "payload" : null,
     "mutation" : null,
     "error" : null,
     "children" : [ {
-      "nodeId" : "4ed10e71a700696a",
-      "parentId" : "f0cd7d665bb45a57",
+      "nodeId" : "e53d6de95007f121",
+      "parentId" : "994642ddfda9dd25",
       "kind" : "BUSINESS",
       "label" : "CreateOrder",
       "status" : "OK",
-      "startedAt" : "2026-09-20T01:31:55.365491700Z",
-      "selfTime" : 10,
-      "totalTime" : 359,
+      "startedAt" : "2026-09-21T15:22:01.789770Z",
+      "selfTime" : 7,
+      "totalTime" : 326,
       "attributes" : {
+        "code.namespace" : "OrderService",
         "code.function" : "create",
-        "tv.business" : "true",
-        "code.namespace" : "OrderService"
+        "tv.business" : "true"
       },
       "payload" : null,
       "mutation" : null,
       "error" : null,
       "children" : [ {
-        "nodeId" : "9b349cf5627bd244",
-        "parentId" : "4ed10e71a700696a",
+        "nodeId" : "4afd6e9ee89a520e",
+        "parentId" : "e53d6de95007f121",
         "kind" : "DYNAMODB",
         "label" : "DynamoDB: orders",
         "status" : "OK",
-        "startedAt" : "2026-09-20T01:31:55.370894400Z",
-        "selfTime" : 323,
-        "totalTime" : 323,
+        "startedAt" : "2026-09-21T15:22:01.792478Z",
+        "selfTime" : 302,
+        "totalTime" : 302,
         "attributes" : {
+          "db.system" : "dynamodb",
+          "rpc.service" : "DynamoDb",
+          "aws.request_id" : "5b2b376c-fee2-4b9b-968d-b39186a8bd3b",
+          "url.full" : "http://127.0.0.1:60447/",
+          "server.address" : "127.0.0.1",
+          "rpc.method" : "PutItem",
           "aws.dynamodb.table_names" : "orders",
           "http.request.method" : "POST",
           "rpc.system" : "aws-api",
           "http.response.status_code" : "200",
-          "server.port" : "55340",
-          "db.operation" : "PutItem",
-          "db.system" : "dynamodb",
-          "rpc.service" : "DynamoDb",
-          "aws.request_id" : "a14639f4-2602-4ce2-9d59-70ad2eb029c5",
-          "url.full" : "http://127.0.0.1:55340/",
-          "server.address" : "127.0.0.1",
-          "rpc.method" : "PutItem"
+          "server.port" : "60447",
+          "db.operation" : "PutItem"
         },
         "payload" : null,
         "mutation" : null,
         "error" : null,
         "children" : [ ]
       }, {
-        "nodeId" : "2d350f65a8d85abc",
-        "parentId" : "4ed10e71a700696a",
+        "nodeId" : "499492b2d6446e61",
+        "parentId" : "e53d6de95007f121",
         "kind" : "SNS",
         "label" : "SNS: order-events",
         "status" : "ORPHANED",
-        "startedAt" : "2026-09-20T01:31:55.698599300Z",
-        "selfTime" : 25,
-        "totalTime" : 25,
+        "startedAt" : "2026-09-21T15:22:02.099245800Z",
+        "selfTime" : 16,
+        "totalTime" : 16,
         "attributes" : {
+          "url.full" : "http://127.0.0.1:60447",
+          "rpc.method" : "Publish",
+          "http.response.status_code" : "200",
           "rpc.system" : "aws-api",
           "http.request.method" : "POST",
           "rpc.service" : "Sns",
           "messaging.destination.name" : "arn:aws:sns:us-east-1:000000000000:order-events",
           "aws.sns.topic.arn" : "arn:aws:sns:us-east-1:000000000000:order-events",
           "server.address" : "127.0.0.1",
-          "server.port" : "55340",
-          "aws.request_id" : "bb38268b-3e5a-433f-ae97-04b814d19871",
-          "url.full" : "http://127.0.0.1:55340",
-          "rpc.method" : "Publish",
-          "http.response.status_code" : "200"
+          "server.port" : "60447",
+          "aws.request_id" : "074c53ac-c80d-4559-938f-164f113b5742"
         },
         "payload" : null,
         "mutation" : null,
@@ -103,29 +103,9 @@
     "droppedEvents" : 0
   },
   "warnings" : [ {
-    "kind" : "EVENTS_DROPPED",
-    "count" : 1,
-    "message" : "Início do span 9b349cf5627bd244 não foi observado; o nó foi montado a partir do fim.",
-    "at" : "2026-09-20T01:31:55.694791400Z"
-  }, {
-    "kind" : "EVENTS_DROPPED",
-    "count" : 1,
-    "message" : "Início do span 2d350f65a8d85abc não foi observado; o nó foi montado a partir do fim.",
-    "at" : "2026-09-20T01:31:55.723606300Z"
-  }, {
-    "kind" : "EVENTS_DROPPED",
-    "count" : 1,
-    "message" : "Início do span 4ed10e71a700696a não foi observado; o nó foi montado a partir do fim.",
-    "at" : "2026-09-20T01:31:55.724619500Z"
-  }, {
-    "kind" : "EVENTS_DROPPED",
-    "count" : 1,
-    "message" : "Início do span f0cd7d665bb45a57 não foi observado; o nó foi montado a partir do fim.",
-    "at" : "2026-09-20T01:31:55.731410700Z"
-  }, {
     "kind" : "ORPHANED_NODES",
     "count" : 1,
     "message" : "1 ramo(s) SNS/SQS sem consumidor observado nesta execução — órfão aguardando consumo.",
-    "at" : "2026-09-20T01:32:02.654409400Z"
+    "at" : "2026-09-21T15:22:08.995891300Z"
   } ]
 }

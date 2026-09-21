@@ -5,6 +5,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### Loop cognitivo: encadeamento história↔nó + simulação por personas
+
+- **Pesquisa de métodos de avaliação cognitiva** (heuristic walkthroughs para dev tools, linking & brushing em visões coordenadas, métricas GOMS/CTA) — referências em `docs/qa/EVIDENCIA-STORYTELLING-PAYMENTS.md`.
+- **Encadeamento história↔nó**: numeração compartilhada entre o balão de nota do canvas e o passo da STORY; conector tracejado nó→nota; passos clicáveis (canvas + nó selecionado + pulso de 1,9 s); brushing reverso (nó selecionado destaca o passo); swatch de cor do kind em cada passo.
+- **Simulação cognitiva automatizada por personas** no script de captura: PO (2 cliques, sem ruído técnico), DEV (1 clique do passo ao nó com pulso), QA (passo ⚠ FALHOU → inspector com erro) — todas passando.
+- **Ruído do SDK removido da narrativa** (achado da persona PO): `StoryService.cleanErrorMessage` remove `(Service: …)`, `Request ID: …` e `(SDK Attempt Count: N)` — o passo agora diz só "este passo FALHOU: The conditional request failed." + teste unitário.
+- Validação final: `mvn install` completo verde + E2E LocalStack (order-service 3/3, lambda-sqs 4/4) + captura v4/v5 com todas as checagens.
+
 ### Novo domínio demo + análise de clareza do storytelling
 
 - **`examples/payment-service`**: novo projeto demo em domínio DIFERENTE (pagamentos Pix) — guarda de idempotência, confirmação com read-back e glossário próprio; prova que a narrativa é domínio-agnóstico (mesmo pipeline que explicou pedidos explica Pix sem mudança na lib).

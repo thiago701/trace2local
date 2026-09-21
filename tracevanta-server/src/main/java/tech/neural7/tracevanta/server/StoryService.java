@@ -252,7 +252,7 @@ public final class StoryService {
 
     private String contextSuffix(Node node) {
         if (node.error() != null && node.error().message() != null && !node.error().message().isBlank()) {
-            String message = node.error().message();
+            String message = cleanErrorMessage(node.error().message());
             if (message.length() > 140) {
                 message = message.substring(0, 140) + "…";
             }
@@ -263,6 +263,17 @@ public final class StoryService {
             return " (somente leitura).";
         }
         return "";
+    }
+
+    /** Remove ruído técnico do SDK (Service/Request ID/Attempt Count) — narrativa para humanos. */
+    static String cleanErrorMessage(String message) {
+        String m = message
+                .replaceAll("\\(Service: [^)]*\\)", "")
+                .replaceAll("\\(SDK Attempt Count: \\d+\\)", "")
+                .replaceAll("Request ID: [0-9a-fA-F-]{8,}", "")
+                .replaceAll("\\s{2,}", " ")
+                .trim();
+        return m.isBlank() ? "detalhes no inspector" : m;
     }
 
     private String mutationSuffix(Node node) {

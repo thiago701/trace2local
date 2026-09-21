@@ -522,6 +522,15 @@ button.small { padding: 3px 8px; font-size: 11px; }
   stroke-dasharray: 3 3;
   rx: 6;
 }
+.tv-node .note-link { stroke: var(--border); stroke-dasharray: 3 3; fill: none; }
+.tv-node .note-num { fill: var(--accent-soft); stroke: rgba(79, 195, 247, 0.5); }
+.tv-node .note-num-text { fill: var(--accent); font-family: var(--mono); font-size: 9.5px; font-weight: 700; text-anchor: middle; }
+.tv-node .box.pulse { animation: nodepulse 0.9s ease-in-out 2; }
+@keyframes nodepulse {
+  0% { stroke-width: 2.6; }
+  50% { stroke-width: 5; filter: drop-shadow(0 0 10px rgba(79, 195, 247, 0.8)); }
+  100% { stroke-width: 2.6; }
+}
 .story-header {
   background: linear-gradient(180deg, #14202e, var(--bg-panel));
   border: 1px solid var(--border);
@@ -542,7 +551,12 @@ button.small { padding: 3px 8px; font-size: 11px; }
   padding: 10px 4px;
   border-bottom: 1px solid var(--border-soft);
   align-items: flex-start;
+  cursor: pointer;
+  border-left: 3px solid transparent;
 }
+.story-step:hover { background: var(--bg-hover); }
+.story-step.active { border-left-color: var(--accent); background: var(--accent-soft); }
+.story-step .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; margin-top: 4px; }
 .story-step .n {
   font-family: var(--mono);
   font-size: 11px;

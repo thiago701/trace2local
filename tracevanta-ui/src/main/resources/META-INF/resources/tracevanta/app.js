@@ -19,6 +19,7 @@ const state = {
   compare: { a: null, b: null },
   notesOn: false,
   story: null,
+  pulseNodeId: null,
   view: { x: 60, y: 40, scale: 1 },
   dragging: false,
   dragStart: null,
@@ -655,11 +656,39 @@ async function renderStory() {
       .then(() => toast("Narrativa copiada como Markdown — pronta para slides/PR", "ok"))
       .catch(() => toast("Não foi possível copiar", "error"));
   });
+
+  // LINKING & BRUSHING: clicar num passo leva ao nó correspondente no canvas
+  container.querySelectorAll(".story-step").forEach((step) => {
+    const focus = () => {
+      const nodeId = step.dataset.nodeId;
+      if (!nodeId) return;
+      state.selectedNodeId = nodeId;
+      state.pulseNodeId = nodeId;
+      switchTab("canvas");
+      renderCanvas();
+      setTimeout(() => {
+        state.pulseNodeId = null;
+        if (state.activeTab === "canvas") renderCanvas();
+      }, 1900);
+    };
+    step.addEventListener("click", focus);
+    step.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        focus();
+      }
+    });
+  });
+  // passo ativo reflete o nó selecionado (brushing reverso)
+  container.querySelectorAll(".story-step").forEach((step) => {
+    step.classList.toggle("active", step.dataset.nodeId === state.selectedNodeId);
+  });
 }
 
 function stepHtml(s) {
-  return '<div class="story-step' + (s.error ? " error" : "") + '">' +
+  return '<div class="story-step' + (s.error ? " error" : "") + '" data-node-id="' + esc(s.nodeId || "") + '" role="button" tabindex="0" title="Ver este passo no canvas">' +
     '<span class="n">' + s.order + "</span>" +
+    '<span class="swatch sw-' + esc(s.kind || "UNKNOWN") + '"></span>' +
     '<span class="icon">' + esc(s.icon || "·") + "</span>" +
     '<div class="body"><div class="text">' + esc(s.text) + "</div>" +
     '<div class="meta">' +
@@ -859,7 +888,8 @@ function renderCanvas() {
     g.dataset.nodeId = n.nodeId;
 
     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    rect.setAttribute("class", "box " + n.status.toLowerCase());
+    rect.setAttribute("class", "box " + n.status.toLowerCase()
+        + (state.pulseNodeId === n.nodeId ? " pulse" : ""));
     rect.setAttribute("width", W); rect.setAttribute("height", H);
     g.appendChild(rect);
 
@@ -922,21 +952,38 @@ function renderCanvas() {
     g.addEventListener("click", () => selectNode(n.nodeId));
     svg.appendChild(g);
 
-    // storytelling: anotação de negócio AO LADO do nó (toggle NOTAS)
+    // storytelling: anotação de negócio AO LADO do nó (toggle NOTAS),
+    // ENCADEADA ao passo da narrativa: número do passo + conector tracejado
     if (state.notesOn && state.story && state.story.steps) {
       const step = state.story.steps.find((s) => s.nodeId === n.nodeId);
       if (step && step.text) {
         const lines = wrapText(step.text, 40);
         const bw = 252, lh = 14, bh = lines.length * lh + 10;
+        // conector: da borda do cartão ao balão de nota
+        const link = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        link.setAttribute("class", "note-link");
+        link.setAttribute("d", "M " + (W + 2) + " " + (H / 2)
+            + " C " + (W + 7) + " " + (H / 2) + ", " + (W + 7) + " " + 14 + ", " + (W + 11) + " " + 14);
+        g.appendChild(link);
         const bubble = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         bubble.setAttribute("class", "note-bubble");
         bubble.setAttribute("x", W + 12); bubble.setAttribute("y", 4);
         bubble.setAttribute("width", bw); bubble.setAttribute("height", bh);
         g.appendChild(bubble);
+        // número do passo = MESMO número da aba STORY (encadeamento visual)
+        const numC = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        numC.setAttribute("class", "note-num");
+        numC.setAttribute("cx", W + 24); numC.setAttribute("cy", 13); numC.setAttribute("r", 8);
+        g.appendChild(numC);
+        const numT = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        numT.setAttribute("class", "note-num-text");
+        numT.setAttribute("x", W + 24); numT.setAttribute("y", 16.5);
+        numT.textContent = String(step.order);
+        g.appendChild(numT);
         lines.forEach((line, i) => {
           const noteText = document.createElementNS("http://www.w3.org/2000/svg", "text");
           noteText.setAttribute("class", "note-line");
-          noteText.setAttribute("x", W + 20); noteText.setAttribute("y", 18 + i * lh);
+          noteText.setAttribute("x", W + 38); noteText.setAttribute("y", 18 + i * lh);
           noteText.textContent = line;
           g.appendChild(noteText);
         });
@@ -995,6 +1042,10 @@ function truncate(s, n) {
 function selectNode(nodeId) {
   state.selectedNodeId = nodeId;
   renderCanvas();
+  // brushing reverso: destaca o passo correspondente na narrativa (se renderizada)
+  document.querySelectorAll("#story-view .story-step").forEach((step) => {
+    step.classList.toggle("active", step.dataset.nodeId === nodeId);
+  });
 }
 
 function renderInspector() {
