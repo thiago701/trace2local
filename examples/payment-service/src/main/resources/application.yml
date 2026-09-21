@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: payment-service
+  profiles:
+    active: dev
+
+tracevanta:
+  port: 9876
+  retention:
+    max-executions: 100

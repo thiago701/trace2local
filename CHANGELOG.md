@@ -5,6 +5,13 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### Novo domínio demo + análise de clareza do storytelling
+
+- **`examples/payment-service`**: novo projeto demo em domínio DIFERENTE (pagamentos Pix) — guarda de idempotência, confirmação com read-back e glossário próprio; prova que a narrativa é domínio-agnóstico (mesmo pipeline que explicou pedidos explica Pix sem mudança na lib).
+- **Análise de UX do storytelling** com script dedicado (`capture-payment-story.mjs`): consistência UI↔API (5=5 labels idênticos), simplicidade (2 cliques, zero config) e heurísticas de clareza (passos legíveis, verbo de negócio, conclusão com status).
+- **Melhorias de clareza aplicadas no loop** (achadas pela própria análise): passo com erro agora diz *"— este passo FALHOU: {mensagem}"*, leituras ganham *"(somente leitura)"*, e título/intro citam o endpoint ("Jornada externa — POST /pix").
+- Evidências: `docs/qa/EVIDENCIA-STORYTELLING-PAYMENTS.md` + telas 19/20/21.
+
 ### v4 — Descoberta de negócio e storytelling (canvas para PO, dev e QA)
 
 - **`StoryService` + `BusinessGlossary`** (tracevanta-server): descoberta da especificação/regras de negócio por **contexto** (kind + atributos OTel + mutação + erro), **engenharia reversa** (camelCase humanizado com mapa de verbos de negócio PT-BR) e **docs** (glossário opcional `tracevanta-business.md` no classpath — o time documenta o termo e a nota é sobrescrita).

@@ -66,7 +66,8 @@ public final class StoryService {
         if (kind != NodeKind.HTTP_SERVER && kind != NodeKind.HTTP_CLIENT) {
             String fromGlossary = glossary.noteFor(node.label());
             if (!fromGlossary.isBlank()) {
-                return fromGlossary;
+                // o glossário diz O QUE o passo faz; o contexto diz O QUE ACONTECEU
+                return fromGlossary + contextSuffix(node);
             }
         }
         Map<String, String> attrs = node.attributes() != null ? node.attributes() : Map.of();
@@ -90,8 +91,13 @@ public final class StoryService {
         if (execution == null) {
             return null;
         }
-        String title = "Jornada " + (execution.trigger() != null ? triggerLabel(execution.trigger()) : "");
-        String intro = introOf(execution);
+        String rootLabel = execution.roots() != null && !execution.roots().isEmpty()
+                && execution.roots().get(0).label() != null
+                ? execution.roots().get(0).label()
+                : null;
+        String title = "Jornada " + (execution.trigger() != null ? triggerLabel(execution.trigger()) : "")
+                + (rootLabel != null && !rootLabel.isBlank() ? " — " + rootLabel : "");
+        String intro = introOf(execution, rootLabel);
         List<StoryStep> steps = new ArrayList<>();
         int[] order = { 1 };
         for (Node root : execution.roots() != null ? execution.roots() : List.<Node>of()) {
@@ -244,6 +250,21 @@ public final class StoryService {
         return n.isBlank() ? (node.label() != null ? node.label() : "?") : n;
     }
 
+    private String contextSuffix(Node node) {
+        if (node.error() != null && node.error().message() != null && !node.error().message().isBlank()) {
+            String message = node.error().message();
+            if (message.length() > 140) {
+                message = message.substring(0, 140) + "…";
+            }
+            return " — este passo FALHOU: " + message + ".";
+        }
+        if (node.mutation() != null && node.mutation().kind() != null
+                && node.mutation().kind() == tech.neural7.tracevanta.model.MutationKind.READ_ONLY) {
+            return " (somente leitura).";
+        }
+        return "";
+    }
+
     private String mutationSuffix(Node node) {
         DataMutation m = node.mutation();
         if (m == null || m.kind() == null) {
@@ -259,14 +280,15 @@ public final class StoryService {
 
     // ------------------------------------------------------------------ história
 
-    private String introOf(Execution execution) {
+    private String introOf(Execution execution, String rootLabel) {
         String how = switch (execution.trigger() != null ? execution.trigger() : Trigger.EXTERNAL) {
             case UI_DISPATCH -> "foi disparada pelo botão EXECUTE REQUEST da própria UI";
             case LAMBDA_EVENT -> "começou quando o evento chegou à função Lambda";
             case TEST -> "foi disparada por um teste automatizado";
             default -> "começou quando o serviço recebeu uma chamada externa";
         };
-        return "A execução " + how + ".";
+        String what = rootLabel != null && !rootLabel.isBlank() ? " (" + rootLabel + ")" : "";
+        return "A execução " + how + what + ".";
     }
 
     private String conclusionOf(Execution execution, List<StoryStep> steps) {

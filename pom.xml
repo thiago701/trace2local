@@ -83,6 +83,7 @@
     <module>tracevanta-architecture</module>
     <module>examples/order-service</module>
     <module>examples/lambda-sqs</module>
+    <module>examples/payment-service</module>
   </modules>
 
   <properties>
