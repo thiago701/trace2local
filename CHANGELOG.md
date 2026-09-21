@@ -5,6 +5,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### Renomeação do projeto: TraceVanta → Trace2Local (refatoramento em cascata)
+
+- **Maven**: groupId `tech.neural7.tracevanta` → `tech.neural7.trace2local`; artifactIds `tracevanta-*` → `trace2local-*` (todos os módulos da lib + plugin); diretórios dos módulos renomeados.
+- **Java**: pacotes, classes (`Trace2LocalConfig`, `Trace2LocalHttpServer`, `Trace2LocalAws`, `Trace2LocalLogs`…), anotação `@Trace2Local`, módulo de testes — 46 arquivos renomeados + conteúdo de 228 arquivos (case-sensitive).
+- **Config/API**: prefixo `trace2local.*`, envs `TRACE2LOCAL_*`, base path da UI `/trace2local`, atributos de span `t2l.trigger`/`t2l.execution.id`/`t2l.business`/`t2l.payload.*`, ingest `/t2lingest/v1/mutations`, marcador `[TRACE2LOCAL_REDACTED]`, glossário `trace2local-business.md`.
+- **UI/docs**: marca TRACE2LOCAL, README/SPEC/ADRs/evidências e scripts de captura atualizados.
+- **GitHub**: repositório renomeado `thiago701/tracevanta` → `thiago701/trace2local` (remote + scm/URLs atualizados).
+- Validação: `mvn clean install` completo verde (17 módulos), E2E LocalStack lambda-sqs 4/4, capturas v2/v3/v4 passando na UI `/trace2local` e persona walkthrough do payment-service — tudo com o novo nome.
+
 ### Instalador Maven + logs portáteis Datadog/OpenTelemetry
 
 - **`trace2local-maven-plugin`** (novo módulo): `analyze` faz engenharia reversa por bytecode (ASM) — endpoints Spring, `@Trace2Local`, serviços AWS SDK v2, JDBC — e audita a higiene de logs com sugestões (System.out/printStackTrace/SLF4J); gera `target/trace2local/canvas-map.md` e `report.md`. `configure` adiciona BOM+starter ao `pom.xml` (com backup, via MavenXpp3), cria `trace2local-business.md`, `application-trace2local.yml` e `logback-spring.xml` com o padrão de correlação — idempotente, nunca sobrescreve.
