@@ -50,6 +50,11 @@ public class TraceVantaWebFilter extends OncePerRequestFilter {
                 .setAttribute(OtelAttributeNames.HTTP_METHOD, request.getMethod())
                 .setAttribute(OtelAttributeNames.HTTP_ROUTE, routeOf(request))
                 .startSpan();
+        // correlação de LOGS portátil: MDC com as chaves do OpenTelemetry
+        // (trace_id/span_id) E do Datadog (dd.trace_id decimal 64-bit/ dd.span_id)
+        // — os logs funcionam no trace local e em pipelines Datadog/OTel sem mudança
+        tech.neural7.tracevanta.spring.TraceVantaLogs.injectTraceIds(span);
+
         // wrapper cacheia o corpo SEM consumi-lo — o controller continua lendo normalmente
         var caching = new org.springframework.web.util.ContentCachingRequestWrapper(request,
                 Math.max(1024, cfg.payloadMaxBytes() * 4));
@@ -71,6 +76,7 @@ public class TraceVantaWebFilter extends OncePerRequestFilter {
             throw t;
         } finally {
             span.end();
+            tech.neural7.tracevanta.spring.TraceVantaLogs.clearTraceIds();
         }
     }
 

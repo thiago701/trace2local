@@ -67,6 +67,11 @@
         <artifactId>tracevanta-testing</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>tech.neural7.tracevanta</groupId>
+        <artifactId>tracevanta-maven-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- OpenTelemetry -->
       <dependency>

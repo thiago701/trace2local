@@ -34,6 +34,7 @@ tudo em memória, e a UI declara o que não conseguiu observar — nunca inventa
 - [Por que TraceVanta](#-por-que-tracevanta)
 - [Demonstração](#-demonstração)
 - [Quickstart](#-quickstart)
+- [Instalador Maven](#-instalador-maven)
 - [Instrumentação](#-instrumentação)
 - [Como funciona](#-como-funciona)
 - [Arquitetura e módulos](#-arquitetura-e-módulos)
@@ -123,6 +124,65 @@ síncrono** no fim da invocação (ADR-002) — a árvore aparece no Station.
 |---|---|---|
 | [`examples/order-service`](examples/order-service/) | Spring Boot + DynamoDB + SNS/SQS fanout + consumidor (JC-1/2/3) + Native Image | `docker compose up --build` |
 | [`examples/lambda-sqs`](examples/lambda-sqs/) | Lambda java21 + DynamoDB + SQS no LocalStack, consumidor na MESMA árvore, token Bearer | `./mvnw -f examples/lambda-sqs/pom.xml -DskipTests package && docker compose -f examples/lambda-sqs/docker-compose.yml up` |
+
+---
+
+## 🧰 Instalador Maven
+
+O plugin `tracevanta-maven-plugin` faz a **configuração automática** do projeto
+e a **engenharia reversa** dos recursos que aparecem no canvas — além de
+auditar os logs e sugerir/gerar o padrão compatível com **Datadog e
+OpenTelemetry**.
+
+### 1. Analisar (somente leitura — engenharia reversa)
+
+```bash
+./mvnw tech.neural7.tracevanta:tracevanta-maven-plugin:0.1.0-SNAPSHOT:analyze
+```
+
+Escaneia o bytecode compilado e gera `target/tracevanta/`:
+
+- **`canvas-map.md`** — o que será mapeado na UI: endpoints Spring (catálogo +
+  disparo), métodos `@TraceVanta` (nós BUSINESS), serviços AWS SDK v2 e JDBC;
+- **`report.md`** — higiene de logs: usos de SLF4J, `System.out`,
+  `printStackTrace`, e sugestões concretas (ex.: *"Substitua System.out por
+  SLF4J em X — logs fora do SLF4J não correlacionam com o trace"*).
+
+### 2. Configurar (aplica a instalação)
+
+```bash
+./mvnw tech.neural7.tracevanta:tracevanta-maven-plugin:0.1.0-SNAPSHOT:configure
+```
+
+Idempotente (nunca sobrescreve arquivo existente):
+
+| Ação | Resultado |
+| :--- | :--- |
+| `pom.xml` | adiciona `tracevanta-bom` (import) + `tracevanta-spring-boot-starter` (backup em `pom.xml.tracevanta.bak`) |
+| `src/main/resources/tracevanta-business.md` | glossário de negócio para a aba STORY (se ausente) |
+| `src/main/resources/application-tracevanta.yml` | config inicial (porta, redaction, retention, delta DynamoDB) |
+| `src/main/resources/logback-spring.xml` | padrão de log com correlação de trace nos DOIS padrões |
+
+### 3. Logs portáteis (Datadog + OpenTelemetry)
+
+O starter injeta no MDC, por requisição, as chaves dos dois ecossistemas:
+
+| Chave | Formato | Quem lê |
+| :--- | :--- | :--- |
+| `trace_id` / `span_id` | hex 128/64 bits | OpenTelemetry (coletor Filelog, OTLP logs) |
+| `dd.trace_id` / `dd.span_id` | decimal unsigned 64 bits | Datadog (correlação de logs padrão) |
+
+Resultado real (demo payment-service):
+
+```
+INFO PaymentController - trace_id=259c9030880bbf221741f9751ba5189c span_id=87b3151e2ab98bac
+                        dd.trace_id=1675894817728829596 dd.span_id=9778182435261483948
+                        - Pix PIX-LOG2 criado
+```
+
+Os MESMOS logs correlacionam no trace local e em pipelines Datadog/OTel —
+adicione `logger.info(...)` de negócio nos seus serviços (o `analyze` aponta
+onde faltam).
 
 ---
 

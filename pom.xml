@@ -80,6 +80,7 @@
     <module>tracevanta-lambda</module>
     <module>tracevanta-station</module>
     <module>tracevanta-testing</module>
+    <module>tracevanta-maven-plugin</module>
     <module>tracevanta-architecture</module>
     <module>examples/order-service</module>
     <module>examples/lambda-sqs</module>
@@ -368,6 +369,12 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-gpg-plugin</artifactId>
           <version>${version.maven.gpg}</version>
+        </plugin>
+        <!-- instalador do TraceVanta: mvn tracevanta:analyze | tracevanta:configure -->
+        <plugin>
+          <groupId>tech.neural7.tracevanta</groupId>
+          <artifactId>tracevanta-maven-plugin</artifactId>
+          <version>${project.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>

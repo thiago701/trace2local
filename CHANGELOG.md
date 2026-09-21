@@ -5,6 +5,13 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### Instalador Maven + logs portáteis Datadog/OpenTelemetry
+
+- **`tracevanta-maven-plugin`** (novo módulo): `analyze` faz engenharia reversa por bytecode (ASM) — endpoints Spring, `@TraceVanta`, serviços AWS SDK v2, JDBC — e audita a higiene de logs com sugestões (System.out/printStackTrace/SLF4J); gera `target/tracevanta/canvas-map.md` e `report.md`. `configure` adiciona BOM+starter ao `pom.xml` (com backup, via MavenXpp3), cria `tracevanta-business.md`, `application-tracevanta.yml` e `logback-spring.xml` com o padrão de correlação — idempotente, nunca sobrescreve.
+- **`TraceVantaLogs`** (starter): injeta no MDC, por requisição, `trace_id`/`span_id` (hex OTel) e `dd.trace_id`/`dd.span_id` (decimal unsigned 64 bits Datadog) — os MESMOS logs correlacionam no trace local e em pipelines Datadog/OTel. Validado ao vivo no payment-service: `INFO PaymentController - trace_id=259c… span_id=87b3… dd.trace_id=1675… dd.span_id=9778… - Pix PIX-LOG2 criado`.
+- **README com seção didática do instalador** + README do plugin com limitações declaradas; plugin registrado no reactor e no BOM; testes unitários (scanner ASM com fixtures, relatórios, conversão decimal/hex, MDC).
+- Bugs achados no loop: `String.valueOf(long)` imprime com SINAL (dd.trace_id virava "-1" — corrigido com `Long.toUnsignedString`), `slf4j-simple` usa NOPMDCAdapter por design (testes migrados para logback-classic), índice errado do owner AWS no scanner.
+
 ### Loop cognitivo: encadeamento história↔nó + simulação por personas
 
 - **Pesquisa de métodos de avaliação cognitiva** (heuristic walkthroughs para dev tools, linking & brushing em visões coordenadas, métricas GOMS/CTA) — referências em `docs/qa/EVIDENCIA-STORYTELLING-PAYMENTS.md`.
