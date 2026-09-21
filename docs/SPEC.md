@@ -1,9 +1,9 @@
-# TraceVanta — Especificação Técnica e Arquitetural
+# Trace2Local — Especificação Técnica e Arquitetural
 
 > **Versão:** 1.0.0 · **Status:** GATE 1 **aprovado** (ver `docs/adr/GATE-1-DECISOES.md`) — implementação em andamento · **Data:** 2026-09-18
 > **Autor:** Thiago Gonçalo (Neural7 Tech) · elaborada pelo pipeline gated da Squad AI
-> **Tagline:** *TraceVanta — See your request travel through the system.*
-> **Substitui:** `tracevanta-spec.md` v1.0.0-PROPOSAL (parcial, interrompida na seção 3; renomeada no GATE 1, decisão D-5)
+> **Tagline:** *Trace2Local — See your request travel through the system.*
+> **Substitui:** `trace2local-spec.md` v1.0.0-PROPOSAL (parcial, interrompida na seção 3; renomeada no GATE 1, decisão D-5)
 
 ---
 
@@ -36,20 +36,20 @@ Três lacunas concretas, que nenhuma ferramenta resolve junta:
 
 ### 1.2 A solução
 
-O **TraceVanta** é uma biblioteca Java plugável via Maven que atua como *runtime canvas* interativa para o desenvolvedor. Ergonomia do **Swagger UI** — adicione a dependência, suba a aplicação, abra `http://localhost:9876/tracevanta` — expandida para cobrir **tracing distribuído, jornada de dados e infraestrutura local**: descobre endpoints, dispara a requisição do navegador e desenha ao vivo o caminho percorrido pelo código, bancos, filas e tópicos.
+O **Trace2Local** é uma biblioteca Java plugável via Maven que atua como *runtime canvas* interativa para o desenvolvedor. Ergonomia do **Swagger UI** — adicione a dependência, suba a aplicação, abra `http://localhost:9876/trace2local` — expandida para cobrir **tracing distribuído, jornada de dados e infraestrutura local**: descobre endpoints, dispara a requisição do navegador e desenha ao vivo o caminho percorrido pelo código, bancos, filas e tópicos.
 
 ### 1.3 Princípios norteadores
 
 1. **Zero-Configuration.** Uma dependência, zero linhas de configuração para o caso comum.
 2. **Local-First & Privacy by Design.** Nenhum byte sai da máquina do desenvolvedor. Bind exclusivo em loopback, sem telemetria de uso, sem *phone home*.
 3. **AOT-First.** Sem `-javaagent`, sem transformação de bytecode em runtime, sem geração opaca de proxy. Reflexão apenas **catalogada em build time** (ver §9 — a promessa honesta não é "zero reflexão").
-4. **Sem sobrecarga crítica.** Coleta desacoplada por fila limitada; o caminho de requisição do usuário nunca bloqueia por causa do TraceVanta. Descarte é preferível a espera.
+4. **Sem sobrecarga crítica.** Coleta desacoplada por fila limitada; o caminho de requisição do usuário nunca bloqueia por causa do Trace2Local. Descarte é preferível a espera.
 5. **Visibilidade semântica.** Não spans desconexos, mas uma árvore viva que correlaciona regra de negócio a mutação de infraestrutura.
-6. **Dev-time, não produção.** TraceVanta **NÃO DEVE** ser empacotado em artefato de produção; o starter falha o boot em perfil produtivo (§8.4).
+6. **Dev-time, não produção.** Trace2Local **NÃO DEVE** ser empacotado em artefato de produção; o starter falha o boot em perfil produtivo (§8.4).
 
 ### 1.4 Não-objetivos (escopo negativo explícito)
 
-O TraceVanta **NÃO** é, e não pretende virar:
+O Trace2Local **NÃO** é, e não pretende virar:
 
 | Não é | Por quê |
 | :--- | :--- |
@@ -71,7 +71,7 @@ O TraceVanta **NÃO** é, e não pretende virar:
 
 **P3 — Dev integrando fluxo assíncrono.** Publicou no SNS e a Lambda consumidora não rodou.
 
-> *Jornada (JC-3):* vê a árvore terminar em `SNS: order-events` sem o filho `SQS: billing-queue` → o TraceVanta marca o ramo como **órfão aguardando consumo** e mostra por quanto tempo.
+> *Jornada (JC-3):* vê a árvore terminar em `SNS: order-events` sem o filho `SQS: billing-queue` → o Trace2Local marca o ramo como **órfão aguardando consumo** e mostra por quanto tempo.
 
 **P4 — Tech lead em code review / onboarding.** Quer mostrar para alguém o que o serviço realmente faz.
 
@@ -83,7 +83,7 @@ O TraceVanta **NÃO** é, e não pretende virar:
 
 Levantamento verificado em 2026-09-18 (fontes em `docs/PESQUISA-2026-09-18.md`).
 
-| Ferramenta | O que faz | Onde difere do TraceVanta |
+| Ferramenta | O que faz | Onde difere do Trace2Local |
 | :--- | :--- | :--- |
 | **Glowroot** (Apache-2.0, ativo) | `-javaagent` + UI embutida em `localhost:4000`, call tree com timing, storage H2 local | **O vizinho mais próximo em arquitetura.** Mas é profiler passivo: não tem catálogo de endpoints clicável, não dispara requisição, não cruza serviço, não mostra delta de dados. E é agente — incompatível com Native Image |
 | **Jaeger all-in-one / Zipkin** | Binário único com collector + UI, recebe OTLP | Processo separado; você empurra telemetria nele. Sem catálogo, sem disparo, sem delta |
@@ -93,11 +93,11 @@ Levantamento verificado em 2026-09-18 (fontes em `docs/PESQUISA-2026-09-18.md`).
 | **Swagger UI / springdoc** | Catálogo de endpoints + disparo | Para no `200 OK`. Nada do que acontece depois |
 | **Postman** | Disparo isolado | Zero visão de runtime |
 
-**Conclusão honesta da pesquisa:** não foi encontrada nenhuma biblioteca Java que combine as três coisas — *UI embutida no próprio JAR* + *catálogo clicável com disparo* + *DAG cross-serviço ao vivo com delta de dados*. O nicho está aberto, mas **"agente Java com UI local embutida" já existe (Glowroot)** — o diferencial do TraceVanta precisa ser dito nesses três termos, nunca como "UI local de tracing", que não é novidade.
+**Conclusão honesta da pesquisa:** não foi encontrada nenhuma biblioteca Java que combine as três coisas — *UI embutida no próprio JAR* + *catálogo clicável com disparo* + *DAG cross-serviço ao vivo com delta de dados*. O nicho está aberto, mas **"agente Java com UI local embutida" já existe (Glowroot)** — o diferencial do Trace2Local precisa ser dito nesses três termos, nunca como "UI local de tracing", que não é novidade.
 
 ### 2.1 Matriz de posicionamento
 
-| Critério | Swagger UI | Jaeger/Zipkin | Glowroot | Postman | **TraceVanta** |
+| Critério | Swagger UI | Jaeger/Zipkin | Glowroot | Postman | **Trace2Local** |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | Ponto de partida | Contrato estático | Telemetria passiva | Agente passivo | Disparo isolado | **Disparo ativo + tracing imediato** |
 | Visão de infraestrutura | Nula | Spans genéricos | JDBC/HTTP | Nenhuma | **Árvore viva (DynamoDB, SQS, SNS, JDBC)** |
@@ -116,17 +116,17 @@ Decidido no GATE 0 com o product owner (2026-09-18).
 
 | # | Capacidade | Critério de aceite (verificável) |
 | :--- | :--- | :--- |
-| E1 | Runtime Java 25 + Spring Boot 4.x, modo **Embedded** | App de exemplo sobe com a dependência e serve a UI em `localhost:9876/tracevanta` sem configuração |
-| E2 | Modo **Companion** para AWS Lambda | `sam local invoke` de uma Lambda Java instrumentada aparece como trace na UI do TraceVanta Station |
+| E1 | Runtime Java 25 + Spring Boot 4.x, modo **Embedded** | App de exemplo sobe com a dependência e serve a UI em `localhost:9876/trace2local` sem configuração |
+| E2 | Modo **Companion** para AWS Lambda | `sam local invoke` de uma Lambda Java instrumentada aparece como trace na UI do Trace2Local Station |
 | E3 | Descoberta de endpoints HTTP | 100% dos `@RequestMapping` da app de exemplo listados, com schema de body quando disponível |
-| E4 | Disparo de requisição pela UI | Requisição sai com o `traceparent` do TraceVanta e a execução aparece na UI em < 1s |
+| E4 | Disparo de requisição pela UI | Requisição sai com o `traceparent` do Trace2Local e a execução aparece na UI em < 1s |
 | E5 | Canvas de execução (árvore) | Nós de HTTP, método de negócio anotado, DynamoDB, SNS, SQS e JDBC com latência individual |
 | E6 | Inspector de nó | Operação, latência, status, atributos semânticos e payload bruto redigido |
 | E7 | Delta de dados DynamoDB | `PutItem`/`UpdateItem`/`DeleteItem` exibem `before` e `after` (§4.10) |
 | E8 | Correlação assíncrona SNS→SQS | Mensagem publicada e consumida no mesmo trace, com ramo órfão sinalizado |
-| E9 | LocalStack como ambiente de referência | `docker-compose.yml` de exemplo sobe LocalStack + app + TraceVanta e a jornada JC-1 roda de ponta a ponta |
+| E9 | LocalStack como ambiente de referência | `docker-compose.yml` de exemplo sobe LocalStack + app + Trace2Local e a jornada JC-1 roda de ponta a ponta |
 | E10 | Compatibilidade GraalVM Native Image | A app de exemplo compila nativa e a jornada JC-1 roda idêntica (§9) |
-| E11 | Redaction por padrão | Campos sensíveis chegam à UI como `[TRACEVANTA_REDACTED]` sem configuração (§8.3) |
+| E11 | Redaction por padrão | Campos sensíveis chegam à UI como `[TRACE2LOCAL_REDACTED]` sem configuração (§8.3) |
 | E12 | Publicação open source no Maven Central | Artefatos assinados, Apache-2.0, com `-sources` e `-javadoc` |
 
 ### 3.2 Fora do escopo da v0.1 (com destino)
@@ -156,7 +156,7 @@ A v0.1 é declarada pronta quando, **em uma máquina limpa**, o comando `docker 
 ```mermaid
 flowchart TB
     subgraph BROWSER["Navegador — localhost"]
-        UI["TraceVanta UI<br/>(assets estáticos no JAR)"]
+        UI["Trace2Local UI<br/>(assets estáticos no JAR)"]
     end
 
     subgraph JVM["Processo da aplicação do dev"]
@@ -168,14 +168,14 @@ flowchart TB
             TRACER["Tracer / Context"]
             LIBINST["Library instrumentation<br/>AWS SDK v2 · JDBC · Spring Web"]
         end
-        subgraph TV["TraceVanta"]
-            BRIDGE["tracevanta-otel<br/>SpanProcessor + SpanExporter"]
+        subgraph TV["Trace2Local"]
+            BRIDGE["trace2local-otel<br/>SpanProcessor + SpanExporter"]
             DMC["Data Mutation Channel<br/>(canal lateral)"]
             RING["Ring Buffer limitado<br/>(descarte na borda)"]
             ASM["Trace Assembler<br/>spans → TVEM"]
             CAT["Endpoint Catalog"]
             LAUNCH["Request Launcher"]
-            HTTP["Servidor TraceVanta<br/>REST + SSE :9876"]
+            HTTP["Servidor Trace2Local<br/>REST + SSE :9876"]
         end
     end
 
@@ -206,7 +206,7 @@ Cinco responsabilidades, separadas por design:
 
 | Bloco | Responsabilidade única |
 | :--- | :--- |
-| **Bridge OTel** | Traduzir span do OTel para o modelo TraceVanta. Não decide, não agrega |
+| **Bridge OTel** | Traduzir span do OTel para o modelo Trace2Local. Não decide, não agrega |
 | **Data Mutation Channel** | Carregar o que não cabe num span: payload bruto e delta de dados |
 | **Ring Buffer** | Desacoplar o thread da requisição do trabalho de montagem. Descarta sob pressão |
 | **Trace Assembler** | Montar a árvore a partir de eventos que chegam fora de ordem |
@@ -219,18 +219,18 @@ Esta é a decisão estrutural que mais amarra o desenho, e nasce de um fato do r
 #### Modo A — Embedded (aplicações de longa duração)
 
 ```
-[ JAR da app ] ── contém ──> [ TraceVanta core + UI + servidor :9876 ]
+[ JAR da app ] ── contém ──> [ Trace2Local core + UI + servidor :9876 ]
 ```
 
-O TraceVanta vive dentro do processo. Disparo, coleta, montagem e UI no mesmo JVM. Zero infraestrutura extra. **Alvo:** Spring Boot local, `docker compose up`, testes de integração.
+O Trace2Local vive dentro do processo. Disparo, coleta, montagem e UI no mesmo JVM. Zero infraestrutura extra. **Alvo:** Spring Boot local, `docker compose up`, testes de integração.
 
 #### Modo B — Companion / Station (Lambda e processos efêmeros)
 
 ```
-[ Lambda Java ] ──OTLP/HTTP──> [ tracevanta-station (container) :9876 ] ──SSE──> [ navegador ]
+[ Lambda Java ] ──OTLP/HTTP──> [ trace2local-station (container) :9876 ] ──SSE──> [ navegador ]
 ```
 
-A função carrega apenas `tracevanta-lambda` (bridge + exporter, sem UI, sem servidor). O **Station** é um processo de longa duração — um container no mesmo `docker-compose.yml` do LocalStack — que recebe a telemetria, monta a árvore e serve a UI. **Alvo:** `sam local invoke`, `sam local start-api`, LocalStack Lambda.
+A função carrega apenas `trace2local-lambda` (bridge + exporter, sem UI, sem servidor). O **Station** é um processo de longa duração — um container no mesmo `docker-compose.yml` do LocalStack — que recebe a telemetria, monta a árvore e serve a UI. **Alvo:** `sam local invoke`, `sam local start-api`, LocalStack Lambda.
 
 | Aspecto | Embedded | Companion |
 | :--- | :--- | :--- |
@@ -244,30 +244,30 @@ A função carrega apenas `tracevanta-lambda` (bridge + exporter, sem UI, sem se
 
 #### Regra de flush em Lambda (crítica)
 
-O exporter do modo Companion **DEVE** operar em `SimpleSpanProcessor` com flush bloqueante no encerramento do handler, com teto de tempo configurável (padrão **200 ms**) e descarte silencioso ao estourar. Um `BatchSpanProcessor` padrão perde telemetria: o ambiente congela antes do worker acordar. O wrapper `TraceVantaLambdaHandler` (§4.12) encapsula isso.
+O exporter do modo Companion **DEVE** operar em `SimpleSpanProcessor` com flush bloqueante no encerramento do handler, com teto de tempo configurável (padrão **200 ms**) e descarte silencioso ao estourar. Um `BatchSpanProcessor` padrão perde telemetria: o ambiente congela antes do worker acordar. O wrapper `Trace2LocalLambdaHandler` (§4.12) encapsula isso.
 
 ### 4.3 Módulos Maven
 
 ```
-tracevanta/                        (pom agregador, groupId tech.neural7.tracevanta)
-├── tracevanta-bom                 — BOM para o consumidor fixar versões
-├── tracevanta-core                — TVEM, ring buffer, assembler, redaction, SPI. ZERO dependência de framework
-├── tracevanta-otel                — ponte OTel: SpanProcessor, SpanExporter, mapeamento semântico
-├── tracevanta-ui                  — assets da UI empacotados como WebJar (META-INF/resources)
-├── tracevanta-server              — REST + SSE agnóstico de framework (sobre com.sun.net.httpserver no Station)
-├── tracevanta-spring-boot-starter — autoconfiguração, catálogo de endpoints, launcher, RuntimeHints
-├── tracevanta-aws                 — semântica AWS + captura de delta DynamoDB + correlação SNS→SQS
-├── tracevanta-jdbc                — semântica SQL + captura de delta opt-in
-├── tracevanta-lambda              — modo Companion: wrapper de handler, exporter, flush síncrono
-├── tracevanta-station             — aplicação standalone (container) do modo Companion
-└── tracevanta-testing             — JUnit 5 extension: asserções sobre a árvore em testes de integração
+trace2local/                        (pom agregador, groupId tech.neural7.trace2local)
+├── trace2local-bom                 — BOM para o consumidor fixar versões
+├── trace2local-core                — TVEM, ring buffer, assembler, redaction, SPI. ZERO dependência de framework
+├── trace2local-otel                — ponte OTel: SpanProcessor, SpanExporter, mapeamento semântico
+├── trace2local-ui                  — assets da UI empacotados como WebJar (META-INF/resources)
+├── trace2local-server              — REST + SSE agnóstico de framework (sobre com.sun.net.httpserver no Station)
+├── trace2local-spring-boot-starter — autoconfiguração, catálogo de endpoints, launcher, RuntimeHints
+├── trace2local-aws                 — semântica AWS + captura de delta DynamoDB + correlação SNS→SQS
+├── trace2local-jdbc                — semântica SQL + captura de delta opt-in
+├── trace2local-lambda              — modo Companion: wrapper de handler, exporter, flush síncrono
+├── trace2local-station             — aplicação standalone (container) do modo Companion
+└── trace2local-testing             — JUnit 5 extension: asserções sobre a árvore em testes de integração
 ```
 
 **Regras de dependência (verificadas por ArchUnit em CI):**
 
-- `tracevanta-core` **NÃO DEVE** depender de Spring, AWS SDK, OTel ou qualquer framework. É POJO + JDK.
-- Nenhum módulo **DEVE** depender de `tracevanta-spring-boot-starter`, exceto o consumidor final.
-- `tracevanta-aws` e `tracevanta-jdbc` **DEVEM** declarar suas dependências pesadas como `provided` — quem não usa DynamoDB não baixa o SDK do DynamoDB.
+- `trace2local-core` **NÃO DEVE** depender de Spring, AWS SDK, OTel ou qualquer framework. É POJO + JDK.
+- Nenhum módulo **DEVE** depender de `trace2local-spring-boot-starter`, exceto o consumidor final.
+- `trace2local-aws` e `trace2local-jdbc` **DEVEM** declarar suas dependências pesadas como `provided` — quem não usa DynamoDB não baixa o SDK do DynamoDB.
 - A UI **NÃO DEVE** referenciar nenhum host externo (CDN, fonte, telemetria). Verificado por teste que faz grep de `http` nos assets.
 
 ### 4.4 Pipeline de coleta
@@ -278,11 +278,11 @@ tracevanta/                        (pom agregador, groupId tech.neural7.tracevan
      requisição       bloqueia                 dedicada             não-bloqueante
 ```
 
-1. **Ingest (thread da requisição).** O `SpanProcessor` do TraceVanta recebe `onStart`/`onEnd`. O contrato do OTel é explícito: ambos são chamados **sincronamente na thread de execução e não devem bloquear**. Portanto o único trabalho permitido aqui é montar um evento imutável e oferecê-lo à fila.
-2. **Ring Buffer.** `ArrayBlockingQueue` limitada (padrão **4096** eventos) com política `offer()` — **nunca `put()`**. Fila cheia ⇒ evento descartado e contador `tracevanta.dropped` incrementado, exibido na UI como aviso honesto ("N eventos descartados"). Ver [ADR-006](adr/ADR-006-ring-buffer-e-backpressure.md).
+1. **Ingest (thread da requisição).** O `SpanProcessor` do Trace2Local recebe `onStart`/`onEnd`. O contrato do OTel é explícito: ambos são chamados **sincronamente na thread de execução e não devem bloquear**. Portanto o único trabalho permitido aqui é montar um evento imutável e oferecê-lo à fila.
+2. **Ring Buffer.** `ArrayBlockingQueue` limitada (padrão **4096** eventos) com política `offer()` — **nunca `put()`**. Fila cheia ⇒ evento descartado e contador `trace2local.dropped` incrementado, exibido na UI como aviso honesto ("N eventos descartados"). Ver [ADR-006](adr/ADR-006-ring-buffer-e-backpressure.md).
 3. **Assembler (thread virtual dedicada).** Consome a fila, resolve parentesco por `spanId`/`parentSpanId`, aplica a camada semântica, funde os eventos do Data Mutation Channel e emite mutações do TVEM.
 4. **Hub SSE.** Fan-out para os navegadores conectados, com coalescência: no máximo **20 frames/s** por trace, agregando mutações no intervalo.
-5. **Exporter em cadeia (opcional).** O TraceVanta **NÃO DEVE** substituir o pipeline OTel do dev. Se já existe um `SpanExporter` configurado (OTLP para Jaeger, por exemplo), o TraceVanta se **acrescenta** como processor adicional.
+5. **Exporter em cadeia (opcional).** O Trace2Local **NÃO DEVE** substituir o pipeline OTel do dev. Se já existe um `SpanExporter` configurado (OTLP para Jaeger, por exemplo), o Trace2Local se **acrescenta** como processor adicional.
 
 > **Por que não LMAX Disruptor?** A spec original citava Disruptor. Uma `ArrayBlockingQueue` entrega o que precisamos (desacoplamento + descarte na borda) com zero dependência nova, e o Disruptor resolve um problema de throughput de milhões de eventos/s que uma ferramenta de debug local não tem. P1-Simplicidade vence. Se a medição (§7.1) mostrar contenção, reavaliar com número na mão — não antes.
 
@@ -290,10 +290,10 @@ tracevanta/                        (pom agregador, groupId tech.neural7.tracevan
 
 Achado da pesquisa que dita este desenho: nas convenções semânticas do OpenTelemetry, os atributos de **banco de dados** estão **estáveis** (`db.system.name`, `db.operation.name`, `db.collection.name`, `db.query.text`), mas **toda a página de mensageria** (`messaging.*`) e **todos os atributos AWS** (`aws.dynamodb.*`, `aws.sqs.queue.url`, `aws.sns.topic.arn`) estão em **status Development** — podem mudar de nome em release menor.
 
-Consequência normativa: **nenhum nome de atributo do OTel DEVE aparecer fora do módulo `tracevanta-otel`.** Existe uma única classe de mapeamento, versionada e testada:
+Consequência normativa: **nenhum nome de atributo do OTel DEVE aparecer fora do módulo `trace2local-otel`.** Existe uma única classe de mapeamento, versionada e testada:
 
 ```java
-// tracevanta-otel
+// trace2local-otel
 public interface SemanticMapper {
     Optional<NodeKind> kindOf(SpanData span);      // DYNAMODB, SQS, SNS, SQL, HTTP_SERVER...
     NodeLabel labelOf(SpanData span);              // "DynamoDB: orders"
@@ -303,7 +303,7 @@ public interface SemanticMapper {
 
 O `SemanticMapper` **DEVE** ter teste de contrato por versão de semconv suportada e **DEVE** degradar para um nó genérico (`NodeKind.UNKNOWN`, rótulo derivado de `span.name`) quando não reconhecer — nunca falhar, nunca sumir com o nó.
 
-### 4.6 Modelo de dados — TVEM (TraceVanta Execution Model)
+### 4.6 Modelo de dados — TVEM (Trace2Local Execution Model)
 
 O TVEM é o modelo público do produto. Ele **não** é o modelo do OTel: um span é um intervalo de tempo com atributos; um nó do TVEM é **algo que aconteceu com a execução**, e carrega o que o dev quer ver.
 
@@ -317,7 +317,7 @@ public record Execution(
     Duration duration,           // do início ao último nó fechado
     List<Node> roots,
     ExecutionMetrics metrics,    // nós, profundidade, spans perdidos, eventos descartados
-    List<Warning> warnings       // honestidade: o que o TraceVanta não conseguiu ver
+    List<Warning> warnings       // honestidade: o que o Trace2Local não conseguiu ver
 ) {}
 
 public record Node(
@@ -351,14 +351,14 @@ Três invariantes do modelo, verificadas por teste de propriedade:
 
 - **I1 — Toda execução é uma árvore, sempre.** Span órfão (pai perdido no descarte) é reparentado na raiz com `NodeStatus.ORPHANED`, nunca some.
 - **I2 — Tempo próprio nunca é negativo.** `selfTime = totalTime − Σ(totalTime dos filhos sobrepostos)`, com piso em zero.
-- **I3 — Fidelidade é declarada, não presumida.** Se o delta foi inferido (§4.10), o campo `fidelity` diz isso, e a UI mostra. O TraceVanta **NÃO DEVE** exibir dado inferido com aparência de dado observado.
+- **I3 — Fidelidade é declarada, não presumida.** Se o delta foi inferido (§4.10), o campo `fidelity` diz isso, e a UI mostra. O Trace2Local **NÃO DEVE** exibir dado inferido com aparência de dado observado.
 
 ### 4.7 SPI pública
 
 Cinco pontos de extensão. Tudo além disso é interno e pode mudar sem aviso (regra de compatibilidade em §11.3).
 
 ```java
-public interface TraceVantaExtension {                 // ServiceLoader, AOT-safe
+public interface Trace2LocalExtension {                 // ServiceLoader, AOT-safe
     default void contribute(NodeBuilder node, SpanData span) {}
     default Optional<DataMutation> captureMutation(MutationContext ctx) { return Optional.empty(); }
     default RedactionPolicy redactionPolicy() { return RedactionPolicy.INHERIT; }
@@ -367,7 +367,7 @@ public interface TraceVantaExtension {                 // ServiceLoader, AOT-saf
 }
 ```
 
-Registro por `META-INF/services` (`ServiceLoader`) — funciona em Native Image quando o serviço é declarado, ao contrário de varredura de classpath. Os módulos `tracevanta-aws` e `tracevanta-jdbc` são, eles próprios, implementações desta SPI: **o núcleo não conhece AWS**.
+Registro por `META-INF/services` (`ServiceLoader`) — funciona em Native Image quando o serviço é declarado, ao contrário de varredura de classpath. Os módulos `trace2local-aws` e `trace2local-jdbc` são, eles próprios, implementações desta SPI: **o núcleo não conhece AWS**.
 
 ### 4.8 Descoberta de endpoints
 
@@ -381,7 +381,7 @@ Registro por `META-INF/services` (`ServiceLoader`) — funciona em Native Image 
 
 > **Nota de honestidade técnica:** a estratégia 2 usa reflexão. Em Native Image ela só funciona com os tipos **registrados em build time** pelo `RuntimeHintsRegistrar` do starter. É por isso que o princípio §1.3 diz "reflexão catalogada", e não "zero reflexão" — é exatamente o que o springdoc faz, e ele tem bug aberto com GraalVM 25 justamente aqui. Ver [ADR-005](adr/ADR-005-empacotamento-ui-e-runtime-hints.md) e §9.
 
-**Lambda (modo Companion).** Não há `HandlerMapping`. O catálogo vem de: (a) parse do `template.yaml` do SAM quando presente no diretório montado, (b) registro explícito via `@TraceVantaEndpoint` no handler, (c) fallback: catálogo vazio e a UI vira somente-observação (ainda útil — a árvore aparece quando o dev dispara pelo `sam local`).
+**Lambda (modo Companion).** Não há `HandlerMapping`. O catálogo vem de: (a) parse do `template.yaml` do SAM quando presente no diretório montado, (b) registro explícito via `@Trace2LocalEndpoint` no handler, (c) fallback: catálogo vazio e a UI vira somente-observação (ainda útil — a árvore aparece quando o dev dispara pelo `sam local`).
 
 ### 4.9 Request Launcher
 
@@ -394,8 +394,8 @@ POST /api/execute
 Regras:
 
 - O launcher **DEVE** gerar um contexto W3C novo e injetar `traceparent`, para que a execução seja atribuível ao disparo — é isso que faz o clique aparecer na árvore em menos de um segundo.
-- Adiciona `tracevanta.trigger=ui` como baggage, permitindo ao dev filtrar disparos próprios de tráfego real.
-- Alvo **DEVE** ser restrito a loopback e à porta da própria aplicação (modo Embedded) ou ao endpoint local configurado (modo Companion). **NÃO DEVE** aceitar URL arbitrária — senão o TraceVanta vira um SSRF com UI bonita. Ver §8.2.
+- Adiciona `trace2local.trigger=ui` como baggage, permitindo ao dev filtrar disparos próprios de tráfego real.
+- Alvo **DEVE** ser restrito a loopback e à porta da própria aplicação (modo Embedded) ou ao endpoint local configurado (modo Companion). **NÃO DEVE** aceitar URL arbitrária — senão o Trace2Local vira um SSRF com UI bonita. Ver §8.2.
 - Um disparo por vez por sessão de UI; o segundo clique cancela o anterior na visualização, nunca no servidor.
 
 ### 4.10 Delta de dados — o diferencial, e seu preço honesto
@@ -420,7 +420,7 @@ Captura via `ExecutionInterceptor` do AWS SDK v2 (o mesmo mecanismo da instrumen
 | `GetItem`/`Query` | — | itens retornados (truncados) | READ_ONLY |
 | `TransactWriteItems` | não suportado na v0.1 | — | UNAVAILABLE |
 
-> ⚠️ **Efeito colateral declarado:** para obter o `before`, o interceptor **modifica a requisição** do desenvolvedor, elevando `ReturnValues` de `NONE` para `ALL_OLD`. Isso muda o consumo de capacidade de escrita e, em tese, pode mudar o comportamento do código do dev se ele inspecionar a resposta. Por isso: (a) a elevação **DEVE** ser desligável (`tracevanta.aws.dynamodb.capture-before=false`), (b) **DEVE** estar documentada em letra grande no README, (c) o TraceVanta **DEVE** devolver ao código da aplicação a resposta **sem** os atributos que ele próprio pediu, restaurando a semântica original. Esta é a decisão mais arriscada da spec — está isolada no ADR-003 para poder ser revertida sem tocar no resto.
+> ⚠️ **Efeito colateral declarado:** para obter o `before`, o interceptor **modifica a requisição** do desenvolvedor, elevando `ReturnValues` de `NONE` para `ALL_OLD`. Isso muda o consumo de capacidade de escrita e, em tese, pode mudar o comportamento do código do dev se ele inspecionar a resposta. Por isso: (a) a elevação **DEVE** ser desligável (`trace2local.aws.dynamodb.capture-before=false`), (b) **DEVE** estar documentada em letra grande no README, (c) o Trace2Local **DEVE** devolver ao código da aplicação a resposta **sem** os atributos que ele próprio pediu, restaurando a semântica original. Esta é a decisão mais arriscada da spec — está isolada no ADR-003 para poder ser revertida sem tocar no resto.
 
 #### SQL/JDBC — fidelidade INFERRED ou opt-in
 
@@ -428,11 +428,11 @@ Não existe `ReturnValues` em SQL. Três níveis, configuráveis:
 
 1. **`off`** (padrão): sem delta, apenas `db.query.text` redigido e `updateCount`.
 2. **`inferred`**: o core deriva a intenção do SQL (parse leve de `INSERT`/`UPDATE`/`DELETE` + tabela + cláusula `WHERE`) e exibe com `fidelity=INFERRED`, sem tocar no banco.
-3. **`before-image`** (opt-in explícito, com aviso): antes de um `UPDATE`/`DELETE`, o TraceVanta executa um `SELECT` correspondente na **mesma conexão e transação**. Captura exata, mas **altera o custo e a contenção da transação do dev** — por isso nunca é padrão.
+3. **`before-image`** (opt-in explícito, com aviso): antes de um `UPDATE`/`DELETE`, o Trace2Local executa um `SELECT` correspondente na **mesma conexão e transação**. Captura exata, mas **altera o custo e a contenção da transação do dev** — por isso nunca é padrão.
 
 #### Payload bruto
 
-Request/response de cada nó são capturados truncados em **8 KB** por padrão (`tracevanta.payload.max-bytes`), redigidos antes de sair do processo de origem (§8.3), e nunca persistidos em disco na v0.1.
+Request/response de cada nó são capturados truncados em **8 KB** por padrão (`trace2local.payload.max-bytes`), redigidos antes de sair do processo de origem (§8.3), e nunca persistidos em disco na v0.1.
 
 ### 4.11 Propagação de contexto
 
@@ -445,28 +445,28 @@ Request/response de cada nó são capturados truncados em **8 KB** por padrão (
 | Lambda | Contexto do evento + `traceparent` propagado pelo wrapper | Sólido |
 | **Virtual threads** | `Context` do OTel é `ThreadLocal`; **`Thread.startVirtualThread` não herda contexto** (issue oficial fechada como *not planned*) | **Armadilha documentada** |
 
-Sobre a última linha: o TraceVanta **DEVE** fornecer `TraceVantaThreadFactory`, que captura `Context.current()` no fork e reabre o escopo na thread nova, e **DEVE** detectar ramos com pai ausente marcando-os `ORPHANED` com a mensagem *"contexto possivelmente perdido em thread não instrumentada"* — em vez de silenciosamente desenhar uma árvore errada.
+Sobre a última linha: o Trace2Local **DEVE** fornecer `Trace2LocalThreadFactory`, que captura `Context.current()` no fork e reabre o escopo na thread nova, e **DEVE** detectar ramos com pai ausente marcando-os `ORPHANED` com a mensagem *"contexto possivelmente perdido em thread não instrumentada"* — em vez de silenciosamente desenhar uma árvore errada.
 
-Sobre `ScopedValue`: é **final** no Java 25 (JEP 506) e é o mecanismo idiomático para contexto imutável, com herança automática dentro de `StructuredTaskScope`. **Mas** não propaga para pools de threads de plataforma clássicos, e `StructuredTaskScope` ainda é **preview** (JEP 505) no Java 25 — uma biblioteca que outros embutem **NÃO DEVE** exigir `--enable-preview`. Decisão: `ScopedValue` é usado **internamente** pelo TraceVanta para carregar o `executionId` do disparo; a propagação de trace continua sendo a do OTel `Context`. Ver [ADR-009](adr/ADR-009-baseline-jdk-e-matriz-de-suporte.md).
+Sobre `ScopedValue`: é **final** no Java 25 (JEP 506) e é o mecanismo idiomático para contexto imutável, com herança automática dentro de `StructuredTaskScope`. **Mas** não propaga para pools de threads de plataforma clássicos, e `StructuredTaskScope` ainda é **preview** (JEP 505) no Java 25 — uma biblioteca que outros embutem **NÃO DEVE** exigir `--enable-preview`. Decisão: `ScopedValue` é usado **internamente** pelo Trace2Local para carregar o `executionId` do disparo; a propagação de trace continua sendo a do OTel `Context`. Ver [ADR-009](adr/ADR-009-baseline-jdk-e-matriz-de-suporte.md).
 
 ### 4.12 Wrapper de Lambda
 
 ```java
-public abstract class TraceVantaLambdaHandler<I, O> implements RequestHandler<I, O> {
+public abstract class Trace2LocalLambdaHandler<I, O> implements RequestHandler<I, O> {
     @Override public final O handleRequest(I input, Context ctx) {
-        return TraceVantaRuntime.around(ctx, () -> handle(input, ctx));  // abre span raiz, flush no fim
+        return Trace2LocalRuntime.around(ctx, () -> handle(input, ctx));  // abre span raiz, flush no fim
     }
     protected abstract O handle(I input, Context ctx);
 }
 ```
 
-Alternativa sem herança, para quem não pode trocar a classe base: `TraceVantaRuntime.instrument(handler)` como decorator. Ambas **DEVEM** garantir o flush síncrono de §4.2.
+Alternativa sem herança, para quem não pode trocar a classe base: `Trace2LocalRuntime.instrument(handler)` como decorator. Ambas **DEVEM** garantir o flush síncrono de §4.2.
 
 ---
 
 ## 5. Contratos de API
 
-Prefixo único: `/tracevanta` (UI) e `/tracevanta/api` (dados). Configurável por `tracevanta.base-path`.
+Prefixo único: `/trace2local` (UI) e `/trace2local/api` (dados). Configurável por `trace2local.base-path`.
 
 ### 5.1 REST
 
@@ -510,11 +510,11 @@ Regras: `id:` monotônico por execução para permitir `Last-Event-ID` na recone
 
 ### 5.3 Ingest do Station (modo Companion)
 
-O Station aceita **OTLP/HTTP** padrão em `/v1/traces` — assim qualquer serviço já instrumentado com OTel aponta para ele sem código do TraceVanta — **mais** o endpoint proprietário `/tvingest/v1/mutations` para o Data Mutation Channel, que não tem equivalente em OTLP. Um serviço que envie apenas OTLP aparece na árvore **sem** delta de dados — degradação prevista, não erro.
+O Station aceita **OTLP/HTTP** padrão em `/v1/traces` — assim qualquer serviço já instrumentado com OTel aponta para ele sem código do Trace2Local — **mais** o endpoint proprietário `/t2lingest/v1/mutations` para o Data Mutation Channel, que não tem equivalente em OTLP. Um serviço que envie apenas OTLP aparece na árvore **sem** delta de dados — degradação prevista, não erro.
 
 ### 5.4 Configuração
 
-Propriedades com prefixo `tracevanta.`, resolvidas na ordem: propriedade de sistema > variável de ambiente > `application.yml` > padrão.
+Propriedades com prefixo `trace2local.`, resolvidas na ordem: propriedade de sistema > variável de ambiente > `application.yml` > padrão.
 
 | Propriedade | Padrão | Nota |
 | :--- | :--- | :--- |
@@ -538,7 +538,7 @@ Propriedades com prefixo `tracevanta.`, resolvidas na ordem: propriedade de sist
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ TRACEVANTA  │ ENVIRONMENT: localstack (dev) │ APP: order-service │ ● CONNECTED│
+│ TRACE2LOCAL  │ ENVIRONMENT: localstack (dev) │ APP: order-service │ ● CONNECTED│
 ├───────────────────────┬──────────────────────────────────────────────────────┤
 │ DISCOVERED ENDPOINTS  │ EXECUTION CANVAS: Trace #TV-88291                     │
 │  ▾ POST /orders       │                                                       │
@@ -564,7 +564,7 @@ Propriedades com prefixo `tracevanta.`, resolvidas na ordem: propriedade de sist
 - **Sem build step obrigatório para o consumidor.** Assets pré-compilados no WebJar; o dev nunca roda `npm`.
 - **Offline absoluto.** Zero requisição externa: sem CDN, sem Google Fonts, sem source map remoto. Verificado por teste (§4.3).
 - **Orçamento de bundle: 400 KB gzip.** Grafo com `d3-hierarchy` (ISC, ~6 KB gzip) para a árvore + SVG próprio. `Cytoscape.js` (MIT, ~137 KB) entra apenas se a visão DAG da v0.2 exigir, e ELK.js (~433 KB, EPL-2.0/GPL) fica fora por peso e licença.
-- **Estados honestos.** Toda degradação aparece: eventos descartados, ramo órfão, delta indisponível, schema não inferido. A UI **NÃO DEVE** esconder o que o TraceVanta não viu.
+- **Estados honestos.** Toda degradação aparece: eventos descartados, ramo órfão, delta indisponível, schema não inferido. A UI **NÃO DEVE** esconder o que o Trace2Local não viu.
 - **Tema escuro como padrão**, contraste AA, navegação por teclado no canvas.
 
 ---
@@ -575,7 +575,7 @@ Propriedades com prefixo `tracevanta.`, resolvidas na ordem: propriedade de sist
 
 | ID | Requisito | Verificação |
 | :--- | :--- | :--- |
-| NFR-1 | Overhead p95 de latência da requisição instrumentada **< 5%** vs. baseline sem TraceVanta | JMH + teste de integração comparativo em CI, 3 execuções, mediana |
+| NFR-1 | Overhead p95 de latência da requisição instrumentada **< 5%** vs. baseline sem Trace2Local | JMH + teste de integração comparativo em CI, 3 execuções, mediana |
 | NFR-2 | `onStart`/`onEnd` do processor: **< 50 µs p99**, sem alocação em caminho quente além do evento | JMH dedicado |
 | NFR-3 | Nenhuma operação bloqueante na thread da requisição | ArchUnit + revisão: proibido `put()`, `synchronized` em caminho de ingest, I/O |
 | NFR-4 | Atraso disparo → primeiro nó na UI **< 1 s** p95 | Teste e2e com Playwright |
@@ -600,8 +600,8 @@ Propriedades com prefixo `tracevanta.`, resolvidas na ordem: propriedade de sist
 ### 7.3 Operacionais
 
 - **Tudo em memória.** Sem banco, sem arquivo, sem daemon. Reiniciar a app zera o histórico — e isso está certo para v0.1.
-- **Degradação preferida à falha.** Qualquer erro interno do TraceVanta **NÃO DEVE** propagar para a aplicação do dev. O bridge encapsula tudo em `try/catch` com log em nível `debug` e contador na UI. Uma ferramenta de debug que derruba o serviço é pior que nenhuma ferramenta.
-- **Kill switch.** `-Dtracevanta.enabled=false` desliga tudo sem remover a dependência, sem custo residual além do carregamento das classes.
+- **Degradação preferida à falha.** Qualquer erro interno do Trace2Local **NÃO DEVE** propagar para a aplicação do dev. O bridge encapsula tudo em `try/catch` com log em nível `debug` e contador na UI. Uma ferramenta de debug que derruba o serviço é pior que nenhuma ferramenta.
+- **Kill switch.** `-Dtrace2local.enabled=false` desliga tudo sem remover a dependência, sem custo residual além do carregamento das classes.
 
 ---
 
@@ -609,7 +609,7 @@ Propriedades com prefixo `tracevanta.`, resolvidas na ordem: propriedade de sist
 
 ### 8.1 Superfície de rede
 
-- Bind **DEVE** ser `127.0.0.1` por padrão. Expor em `0.0.0.0` exige `tracevanta.allow-non-loopback=true` **e** emite `WARN` a cada boot.
+- Bind **DEVE** ser `127.0.0.1` por padrão. Expor em `0.0.0.0` exige `trace2local.allow-non-loopback=true` **e** emite `WARN` a cada boot.
 - Sem autenticação por design: em loopback, autenticação seria teatro. A consequência é declarada — **quem tem a máquina, tem a UI**.
 - CORS fechado; a UI só é servida pela própria origem.
 - Cabeçalhos: `Content-Security-Policy` restritivo (`default-src 'self'`), `X-Frame-Options: DENY`.
@@ -630,7 +630,7 @@ Padrão `strict`, aplicado **na origem**, antes de o dado entrar no buffer — n
 2. **Por padrão de valor:** cartão (Luhn), CPF/CNPJ, JWT (`eyJ…`), chave AWS (`AKIA…`), e-mail, `Bearer …`, chave privada PEM.
 3. **Por tamanho:** valores acima do limite são truncados com marca de truncamento.
 
-Substituto literal: `[TRACEVANTA_REDACTED]` — o mesmo do protótipo. A política é extensível pela SPI e **DEVE** ter teste com um corpus de payloads sensíveis; falso-negativo em campo óbvio é bug bloqueante.
+Substituto literal: `[TRACE2LOCAL_REDACTED]` — o mesmo do protótipo. A política é extensível pela SPI e **DEVE** ter teste com um corpus de payloads sensíveis; falso-negativo em campo óbvio é bug bloqueante.
 
 > **Limite declarado:** redaction é mitigação, não garantia. Um campo de negócio com dado pessoal e nome inocente (`observacao`) passa. Como nada sai da máquina (§1.3), o risco residual é o do próprio ambiente local — mas ele **DEVE** estar escrito no README, não escondido.
 
@@ -639,7 +639,7 @@ Substituto literal: `[TRACEVANTA_REDACTED]` — o mesmo do protótipo. A políti
 Três camadas, porque a mais provável causa de incidente com esta lib é ela subir junto com a aplicação:
 
 1. Escopo recomendado no README: `<scope>provided</scope>` ou perfil Maven `dev`.
-2. O starter **DEVE** se autodesabilitar quando não detectar perfil de desenvolvimento e **DEVE** falhar o boot com mensagem explícita se `tracevanta.enabled=true` for forçado fora de dev sem `tracevanta.i-know-what-im-doing=true`.
+2. O starter **DEVE** se autodesabilitar quando não detectar perfil de desenvolvimento e **DEVE** falhar o boot com mensagem explícita se `trace2local.enabled=true` for forçado fora de dev sem `trace2local.i-know-what-im-doing=true`.
 3. Aviso visível no log de boot: banner com porta, modo e política de redaction.
 
 ### 8.5 Cadeia de suprimento
@@ -654,11 +654,11 @@ Três camadas, porque a mais provável causa de incidente com esta lib é ela su
 
 A spec original dizia "sem instrumentação dinâmica e sem proxies CGLIB". Isso está certo, mas é insuficiente como promessa. A promessa verificável é:
 
-> **O TraceVanta não usa `-javaagent` nem transformação de bytecode em runtime, e toda reflexão que ele faz está catalogada em metadados de build.**
+> **O Trace2Local não usa `-javaagent` nem transformação de bytecode em runtime, e toda reflexão que ele faz está catalogada em metadados de build.**
 
 Fatos que sustentam e limitam isso:
 
-- O javaagent do OpenTelemetry **não funciona** em Native Image — a documentação oficial do OTel afirma isso, e a issue do GraalVM (GR-55707) trata transformação em runtime como *non-goal*. **Este é o motivo estrutural de existir do TraceVanta**: no mundo AOT, o caminho do agente está fechado.
+- O javaagent do OpenTelemetry **não funciona** em Native Image — a documentação oficial do OTel afirma isso, e a issue do GraalVM (GR-55707) trata transformação em runtime como *non-goal*. **Este é o motivo estrutural de existir do Trace2Local**: no mundo AOT, o caminho do agente está fechado.
 - O caminho sem agente existe e é oficial: `opentelemetry-spring-boot-starter` auto-configura via AOP + DI + `BeanPostProcessor`, com exemplo oficial de native image. Spring Boot 4 traz ainda seu próprio starter OTel integrado ao Micrometer.
 - **Consequência dura:** a cobertura em AOT é limitada às bibliotecas com *library instrumentation* publicada (AWS SDK v2, JDBC, Spring Web). Qualquer outra dependência do serviço do dev **não aparece automaticamente na árvore**. A spec **DEVE** dizer isso no README, e a SPI (§4.7) é a válvula de escape.
 - `opentelemetry-jdbc` ainda é publicado como `-alpha` — sem garantia de SemVer numa peça central do nosso pipeline SQL. Risco R-04 (§12).
@@ -668,7 +668,7 @@ Fatos que sustentam e limitam isso:
 - Cada módulo **DEVE** publicar seu `RuntimeHintsRegistrar` (Spring) e/ou `reachability-metadata.json` (GraalVM) para: assets da UI (`resources`), tipos do TVEM serializados por Jackson, `ServiceLoader` da SPI, e tipos de request/response cujo schema o catálogo inspeciona.
 - O pipeline de CI **DEVE** compilar a aplicação de exemplo em Native Image **a cada PR** e rodar as jornadas JC-1/JC-2 sobre o binário. "Compila" não é critério; "a jornada funciona no binário" é.
 - Log4j2 **não** é suportado em native image com Spring; a app de exemplo usa Logback.
-- **Alerta de manutenção:** o springdoc — referência do setor nesta técnica — tem issue aberta (fev/2026) com o formato mais estrito de metadados do GraalVM 25. O budget de manutenção do TraceVanta precisa contar com isso, e a matriz de suporte declara a versão de GraalVM testada.
+- **Alerta de manutenção:** o springdoc — referência do setor nesta técnica — tem issue aberta (fev/2026) com o formato mais estrito de metadados do GraalVM 25. O budget de manutenção do Trace2Local precisa contar com isso, e a matriz de suporte declara a versão de GraalVM testada.
 
 ---
 
@@ -686,7 +686,7 @@ Fatos que sustentam e limitam isso:
 | Performance | NFR-1, NFR-2 | JMH + comparativo | Sem regressão > 10% vs. baseline anterior |
 | Segurança | Redaction sobre corpus sensível; SSRF; boot em perfil prod | JUnit + gitleaks + OWASP dep-check | 0 falha; 0 vulnerabilidade crítica |
 
-**Regra de ouro dos testes:** todo teste que valida "o TraceVanta viu X" **DEVE** também ter o gêmeo negativo "o TraceVanta declarou que não viu Y". A honestidade do produto (§I3) é requisito testável, não postura.
+**Regra de ouro dos testes:** todo teste que valida "o Trace2Local viu X" **DEVE** também ter o gêmeo negativo "o Trace2Local declarou que não viu Y". A honestidade do produto (§I3) é requisito testável, não postura.
 
 ---
 
@@ -705,7 +705,7 @@ A ordem não é por camada (core → adapters → UI), e sim por **risco decresc
 | **M4** | Delta de dados | Data Mutation Channel + DynamoDB EXACT + SQL INFERRED (**diferencial no ar**) | 1,5 sem |
 | **M5** | **Prova AOT** | App de exemplo em Native Image com JC-1/JC-2 verdes no binário, hints publicados | 1,5 sem |
 | **M6** | Assíncrono | SNS→SQS correlacionado, ramo órfão, `Link` de consumidor (**JC-3**) | 1,5 sem |
-| **M7** | Lambda + Station | `tracevanta-station` em container, `tracevanta-lambda`, `sam local` na árvore (**E2**) | 2 sem |
+| **M7** | Lambda + Station | `trace2local-station` em container, `trace2local-lambda`, `sam local` na árvore (**E2**) | 2 sem |
 | **M8** | Endurecimento | NFRs medidos, testes de propriedade, SSRF, bloqueio em prod, docs | 1,5 sem |
 | **M9** | Release 0.1.0 | Maven Central assinado, README, `docker-compose` de exemplo, licença, SBOM | 1 sem |
 
@@ -716,13 +716,13 @@ A ordem não é por camada (core → adapters → UI), e sim por **risco decresc
 ### 11.2 Distribuição open source
 
 - **Licença:** Apache-2.0 — padrão de facto do ecossistema Java de observabilidade (OpenTelemetry, Jaeger, Zipkin, Glowroot, springdoc) e a única das permissivas com concessão explícita de patente, o que importa para adoção corporativa. Ver [ADR-010](adr/ADR-010-distribuicao-licenca-e-compatibilidade.md).
-- **Coordenadas:** `groupId` **`tech.neural7.tracevanta`**, verificando o domínio `neural7.tech` no Central Portal via registro TXT de DNS. Alternativa sem domínio: `io.github.<usuário>`, auto-verificada via login GitHub.
+- **Coordenadas:** `groupId` **`tech.neural7.trace2local`**, verificando o domínio `neural7.tech` no Central Portal via registro TXT de DNS. Alternativa sem domínio: `io.github.<usuário>`, auto-verificada via login GitHub.
 - **Publicação:** **Central Publisher Portal**. O OSSRH antigo (`oss.sonatype.org` / `s01.oss.sonatype.org`) foi **encerrado em 30/jun/2025** — qualquer tutorial que o mencione está obsoleto. Requisitos por release: jar + `-sources` + `-javadoc`, checksums, assinatura GPG de cada arquivo, POM com licença/desenvolvedor/SCM.
-- **Nome:** verificar disponibilidade de `tracevanta` no npm (caso a UI vire pacote), no GitHub e como marca antes do anúncio. **Resolvida a pendência de grafia** (D-5): arquivos renomeados para `tracevanta-*`.
+- **Nome:** verificar disponibilidade de `trace2local` no npm (caso a UI vire pacote), no GitHub e como marca antes do anúncio. **Resolvida a pendência de grafia** (D-5): arquivos renomeados para `trace2local-*`.
 
 ### 11.3 Compatibilidade e versionamento
 
-SemVer a partir do 1.0.0. Antes disso (0.x), a API pode quebrar entre minors, e isso **DEVE** estar no README. A superfície pública é **apenas**: `TraceVantaExtension` e os tipos do TVEM que ela expõe, as propriedades de configuração e os contratos REST/SSE. Todo o resto vive em pacotes `internal` e pode mudar livremente — regra verificada por ArchUnit.
+SemVer a partir do 1.0.0. Antes disso (0.x), a API pode quebrar entre minors, e isso **DEVE** estar no README. A superfície pública é **apenas**: `Trace2LocalExtension` e os tipos do TVEM que ela expõe, as propriedades de configuração e os contratos REST/SSE. Todo o resto vive em pacotes `internal` e pode mudar livremente — regra verificada por ArchUnit.
 
 ---
 
@@ -752,8 +752,8 @@ Estas cinco precisam de decisão humana antes do M0. As demais estão fechadas n
 | **D-1** | **Baseline de bytecode: Java 21 ou Java 25?** Java 25 alinha ao alvo declarado e simplifica o build; Java 21 amplia a base instalada (Spring Boot 4 tem baseline 17, Lambda oferece `java21` e `java25`) | **Java 21** para `core`/adapters, com o build em JDK 25 e Java 25 usado em módulo opcional. Custo: nada de `ScopedValue` no core. Ver ADR-009 |
 | **D-2** | **Station na v0.1 ou v0.2?** Ele habilita Lambda (E2) e multi-serviço, mas é ~2 semanas | Manter na v0.1 (foi escopo escolhido), **mas** no M7 — depois do valor central provado |
 | **D-3** | **`ReturnValues` elevado por padrão?** (R-01) | Padrão **ligado** em perfil de desenvolvimento, com aviso de boot; desligado em qualquer outro contexto |
-| **D-4** | **groupId:** `tech.neural7.tracevanta` (exige TXT no DNS de `neural7.tech`) ou `io.github.*` (imediato) | `tech.neural7.tracevanta` — o domínio já é seu e a marca compõe com o produto |
-| **D-5** | **Grafia oficial:** TraceVanta vs. TraceVenta nos arquivos do repo | **TraceVanta**; renomear `traceventa-*` antes do M0 |
+| **D-4** | **groupId:** `tech.neural7.trace2local` (exige TXT no DNS de `neural7.tech`) ou `io.github.*` (imediato) | `tech.neural7.trace2local` — o domínio já é seu e a marca compõe com o produto |
+| **D-5** | **Grafia oficial:** Trace2Local vs. TraceVenta nos arquivos do repo | **Trace2Local**; renomear `traceventa-*` antes do M0 |
 
 ---
 
@@ -761,12 +761,12 @@ Estas cinco precisam de decisão humana antes do M0. As demais estão fechadas n
 
 | Termo | Significado |
 | :--- | :--- |
-| **TVEM** | TraceVanta Execution Model — modelo de domínio do produto (§4.6) |
+| **TVEM** | Trace2Local Execution Model — modelo de domínio do produto (§4.6) |
 | **Execution** | Uma jornada completa disparada por um gatilho; identificada por `TV-NNNNN` |
 | **Node** | Algo que aconteceu na execução: uma chamada, uma operação de infra, um método de negócio |
 | **Data Mutation Channel** | Canal lateral que transporta payload e delta de dados fora do span (§4.10) |
-| **Modo Embedded** | TraceVanta dentro do processo da aplicação (§4.2) |
-| **Modo Companion / Station** | TraceVanta como processo separado, para Lambda e multi-serviço (§4.2) |
+| **Modo Embedded** | Trace2Local dentro do processo da aplicação (§4.2) |
+| **Modo Companion / Station** | Trace2Local como processo separado, para Lambda e multi-serviço (§4.2) |
 | **Fidelidade** | Declaração de origem do dado: observado (EXACT), derivado (INFERRED) ou ausente (UNAVAILABLE) |
 | **Ramo órfão** | Sub-árvore cujo pai não chegou; exibida na raiz com aviso, nunca descartada |
 

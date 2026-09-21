@@ -1,6 +1,6 @@
-# Contribuindo com o TraceVanta
+# Contribuindo com o Trace2Local
 
-Obrigado pelo interesse! O TraceVanta é Apache-2.0 e aberto a contribuições de
+Obrigado pelo interesse! O Trace2Local é Apache-2.0 e aberto a contribuições de
 código, documentação, testes e relato de bugs.
 
 ## Começando
@@ -37,7 +37,7 @@ Requisitos: **JDK 21+** (CI roda 21 e 25) e **Docker** apenas para os E2E.
 ## Estrutura de pastas
 
 ```
-tracevanta-*/        módulos da lib (um por responsabilidade — docs/ARQUITETURA.md)
+trace2local-*/        módulos da lib (um por responsabilidade — docs/ARQUITETURA.md)
 examples/            apps de demonstração (NÃO são a lib)
 docs/                SPEC, ADRs, pesquisa, arquitetura, evidências de QA
 scripts/screenshots/ captura e validação de consistência da UI

@@ -1,6 +1,6 @@
-# Plano de melhoria de UX/Usabilidade — UI TraceVanta
+# Plano de melhoria de UX/Usabilidade — UI Trace2Local
 
-> Estudo profundo da UI atual (`tracevanta-ui`: index.html + app.css + app.js, 613 linhas JS)
+> Estudo profundo da UI atual (`trace2local-ui`: index.html + app.css + app.js, 613 linhas JS)
 > feito em 2026-09-20. Restrições imutáveis: **ADR-005** (zero asset/referência externa),
 > **CSP `default-src 'self'; style-src 'self'; script-src 'self'`** (nada de estilo/script inline).
 

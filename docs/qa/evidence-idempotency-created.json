@@ -1,37 +1,37 @@
 {
   "executionId" : "req-idem-1",
-  "traceId" : "2aeae8d429a74cd9e2e5a04539978a6c",
+  "traceId" : "3dc8a104e6ee77d376c43977bbd4a44f",
   "status" : "COMPLETED",
   "trigger" : "LAMBDA_EVENT",
-  "startedAt" : "2026-09-21T15:19:57.950503400Z",
-  "duration" : 1030,
+  "startedAt" : "2026-09-21T16:14:31.933763300Z",
+  "duration" : 1302,
   "roots" : [ {
-    "nodeId" : "a47e9b606f2c4a8a",
+    "nodeId" : "4750d6956dbce27a",
     "parentId" : null,
     "kind" : "LAMBDA",
     "label" : "idempotent-processor",
     "status" : "OK",
-    "startedAt" : "2026-09-21T15:19:57.032075900Z",
-    "selfTime" : 7,
-    "totalTime" : 1030,
+    "startedAt" : "2026-09-21T16:14:30.631192300Z",
+    "selfTime" : 5,
+    "totalTime" : 1302,
     "attributes" : {
-      "faas.name" : "idempotent-processor",
-      "tv.execution.id" : "req-idem-1",
+      "faas.invocation_id" : "req-idem-1",
       "tv.trigger" : "lambda_event",
-      "faas.invocation_id" : "req-idem-1"
+      "tv.execution.id" : "req-idem-1",
+      "faas.name" : "idempotent-processor"
     },
     "payload" : null,
     "mutation" : null,
     "error" : null,
     "children" : [ {
-      "nodeId" : "af91769ad8950c61",
-      "parentId" : "a47e9b606f2c4a8a",
+      "nodeId" : "1ec5473a2807e587",
+      "parentId" : "4750d6956dbce27a",
       "kind" : "BUSINESS",
       "label" : "IdempotencyGuard",
       "status" : "OK",
-      "startedAt" : "2026-09-21T15:19:57.037754100Z",
-      "selfTime" : 296,
-      "totalTime" : 1022,
+      "startedAt" : "2026-09-21T16:14:30.634656200Z",
+      "selfTime" : 378,
+      "totalTime" : 1296,
       "attributes" : {
         "tv.business" : "true"
       },
@@ -39,27 +39,27 @@
       "mutation" : null,
       "error" : null,
       "children" : [ {
-        "nodeId" : "66047d5e49894d9a",
-        "parentId" : "af91769ad8950c61",
+        "nodeId" : "dac3607a0cb8a94f",
+        "parentId" : "1ec5473a2807e587",
         "kind" : "DYNAMODB",
         "label" : "DynamoDB: idempotency",
         "status" : "OK",
-        "startedAt" : "2026-09-21T15:19:57.224170200Z",
-        "selfTime" : 726,
-        "totalTime" : 726,
+        "startedAt" : "2026-09-21T16:14:30.922297200Z",
+        "selfTime" : 918,
+        "totalTime" : 918,
         "attributes" : {
           "server.address" : "127.0.0.1",
-          "url.full" : "http://127.0.0.1:63932/",
-          "aws.request_id" : "6315d1b8-cc49-46bb-877f-09962538c4cd",
-          "rpc.service" : "DynamoDb",
+          "rpc.method" : "PutItem",
+          "aws.dynamodb.table_names" : "idempotency",
+          "http.request.method" : "POST",
+          "rpc.system" : "aws-api",
+          "http.response.status_code" : "200",
+          "server.port" : "58869",
           "db.system" : "dynamodb",
           "db.operation" : "PutItem",
-          "server.port" : "63932",
-          "http.response.status_code" : "200",
-          "rpc.system" : "aws-api",
-          "http.request.method" : "POST",
-          "aws.dynamodb.table_names" : "idempotency",
-          "rpc.method" : "PutItem"
+          "rpc.service" : "DynamoDb",
+          "aws.request_id" : "2a7caa79-b3c9-4ac8-85cd-1c2729d128aa",
+          "url.full" : "http://127.0.0.1:58869/"
         },
         "payload" : null,
         "mutation" : {
@@ -68,22 +68,22 @@
           "key" : "IDEM-1",
           "before" : { },
           "after" : {
-            "pk" : "IDEM-1",
+            "createdAt" : "2026-09-21T16:14:30.661824300Z",
             "payload" : "{\"amount\":100}",
-            "createdAt" : "2026-09-21T15:19:57.072314Z"
+            "pk" : "IDEM-1"
           },
           "deltas" : [ {
-            "path" : "pk",
+            "path" : "createdAt",
             "before" : null,
-            "after" : "IDEM-1"
+            "after" : "2026-09-21T16:14:30.661824300Z"
           }, {
             "path" : "payload",
             "before" : null,
             "after" : "{\"amount\":100}"
           }, {
-            "path" : "createdAt",
+            "path" : "pk",
             "before" : null,
-            "after" : "2026-09-21T15:19:57.072314Z"
+            "after" : "IDEM-1"
           } ],
           "fidelity" : "EXACT"
         },

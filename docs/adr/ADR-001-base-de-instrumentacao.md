@@ -6,7 +6,7 @@
 
 ## Contexto
 
-O TraceVanta precisa capturar HTTP de entrada, chamadas ao AWS SDK v2 (DynamoDB, SNS, SQS), JDBC e métodos de negócio — e precisa fazer isso sob uma restrição inegociável: **compatibilidade com GraalVM Native Image**, o que elimina `-javaagent` e qualquer transformação de bytecode em runtime.
+O Trace2Local precisa capturar HTTP de entrada, chamadas ao AWS SDK v2 (DynamoDB, SNS, SQS), JDBC e métodos de negócio — e precisa fazer isso sob uma restrição inegociável: **compatibilidade com GraalVM Native Image**, o que elimina `-javaagent` e qualquer transformação de bytecode em runtime.
 
 Fatos apurados (fontes em `../PESQUISA-2026-09-18.md`):
 
@@ -16,12 +16,12 @@ Fatos apurados (fontes em `../PESQUISA-2026-09-18.md`):
 
 ## Decisão
 
-Usar o **OpenTelemetry Java SDK como substrato de coleta**, consumindo a *library instrumentation* sem agente, e construir a identidade do TraceVanta em **duas camadas próprias** por cima:
+Usar o **OpenTelemetry Java SDK como substrato de coleta**, consumindo a *library instrumentation* sem agente, e construir a identidade do Trace2Local em **duas camadas próprias** por cima:
 
-1. **Ponte** (`tracevanta-otel`): `SpanProcessor` + `SpanExporter` in-process que traduzem `SpanData` para o TVEM.
+1. **Ponte** (`trace2local-otel`): `SpanProcessor` + `SpanExporter` in-process que traduzem `SpanData` para o TVEM.
 2. **Camada semântica** (ADR-008): o que transforma `DynamoDb.PutItem` em "DynamoDB: orders, item ORDER#88291 criado".
 
-O TraceVanta **acrescenta** um processor ao pipeline do desenvolvedor; **não substitui** o exporter dele. Quem já manda OTLP para o Jaeger continua mandando.
+O Trace2Local **acrescenta** um processor ao pipeline do desenvolvedor; **não substitui** o exporter dele. Quem já manda OTLP para o Jaeger continua mandando.
 
 ## Alternativas descartadas
 
@@ -29,12 +29,12 @@ O TraceVanta **acrescenta** um processor ao pipeline do desenvolvedor; **não su
 | :--- | :--- |
 | **Instrumentação 100% própria** (interceptors Spring + AWS + JDBC, sem OTel) | Reescreve o que já existe, maduro e mantido; perde propagação W3C de graça, perde interoperabilidade com Jaeger/Tempo, e dobra o custo de manutenção — que é o risco R-09, o mais letal para um projeto de um mantenedor |
 | **Javaagent próprio** | Mata o princípio AOT-first, que é a razão de existir do produto (§9.1 da SPEC) |
-| **Micrometer Observation como base** | Excelente dentro do Spring, mas amarra o núcleo a um framework — viola a regra de `tracevanta-core` sem dependência de framework |
+| **Micrometer Observation como base** | Excelente dentro do Spring, mas amarra o núcleo a um framework — viola a regra de `trace2local-core` sem dependência de framework |
 | **Híbrido desde o início** (OTel onde existe, interceptor próprio onde não existe) | É o destino provável, mas começar assim mantém dois caminhos de código antes de saber se o segundo é necessário. P1-Simplicidade: o híbrido nasce por evidência, via SPI (§4.7), não por antecipação |
 
 ## Consequências
 
-**Boas.** Instrumentação madura de graça; compatibilidade nativa comprovada por exemplo oficial; propagação W3C pronta; o dev pode reaproveitar a telemetria em qualquer backend OTLP; o TraceVanta fica pequeno o suficiente para uma pessoa manter.
+**Boas.** Instrumentação madura de graça; compatibilidade nativa comprovada por exemplo oficial; propagação W3C pronta; o dev pode reaproveitar a telemetria em qualquer backend OTLP; o Trace2Local fica pequeno o suficiente para uma pessoa manter.
 
 **Ruins, e assumidas.**
 

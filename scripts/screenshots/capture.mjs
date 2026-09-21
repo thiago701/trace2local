@@ -1,5 +1,5 @@
 /**
- * Captura as telas da UI do TraceVanta rodando no projeto local (order-service
+ * Captura as telas da UI do Trace2Local rodando no projeto local (order-service
  * + LocalStack): catálogo, árvore JC-1 com consumidor SQS, inspector com delta,
  * execução vermelha da JC-2 e inspector do erro.
  *
@@ -19,15 +19,15 @@ mkdirSync(OUT, { recursive: true });
 const out = (name) => path.join(OUT, name);
 
 const EDGE = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
-const BASE = "http://127.0.0.1:9876/tracevanta";
+const BASE = "http://127.0.0.1:9876/trace2local";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function findOrderId(page) {
   return page.evaluate(async () => {
-    const list = await (await fetch("/tracevanta/api/executions?limit=20")).json();
+    const list = await (await fetch("/trace2local/api/executions?limit=20")).json();
     for (const summary of list) {
-      const full = await (await fetch("/tracevanta/api/executions/" + summary.executionId)).json();
+      const full = await (await fetch("/trace2local/api/executions/" + summary.executionId)).json();
       const search = (nodes) => {
         for (const n of nodes) {
           const key = n.mutation && n.mutation.key;
@@ -97,7 +97,7 @@ await sleep(400);
 await page.waitForSelector(".endpoint.active .primary", { timeout: 5000 });
 await page.evaluate(async () => {
   // limpa o acervo e define um payload válido (o sample tem total=0 → 400)
-  await fetch("/tracevanta/api/executions", { method: "DELETE" });
+  await fetch("/trace2local/api/executions", { method: "DELETE" });
   const ta = document.querySelector(".endpoint.active .ep-body textarea");
   ta.value = JSON.stringify({ customerId: "UI-SHOT", total: 250 });
 });
@@ -140,7 +140,7 @@ if (!orderId) {
 console.log("confirmando " + orderId + " duas vezes…");
 for (let i = 0; i < 2; i++) {
   await page.evaluate(async (id) => {
-    await fetch("/tracevanta/api/execute", {
+    await fetch("/trace2local/api/execute", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

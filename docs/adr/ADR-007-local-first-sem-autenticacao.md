@@ -4,7 +4,7 @@
 
 ## Contexto
 
-O TraceVanta expõe, num navegador, o corpo das requisições, o conteúdo de itens de banco e o resultado de chamadas de infraestrutura da aplicação do desenvolvedor. Em outras palavras: **uma UI que mostra tudo o que o serviço faz com os dados**. Esse poder é o produto — e é também toda a sua superfície de risco.
+O Trace2Local expõe, num navegador, o corpo das requisições, o conteúdo de itens de banco e o resultado de chamadas de infraestrutura da aplicação do desenvolvedor. Em outras palavras: **uma UI que mostra tudo o que o serviço faz com os dados**. Esse poder é o produto — e é também toda a sua superfície de risco.
 
 Somam-se dois agravantes específicos: (a) a UI **dispara requisições** por ordem do navegador, o que é a definição de um vetor de SSRF; (b) a biblioteca vive dentro da aplicação, e a falha mais provável não é um ataque — é ela subir junto com o artefato de produção.
 
@@ -12,13 +12,13 @@ Somam-se dois agravantes específicos: (a) a UI **dispara requisições** por or
 
 Quatro travas, em camadas:
 
-**1. Local-first absoluto.** Bind em `127.0.0.1`. Nenhum dado sai da máquina: sem telemetria de uso, sem *phone home*, sem CDN, sem fonte remota. Expor fora do loopback exige `tracevanta.allow-non-loopback=true` **e** emite `WARN` a cada boot.
+**1. Local-first absoluto.** Bind em `127.0.0.1`. Nenhum dado sai da máquina: sem telemetria de uso, sem *phone home*, sem CDN, sem fonte remota. Expor fora do loopback exige `trace2local.allow-non-loopback=true` **e** emite `WARN` a cada boot.
 
 **2. Sem autenticação, por design.** Em loopback, uma senha protegeria contra nada que já não esteja comprometido: quem tem a máquina, tem a UI. Autenticação aqui seria teatro de segurança, com o efeito colateral de sugerir uma proteção que não existe. **A consequência é declarada no README, não escondida.**
 
-**3. Alvo do disparo vem do catálogo, nunca do cliente.** O Request Launcher resolve o destino a partir do `endpointId` interno; não aceita URL arbitrária; não segue redirects; aplica allowlist de host/porta e revalida a resolução DNS (defesa contra rebinding). Sem isso, o TraceVanta seria um SSRF com interface bonita.
+**3. Alvo do disparo vem do catálogo, nunca do cliente.** O Request Launcher resolve o destino a partir do `endpointId` interno; não aceita URL arbitrária; não segue redirects; aplica allowlist de host/porta e revalida a resolução DNS (defesa contra rebinding). Sem isso, o Trace2Local seria um SSRF com interface bonita.
 
-**4. Redaction na origem, ligada por padrão.** Aplicada **antes** de o dado entrar no buffer — nunca na UI —, por chave (`password`, `token`, `authorization`, `cpf`, `cnpj`, `card`, `cvv`, `accessKey`…), por padrão de valor (Luhn, JWT `eyJ…`, `AKIA…`, PEM, e-mail) e por tamanho. Substituto literal `[TRACEVANTA_REDACTED]`, com corpus de teste dedicado; falso-negativo em campo óbvio é bug bloqueante.
+**4. Redaction na origem, ligada por padrão.** Aplicada **antes** de o dado entrar no buffer — nunca na UI —, por chave (`password`, `token`, `authorization`, `cpf`, `cnpj`, `card`, `cvv`, `accessKey`…), por padrão de valor (Luhn, JWT `eyJ…`, `AKIA…`, PEM, e-mail) e por tamanho. Substituto literal `[TRACE2LOCAL_REDACTED]`, com corpus de teste dedicado; falso-negativo em campo óbvio é bug bloqueante.
 
 **5. Bloqueio em produção em três camadas.** Escopo `provided` recomendado; autodesabilitação fora de perfil de desenvolvimento; falha de boot explícita se alguém forçar `enabled=true` fora de dev sem a flag de escape consciente.
 

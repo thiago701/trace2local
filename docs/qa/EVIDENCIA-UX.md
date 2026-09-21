@@ -1,6 +1,6 @@
-# EVIDÊNCIAS UX — GUI do TraceVanta (estudo, plano e implementação)
+# EVIDÊNCIAS UX — GUI do Trace2Local (estudo, plano e implementação)
 
-> Data: 2026-09-20/21 · Escopo: `tracevanta-ui` (index.html, app.css, app.js)
+> Data: 2026-09-20/21 · Escopo: `trace2local-ui` (index.html, app.css, app.js)
 > Restrições respeitadas: **ADR-005** (zero referência externa — `UiOfflineTest` verde)
 > e **CSP `default-src 'self'; style-src 'self'; script-src 'self'`** (zero estilo/script inline).
 
@@ -14,7 +14,7 @@ fontes para explicar cada nó em linguagem de negócio:
 2. **Engenharia reversa** — nomes em camelCase humanizados com mapa de verbos
    de negócio (`CreateOrder` → "cria o recurso", `ConfirmOrder` → "aplica a
    regra de confirmação (condição de estado)…");
-3. **Docs** — `tracevanta-business.md` opcional no classpath: o glossário do
+3. **Docs** — `trace2local-business.md` opcional no classpath: o glossário do
    time sobrescreve a nota quando o termo é documentado (ex.: a guarda de
    idempotência virou "a mesma chave só grava uma vez; duplicados são
    recusados sem efeito colateral").
@@ -41,7 +41,7 @@ Referências estudadas: [.NET Aspire Dashboard](https://learn.microsoft.com/pt-b
 Jaeger (busca de traces, waterfall e **diff entre traces**), SigNoz/Grafana
 (vista unificada de métricas+traces+logs) e o padrão de **deep links
 compartilháveis** dessas ferramentas. Da pesquisa saíram três funcionalidades
-de alto valor que cabem na filosofia do TraceVanta (zero-config, local-first,
+de alto valor que cabem na filosofia do Trace2Local (zero-config, local-first,
 client-side) — implementadas SEM mudar a operação existente:
 
 | Funcionalidade | Inspiração | O que faz |

@@ -5,7 +5,7 @@
 
 ## Contexto
 
-O TraceVanta depende das convenções semânticas do OpenTelemetry para saber que um span **é** uma escrita no DynamoDB, uma publicação no SNS ou um `UPDATE` em SQL — é disso que sai o ícone, o rótulo "DynamoDB: orders" e os campos do inspector.
+O Trace2Local depende das convenções semânticas do OpenTelemetry para saber que um span **é** uma escrita no DynamoDB, uma publicação no SNS ou um `UPDATE` em SQL — é disso que sai o ícone, o rótulo "DynamoDB: orders" e os campos do inspector.
 
 O problema é que essas convenções estão em estágios diferentes de maturidade. Verificado em 2026-09-18:
 
@@ -19,7 +19,7 @@ Ou seja: **a metade do modelo mental do produto que trata de filas e AWS repousa
 
 ## Decisão
 
-Uma **camada anti-corrupção** com fronteira normativa: nenhum nome de atributo do OTel **DEVE** aparecer fora do módulo `tracevanta-otel`. Existe uma única classe de tradução:
+Uma **camada anti-corrupção** com fronteira normativa: nenhum nome de atributo do OTel **DEVE** aparecer fora do módulo `trace2local-otel`. Existe uma única classe de tradução:
 
 ```java
 public interface SemanticMapper {

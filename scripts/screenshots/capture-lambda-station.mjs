@@ -1,5 +1,5 @@
 /**
- * Captura das telas da UI do TraceVanta STATION (modo Companion) para o cenário
+ * Captura das telas da UI do Trace2Local STATION (modo Companion) para o cenário
  * lambda-sqs + VALIDAÇÃO DE CONSISTÊNCIA: o que a UI desenha no canvas é
  * comparado nó a nó com a API REST do Station (labels e contagem) — o script
  * falha (exit 2) se divergirem.
@@ -21,7 +21,7 @@ mkdirSync(OUT, { recursive: true });
 const out = (name) => path.join(OUT, name);
 
 const EDGE = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
-const BASE = "http://127.0.0.1:19877/tracevanta";
+const BASE = "http://127.0.0.1:19877/trace2local";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -49,7 +49,7 @@ async function clickNodeByLabel(page, labelPart, statusClass) {
 // --- validação de consistência: UI (canvas) x API (Station)
 async function consistencyReport(page, executionId) {
   return page.evaluate(async (executionId) => {
-    const api = await (await fetch("/tracevanta/api/executions/" + executionId)).json();
+    const api = await (await fetch("/trace2local/api/executions/" + executionId)).json();
     const apiLabels = [];
     const walk = (nodes) => {
       for (const n of nodes) {
@@ -103,7 +103,7 @@ async function selectRecentFailed(page) {
   }
   // fallback pela API (a lista de cards pode re-renderizar durante eventos SSE)
   return page.evaluate(async () => {
-    const list = await (await fetch("/tracevanta/api/executions?limit=50")).json();
+    const list = await (await fetch("/trace2local/api/executions?limit=50")).json();
     const failed = list.filter((s) => s.status === "FAILED");
     const s = failed.find((x) => (x.rootLabel || "").includes("order-processor")) || failed[0];
     if (!s) return false;
@@ -117,7 +117,7 @@ async function selectRecentFailed(page) {
 
 async function selectExecutionWithNode(page, label, excludeLabel) {
   return page.evaluate(async ({ label, excludeLabel }) => {
-    const list = await (await fetch("/tracevanta/api/executions?limit=50")).json();
+    const list = await (await fetch("/trace2local/api/executions?limit=50")).json();
     const search = (nodes) => {
       for (const n of nodes) {
         if ((n.label || "").includes(label)) return true;
@@ -134,7 +134,7 @@ async function selectExecutionWithNode(page, label, excludeLabel) {
     };
     for (const summary of list) {
       if (summary.status !== "COMPLETED") continue;
-      const full = await (await fetch("/tracevanta/api/executions/" + summary.executionId)).json();
+      const full = await (await fetch("/trace2local/api/executions/" + summary.executionId)).json();
       if (search(full.roots || []) && (!excludeLabel || !excluded(full.roots || []))) {
         const item = [...document.querySelectorAll(".exec-card")]
           .find((r) => r.textContent.includes(summary.executionId));
@@ -208,7 +208,7 @@ if (!failFound) {
   await browser.close();
   process.exit(2);
 }
-const failId = await page.evaluate(() => window.__tvState?.selectedExecutionId || null);
+const failId = await page.evaluate(() => window.__t2lState?.selectedExecutionId || null);
 await page.waitForFunction(
   () => [...document.querySelectorAll(".tv-node .label")].some(
     (n) => n.textContent.includes("order-processor")),
@@ -340,7 +340,7 @@ const v3 = await page.evaluate(async () => {
   results.compareRows = document.querySelectorAll("#compare-view .diff-table tbody tr").length;
   results.compareSummaryItems = document.querySelectorAll("#compare-view .compare-summary .cs-item").length;
 
-  const firstId = window.__tvState?.selectedExecutionId;
+  const firstId = window.__t2lState?.selectedExecutionId;
   history.replaceState(null, "", "?execution=" + encodeURIComponent(firstId));
   results.deepLinkInUrl = location.search.includes("execution=");
 

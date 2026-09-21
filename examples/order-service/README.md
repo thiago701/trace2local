@@ -1,6 +1,6 @@
-# order-service — app de exemplo do TraceVanta
+# order-service — app de exemplo do Trace2Local
 
-App de referência das jornadas **JC-1**, **JC-2** e **JC-3** da [SPEC](../../docs/SPEC.md): `POST /orders` grava no DynamoDB e publica no SNS (LocalStack), com o **TraceVanta Embedded** em `http://localhost:9876/tracevanta` — uma dependência, zero configuração.
+App de referência das jornadas **JC-1**, **JC-2** e **JC-3** da [SPEC](../../docs/SPEC.md): `POST /orders` grava no DynamoDB e publica no SNS (LocalStack), com o **Trace2Local Embedded** em `http://localhost:9876/trace2local` — uma dependência, zero configuração.
 
 ## Rodando (máquina limpa)
 
@@ -10,7 +10,7 @@ docker compose up --build
 
 | URL | O que é |
 | :--- | :--- |
-| `http://localhost:9876/tracevanta` | UI do TraceVanta (catálogo + canvas + inspector) |
+| `http://localhost:9876/trace2local` | UI do Trace2Local (catálogo + canvas + inspector) |
 | `http://localhost:8080/orders` | A aplicação em si |
 
 ### As três jornadas
@@ -25,7 +25,7 @@ docker compose up --build
 docker compose --profile companion up --build
 ```
 
-O container `tracevanta-station` aceita **OTLP/HTTP** em `/v1/traces` e o canal de mutação em `/tvingest/v1/mutations` — dois microsserviços e uma Lambda apontando para ele produzem **uma árvore** (ADR-002). Serviços que enviam só OTLP aparecem **sem delta** (degradação prevista da §5.3). O `StationJourneyIT` valida esse caminho ponta a ponta.
+O container `trace2local-station` aceita **OTLP/HTTP** em `/v1/traces` e o canal de mutação em `/t2lingest/v1/mutations` — dois microsserviços e uma Lambda apontando para ele produzem **uma árvore** (ADR-002). Serviços que enviam só OTLP aparecem **sem delta** (degradação prevista da §5.3). O `StationJourneyIT` valida esse caminho ponta a ponta.
 
 ## Native Image (M5)
 
@@ -45,7 +45,7 @@ mvn -pl examples/order-service -am test          # integração Spring sem Docke
 mvn -f examples/order-service/pom.xml -Pit test  # E2E real contra LocalStack (Testcontainers, requer Docker)
 ```
 
-O teste E2E (`OrderJourneyIT`) sobe o LocalStack (DynamoDB + SNS + SQS), dispara `POST /orders` **pelo botão da UI** (`/tracevanta/api/execute`), mede o NFR-4 (disparo → `execution.started` no SSE), verifica o delta EXACT, a redaction e o `ConditionalCheckFailedException` da JC-2 — e grava as evidências em [`../../docs/qa/`](../../docs/qa/EVIDENCIA-E2E.md).
+O teste E2E (`OrderJourneyIT`) sobe o LocalStack (DynamoDB + SNS + SQS), dispara `POST /orders` **pelo botão da UI** (`/trace2local/api/execute`), mede o NFR-4 (disparo → `execution.started` no SSE), verifica o delta EXACT, a redaction e o `ConditionalCheckFailedException` da JC-2 — e grava as evidências em [`../../docs/qa/`](../../docs/qa/EVIDENCIA-E2E.md).
 
 ### Telas da UI (evidência visual)
 

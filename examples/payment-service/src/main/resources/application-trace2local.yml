@@ -1,0 +1,10 @@
+# Gerado pelo instalador do Trace2Local (mvn trace2local:configure)
+trace2local:
+  port: 9876            # UI do Trace2Local
+  redaction:
+    mode: strict        # strict | keys | off
+  retention:
+    max-executions: 100
+  aws:
+    dynamodb:
+      capture-before: true

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  TraceVanta — runtime canvas para desenvolvimento local.
-  Apache-2.0 · tech.neural7.tracevanta
+  Trace2Local — runtime canvas para desenvolvimento local.
+  Apache-2.0 · tech.neural7.trace2local
   Baseline de bytecode: Java 21 (ADR-009, decisão D-1). Build: JDK 25.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -9,14 +9,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>tech.neural7.tracevanta</groupId>
-  <artifactId>tracevanta-parent</artifactId>
+  <groupId>tech.neural7.trace2local</groupId>
+  <artifactId>trace2local-parent</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>TraceVanta — parent</name>
+  <name>Trace2Local — parent</name>
   <description>See your request travel through the system. Runtime canvas interativa para desenvolvimento local (Java 21+, Spring Boot 4, GraalVM AOT).</description>
-  <url>https://github.com/thiago701/tracevanta</url>
+  <url>https://github.com/thiago701/trace2local</url>
 
   <licenses>
     <license>
@@ -29,24 +29,24 @@
   <inceptionYear>2026</inceptionYear>
   <organization>
     <name>Neural7 Tech</name>
-    <url>https://github.com/thiago701/tracevanta</url>
+    <url>https://github.com/thiago701/trace2local</url>
   </organization>
 
   <scm>
-    <connection>scm:git:https://github.com/thiago701/tracevanta.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/thiago701/tracevanta.git</developerConnection>
-    <url>https://github.com/thiago701/tracevanta</url>
+    <connection>scm:git:https://github.com/thiago701/trace2local.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/thiago701/trace2local.git</developerConnection>
+    <url>https://github.com/thiago701/trace2local</url>
     <tag>HEAD</tag>
   </scm>
 
   <issueManagement>
     <system>GitHub Issues</system>
-    <url>https://github.com/thiago701/tracevanta/issues</url>
+    <url>https://github.com/thiago701/trace2local/issues</url>
   </issueManagement>
 
   <ciManagement>
     <system>GitHub Actions</system>
-    <url>https://github.com/thiago701/tracevanta/actions</url>
+    <url>https://github.com/thiago701/trace2local/actions</url>
   </ciManagement>
 
   <distributionManagement>
@@ -69,19 +69,19 @@
   </developers>
 
   <modules>
-    <module>tracevanta-bom</module>
-    <module>tracevanta-core</module>
-    <module>tracevanta-otel</module>
-    <module>tracevanta-ui</module>
-    <module>tracevanta-server</module>
-    <module>tracevanta-aws</module>
-    <module>tracevanta-jdbc</module>
-    <module>tracevanta-spring-boot-starter</module>
-    <module>tracevanta-lambda</module>
-    <module>tracevanta-station</module>
-    <module>tracevanta-testing</module>
-    <module>tracevanta-maven-plugin</module>
-    <module>tracevanta-architecture</module>
+    <module>trace2local-bom</module>
+    <module>trace2local-core</module>
+    <module>trace2local-otel</module>
+    <module>trace2local-ui</module>
+    <module>trace2local-server</module>
+    <module>trace2local-aws</module>
+    <module>trace2local-jdbc</module>
+    <module>trace2local-spring-boot-starter</module>
+    <module>trace2local-lambda</module>
+    <module>trace2local-station</module>
+    <module>trace2local-testing</module>
+    <module>trace2local-maven-plugin</module>
+    <module>trace2local-architecture</module>
     <module>examples/order-service</module>
     <module>examples/lambda-sqs</module>
     <module>examples/payment-service</module>
@@ -127,53 +127,53 @@
     <dependencies>
       <!-- Projeto -->
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-core</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-otel</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-otel</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-ui</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-ui</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-server</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-server</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-aws</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-aws</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-jdbc</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-jdbc</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-lambda</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-lambda</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-spring-boot-starter</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-spring-boot-starter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-station</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-station</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-testing</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-testing</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -306,7 +306,7 @@
                 </requireMavenVersion>
                 <requireJavaVersion>
                   <version>[21,)</version>
-                  <message>TraceVanta exige JDK 21+ para construir (bytecode baseline 21 — ADR-009/D-1)</message>
+                  <message>Trace2Local exige JDK 21+ para construir (bytecode baseline 21 — ADR-009/D-1)</message>
                 </requireJavaVersion>
                 <requireUpperBoundDeps>
                   <excludes>
@@ -370,10 +370,10 @@
           <artifactId>maven-gpg-plugin</artifactId>
           <version>${version.maven.gpg}</version>
         </plugin>
-        <!-- instalador do TraceVanta: mvn tracevanta:analyze | tracevanta:configure -->
+        <!-- instalador do Trace2Local: mvn trace2local:analyze | trace2local:configure -->
         <plugin>
-          <groupId>tech.neural7.tracevanta</groupId>
-          <artifactId>tracevanta-maven-plugin</artifactId>
+          <groupId>tech.neural7.trace2local</groupId>
+          <artifactId>trace2local-maven-plugin</artifactId>
           <version>${project.version}</version>
         </plugin>
       </plugins>

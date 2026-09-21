@@ -2,7 +2,7 @@
 
 > Cenário: handler Lambda-style com **guarda de idempotência** (escrita condicional
 > `attribute_not_exists(pk)` no DynamoDB + nó BUSINESS `IdempotencyGuard`),
-> monitorado pelo TraceVanta. Data: 2026-09-20 · LocalStack 4.2 real ·
+> monitorado pelo Trace2Local. Data: 2026-09-20 · LocalStack 4.2 real ·
 > Station com token Bearer.
 
 ## O que foi validado
@@ -51,9 +51,9 @@ esperado; a árvore separa os dois: raiz e guarda OK, escrita rejeitada).
 # 2) Demo visual no compose (Station :19877 com token)
 java -cp examples/lambda-sqs/target/lambda-sqs-bundle.jar;<m2>/aws-lambda-java-core-1.4.0.jar \
   -Dlocalstack.endpoint=http://localhost:4567 \
-  -Dtracevanta.station.endpoint=http://127.0.0.1:19877 \
-  -Dtracevanta.station.token=devtoken \
-  tech.neural7.tracevanta.examples.lambda.IdempotencyDemoRun
+  -Dtrace2local.station.endpoint=http://127.0.0.1:19877 \
+  -Dtrace2local.station.token=devtoken \
+  tech.neural7.trace2local.examples.lambda.IdempotencyDemoRun
 node scripts/screenshots/capture-idempotency.mjs
 ```
 

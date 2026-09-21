@@ -13,7 +13,7 @@ A lição é dupla: o mecanismo é o certo, e **a manutenção dele é o custo r
 
 ## Decisão
 
-1. **Assets como WebJar** em `META-INF/resources/tracevanta/`, servidos por resource handler padrão — não por servlet próprio.
+1. **Assets como WebJar** em `META-INF/resources/trace2local/`, servidos por resource handler padrão — não por servlet próprio.
 2. **Cada módulo publica seus próprios metadados** (`RuntimeHintsRegistrar` no mundo Spring, `reachability-metadata.json` no GraalVM) para: recursos da UI, tipos do TVEM serializados por Jackson, serviços da SPI (`ServiceLoader`) e tipos de request/response inspecionados pelo catálogo. Isso nasce junto com o código, **nunca como correção pós-falha**.
 3. **CI compila a app de exemplo em Native Image a cada PR** e roda as jornadas JC-1/JC-2 **sobre o binário**. O critério não é "compilou": é "a jornada funciona no binário".
 4. **A matriz de suporte declara a versão exata de GraalVM testada.** Sem promessa genérica de "funciona em nativo".

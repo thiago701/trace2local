@@ -5,7 +5,7 @@
 
 ## Contexto
 
-O alvo declarado do produto é **Java 25 + GraalVM Native + AWS**. Mas "alvo de desenvolvimento" e "baseline de bytecode de uma biblioteca que outros embutem" são decisões diferentes, e a segunda define quem pode adotar o TraceVanta.
+O alvo declarado do produto é **Java 25 + GraalVM Native + AWS**. Mas "alvo de desenvolvimento" e "baseline de bytecode de uma biblioteca que outros embutem" são decisões diferentes, e a segunda define quem pode adotar o Trace2Local.
 
 Dados verificados em 2026-09-18:
 
@@ -18,16 +18,16 @@ Duas restrições se cruzam: exigir Java 25 simplifica o build e alinha ao discu
 
 ## Decisão (aprovada no GATE 1)
 
-**Baseline de bytecode Java 21** para `tracevanta-core` e os adapters; **build com JDK 25**; recursos exclusivos do 25 isolados em módulo opcional.
+**Baseline de bytecode Java 21** para `trace2local-core` e os adapters; **build com JDK 25**; recursos exclusivos do 25 isolados em módulo opcional.
 
 | Módulo | Baseline | Justificativa |
 | :--- | :--- | :--- |
-| `tracevanta-core`, `-otel`, `-aws`, `-jdbc`, `-server` | **21** | Cobre Spring Boot 4 em 17/21/25 e os runtimes `java21`/`java25` da Lambda |
-| `tracevanta-spring-boot-starter` | **21** | Segue o consumidor |
-| `tracevanta-java25` (opcional) | **25** | `ScopedValue` e o que mais vier; ausente ⇒ degrada sem erro |
+| `trace2local-core`, `-otel`, `-aws`, `-jdbc`, `-server` | **21** | Cobre Spring Boot 4 em 17/21/25 e os runtimes `java21`/`java25` da Lambda |
+| `trace2local-spring-boot-starter` | **21** | Segue o consumidor |
+| `trace2local-java25` (opcional) | **25** | `ScopedValue` e o que mais vier; ausente ⇒ degrada sem erro |
 | Build e CI | **JDK 25** | Compila com `--release`, testa nas três versões |
 
-Consequência direta: **`ScopedValue` não entra no núcleo.** O carregamento de contexto usa o `Context` do OpenTelemetry (que é `ThreadLocal`), com `TraceVantaThreadFactory` para virtual threads — porque o `Context` do OTel, sendo `ThreadLocal`, **não é herdado** por `Thread.startVirtualThread` (issue oficial, fechada como *not planned*).
+Consequência direta: **`ScopedValue` não entra no núcleo.** O carregamento de contexto usa o `Context` do OpenTelemetry (que é `ThreadLocal`), com `Trace2LocalThreadFactory` para virtual threads — porque o `Context` do OTel, sendo `ThreadLocal`, **não é herdado** por `Thread.startVirtualThread` (issue oficial, fechada como *not planned*).
 
 **Nenhum módulo DEVE exigir `--enable-preview`.** `StructuredTaskScope` fica fora até virar final.
 

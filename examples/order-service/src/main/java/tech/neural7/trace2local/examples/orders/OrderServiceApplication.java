@@ -1,0 +1,17 @@
+package tech.neural7.trace2local.examples.orders;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/**
+ * App de exemplo das jornadas JC-1/JC-2/JC-3 (SPEC §1.5): POST /orders grava no
+ * DynamoDB e publica no SNS (LocalStack), com Trace2Local Embedded em
+ * {@code localhost:9876/trace2local} — uma dependência, zero configuração.
+ */
+@SpringBootApplication
+public class OrderServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(OrderServiceApplication.class, args);
+    }
+}

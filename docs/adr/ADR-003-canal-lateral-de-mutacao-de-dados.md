@@ -5,7 +5,7 @@
 
 ## Contexto
 
-O diferencial do TraceVanta frente a Jaeger, Glowroot e Postman é mostrar **o que mudou** — `before` e `after` de cada mutação de estado, como no protótipo (`Before: null (New Item)` / `After: {...}`). Duas restrições técnicas moldam a solução:
+O diferencial do Trace2Local frente a Jaeger, Glowroot e Postman é mostrar **o que mudou** — `before` e `after` de cada mutação de estado, como no protótipo (`Before: null (New Item)` / `After: {...}`). Duas restrições técnicas moldam a solução:
 
 1. **O ciclo de vida do span não permite enriquecimento pós-fato.** No OpenTelemetry, `SpanProcessor.onStart` recebe um `ReadWriteSpan` (mutável), mas `onEnd` recebe um `ReadableSpan` — **somente leitura**. O resultado da operação (o que o DynamoDB devolveu) só é conhecido quando a chamada termina; nesse instante, o span já não aceita atributos. Além disso, o javadoc de ambos os métodos é explícito: são chamados **na thread de execução e não devem bloquear**.
 2. **Payload não pertence a um span.** Corpos de requisição e itens de banco são grandes, sensíveis e de vida curta. Enfiá-los como atributos infla a telemetria, vaza para qualquer exporter encadeado e viola o local-first quando o dev também exporta para um backend remoto.
@@ -24,10 +24,10 @@ Consequências diretas do desenho: dados sensíveis **nunca** entram no pipeline
 
 ### A parte arriscada: `ReturnValues` no DynamoDB
 
-Para obter o `before` de um `PutItem`/`UpdateItem`/`DeleteItem`, o `ExecutionInterceptor` do TraceVanta **eleva** `ReturnValues` de `NONE` para `ALL_OLD` na requisição do desenvolvedor. Isso é modificar o comportamento do código alheio, e é a decisão mais arriscada da especificação. Ela só é aceitável com as quatro travas:
+Para obter o `before` de um `PutItem`/`UpdateItem`/`DeleteItem`, o `ExecutionInterceptor` do Trace2Local **eleva** `ReturnValues` de `NONE` para `ALL_OLD` na requisição do desenvolvedor. Isso é modificar o comportamento do código alheio, e é a decisão mais arriscada da especificação. Ela só é aceitável com as quatro travas:
 
-1. Desligável: `tracevanta.aws.dynamodb.capture-before=false`.
-2. A resposta devolvida ao código da aplicação é **restaurada** ao formato original — os atributos que o TraceVanta pediu são removidos antes de o SDK entregar ao chamador. Existe teste dedicado que prova isso.
+1. Desligável: `trace2local.aws.dynamodb.capture-before=false`.
+2. A resposta devolvida ao código da aplicação é **restaurada** ao formato original — os atributos que o Trace2Local pediu são removidos antes de o SDK entregar ao chamador. Existe teste dedicado que prova isso.
 3. Ativa apenas em perfil de desenvolvimento (§8.4 da SPEC).
 4. Documentada em letra grande no README, não em nota de rodapé.
 
@@ -41,7 +41,7 @@ Para obter o `before` de um `PutItem`/`UpdateItem`/`DeleteItem`, o `ExecutionInt
 | **Span Events** | Mesmo problema de mutabilidade e de vazamento; e o limite de atributos do OTel trunca sem aviso |
 | **Leitura prévia do item (`GetItem` antes do `PutItem`)** | Dobra chamadas, custa latência e capacidade, e cria janela de corrida entre a leitura e a escrita |
 | **DynamoDB Streams** | Só existe se a tabela tiver stream ligado, é assíncrono e chega tarde demais para a UI ao vivo |
-| **Não ter delta de dados** | É o diferencial do produto (§2 da SPEC). Sem ele, o TraceVanta é um Jaeger local com catálogo |
+| **Não ter delta de dados** | É o diferencial do produto (§2 da SPEC). Sem ele, o Trace2Local é um Jaeger local com catálogo |
 
 ## Consequências
 

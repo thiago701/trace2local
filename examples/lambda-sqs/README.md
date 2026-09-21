@@ -1,25 +1,25 @@
-# TraceVanta — cenário lambda-sqs (Lambda + DynamoDB + SQS no LocalStack)
+# Trace2Local — cenário lambda-sqs (Lambda + DynamoDB + SQS no LocalStack)
 
-Projeto de teste/validação da lib **TraceVanta** em uma arquitetura serverless:
+Projeto de teste/validação da lib **Trace2Local** em uma arquitetura serverless:
 uma **AWS Lambda (java21)** que grava um pedido no **DynamoDB** e publica um
-evento na **SQS**, tudo rodando no **LocalStack** e observado no **TraceVanta
+evento na **SQS**, tudo rodando no **LocalStack** e observado no **Trace2Local
 Station** (modo Companion, ADR-002).
 
 ```
 invoke ──▶ Lambda order-processor ──▶ DynamoDB PutItem (delta EXACT)
                 │                        ▲
-                └────────▶ SQS send ─────┘ flush síncrono: OTLP + /tvingest/v1/mutations
+                └────────▶ SQS send ─────┘ flush síncrono: OTLP + /t2lingest/v1/mutations
                                            ▼
-                                   TraceVanta Station (:19877)
+                                   Trace2Local Station (:19877)
 ```
 
 ## O que é validado
 
 | Item | Como |
 |---|---|
-| Span raiz LAMBDA | `TraceVantaLambdaHandler` abre span SERVER com `faas.name`/`faas.invocation_id` → nó `LAMBDA` na árvore |
-| Trigger `LAMBDA_EVENT` | `tv.trigger=lambda_event` no span raiz, parseado no ingest OTLP do Station |
-| Delta EXACT do DynamoDB | `TraceVantaAws.instrument` + `DynamoDbDeltaInterceptor`; mutação via `MutationHttpPublisher` → `/tvingest/v1/mutations` |
+| Span raiz LAMBDA | `Trace2LocalLambdaHandler` abre span SERVER com `faas.name`/`faas.invocation_id` → nó `LAMBDA` na árvore |
+| Trigger `LAMBDA_EVENT` | `t2l.trigger=lambda_event` no span raiz, parseado no ingest OTLP do Station |
+| Delta EXACT do DynamoDB | `Trace2LocalAws.instrument` + `DynamoDbDeltaInterceptor`; mutação via `MutationHttpPublisher` → `/t2lingest/v1/mutations` |
 | Nó SQS (produtor) | span PRODUCER manual com `AWSTraceHeader` (a instrumentação automática do AWS SDK **não** injeta o header no SendMessage direto — descoberto no loop de validação) |
 | **J2 — jornada de erro** | input `fail=true` lança após o PutItem → execução **FAILED** com a raiz vermelha e o ramo DynamoDB OK (sucesso parcial visível) |
 | **J3 — consumidor continua a MESMA árvore** | `OrderBillingProcessor` devolve o parent remoto (`remoteParentOf`) a partir do `AWSTraceHeader` → `LAMBDA → SQS → LAMBDA → DYNAMODB (UPDATE)` em UMA árvore (§4.11) |
@@ -55,7 +55,7 @@ docker compose -f examples/lambda-sqs/docker-compose.yml up
 O compose sobe LocalStack (dynamodb+sqs+lambda), o Station (em container,
 `:19877`), provisiona a tabela/fila, cria a função `order-processor` (runtime
 `java21`), e faz uma **invocação de fumaça real** — a árvore aparece em
-http://localhost:19877/tracevanta.
+http://localhost:19877/trace2local.
 
 Captura das telas (evidência visual) **com validação de consistência UI↔API**
 (o script compara os labels desenhados no canvas com a API REST do Station e
@@ -64,13 +64,13 @@ falha se divergirem):
 ```sh
 java -cp target/lambda-sqs-bundle.jar;<m2>/aws-lambda-java-core-1.4.0.jar \
   -Dlocalstack.endpoint=http://localhost:4567 \
-  -Dtracevanta.station.endpoint=http://127.0.0.1:19877 \
-  -Dtracevanta.station.token=devtoken \
-  tech.neural7.tracevanta.examples.lambda.LambdaSqsDemoRun   # J1+J2+J3 no Station do compose
+  -Dtrace2local.station.endpoint=http://127.0.0.1:19877 \
+  -Dtrace2local.station.token=devtoken \
+  tech.neural7.trace2local.examples.lambda.LambdaSqsDemoRun   # J1+J2+J3 no Station do compose
 node scripts/screenshots/capture-lambda-station.mjs          # → docs/qa/screenshots/07..12-*.png
 ```
 
-O Station do compose roda com **token de ingest** (`TRACEVANTA_STATION_TOKEN=devtoken`
+O Station do compose roda com **token de ingest** (`TRACE2LOCAL_STATION_TOKEN=devtoken`
 no Station e na função): OTLP e mutações exigem `Authorization: Bearer devtoken`
 — a Lambda e o DemoRun enviam automaticamente (ADR-007/§8.1).
 
@@ -79,14 +79,14 @@ no Station e na função): OTLP e mutações exigem `Authorization: Bearer devto
 - **Endpoint do LocalStack** (dentro da função): cascata `localstack.endpoint`
   (propriedade) → `LOCALSTACK_ENDPOINT` → `AWS_ENDPOINT_URL` (injetada pelo
   LocalStack no ambiente do emulador) → `http://localhost:4566`.
-- **Station endpoint** (dentro da função): `TRACEVANTA_STATION_ENDPOINT`
+- **Station endpoint** (dentro da função): `TRACE2LOCAL_STATION_ENDPOINT`
   (ADR-002 — obrigatório no modo Lambda); no compose aponta para
   `http://host.docker.internal:19877` (Station publicado no host).
 - **Fat jar**: `maven-shade-plugin` unifica `META-INF/services` (ServiceLoader
   do AWS SDK v2 e do OTel) e remove assinaturas; `aws-lambda-java-core` é
   `provided` — a imagem `java:21` do runtime já o fornece (embalar cópia
   própria quebraria o `instanceof` do runtime).
-- **SQS send manual** (não `TraceVantaAws.instrument`): o interceptor OTel do
+- **SQS send manual** (não `Trace2LocalAws.instrument`): o interceptor OTel do
   AWS SDK não injeta `AWSTraceHeader` no SendMessage direto — o span PRODUCER
   é criado manualmente (atributos `messaging.*` + `aws.sqs.queue.url`) e o
   header vai no atributo de sistema da mensagem, permitindo ao consumidor

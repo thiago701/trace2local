@@ -1,7 +1,7 @@
 # EVIDÊNCIAS — Novo domínio (pagamentos Pix): análise do canvas e do storytelling
 
 > Cenário: **`examples/payment-service`** (novo projeto demo, domínio DIFERENTE dos
-> pedidos) — Spring Boot + TraceVanta Embedded (:9876) + DynamoDB no LocalStack,
+> pedidos) — Spring Boot + Trace2Local Embedded (:9876) + DynamoDB no LocalStack,
 > fluxos criar / duplicado / confirmar. Data: 2026-09-21.
 
 ## O que foi feito
@@ -9,7 +9,7 @@
 1. Novo módulo `examples/payment-service` (registrado no reactor): Pix com
    **guarda de idempotência** (escrita condicional), confirmação com
    **read-back** (UpdateItem before+after EXACT) e **glossário de negócio**
-   próprio (`tracevanta-business.md`).
+   próprio (`trace2local-business.md`).
 2. App rodada ao vivo contra o LocalStack; fluxos reais via HTTP:
    `created → duplicated:true (recusado) → CONFIRMED` (respostas verificadas).
 3. Canvas analisado por script dedicado (`capture-payment-story.mjs`):

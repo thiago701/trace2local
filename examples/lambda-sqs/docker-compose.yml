@@ -1,10 +1,10 @@
 # Projeto de teste/validação: AWS Lambda (java21) + DynamoDB + SQS no LocalStack,
-# com a lib TraceVanta em modo Companion (ADR-002).
+# com a lib Trace2Local em modo Companion (ADR-002).
 #
 # Pré-requisito: o fat jar já construído (mvn -f examples/lambda-sqs/pom.xml package)
 #   → target/lambda-sqs-bundle.jar (montado no container de provisionamento).
 # Uso: docker compose up   → sobe LocalStack + Station + provisiona e INVOCA a função.
-# A UI do Station: http://localhost:19877/tracevanta
+# A UI do Station: http://localhost:19877/trace2local
 services:
   localstack:
     image: localstack/localstack:4.2
@@ -27,7 +27,7 @@ services:
       # executor docker do Lambda: o LocalStack sobe a função em container irmão
       - /var/run/docker.sock:/var/run/docker.sock
 
-  tracevanta-station:
+  trace2local-station:
     build:
       context: ../..
       dockerfile: examples/lambda-sqs/Dockerfile.station
@@ -36,7 +36,7 @@ services:
     environment:
       # ingest protegido: OTLP/mutações exigem Authorization: Bearer devtoken
       # (a UI/API continuam locais; o token é do cenário demo — troque em produção)
-      - TRACEVANTA_STATION_TOKEN=devtoken
+      - TRACE2LOCAL_STATION_TOKEN=devtoken
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/19877 && echo ok"]
       interval: 2s
@@ -48,7 +48,7 @@ services:
     depends_on:
       localstack:
         condition: service_started
-      tracevanta-station:
+      trace2local-station:
         condition: service_healthy
     environment:
       - AWS_ACCESS_KEY_ID=test

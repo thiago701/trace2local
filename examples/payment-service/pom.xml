@@ -11,11 +11,11 @@
     <relativePath/>
   </parent>
 
-  <groupId>tech.neural7.tracevanta.examples</groupId>
+  <groupId>tech.neural7.trace2local.examples</groupId>
   <artifactId>payment-service</artifactId>
   <version>0.1.0-SNAPSHOT</version>
-  <name>TraceVanta — payment-service (demo de storytelling em pagamentos)</name>
-  <description>Demo de domínio DIFERENTE (pagamentos Pix): fluxo criar/duplicado/confirmar com guarda de idempotência, para validar a clareza da narrativa do TraceVanta para PO/dev/QA.</description>
+  <name>Trace2Local — payment-service (demo de storytelling em pagamentos)</name>
+  <description>Demo de domínio DIFERENTE (pagamentos Pix): fluxo criar/duplicado/confirmar com guarda de idempotência, para validar a clareza da narrativa do Trace2Local para PO/dev/QA.</description>
 
   <properties>
     <java.version>21</java.version>
@@ -24,8 +24,8 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>tech.neural7.tracevanta</groupId>
-        <artifactId>tracevanta-bom</artifactId>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-bom</artifactId>
         <version>0.1.0-SNAPSHOT</version>
         <type>pom</type>
         <scope>import</scope>
@@ -35,12 +35,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>tech.neural7.tracevanta</groupId>
-      <artifactId>tracevanta-spring-boot-starter</artifactId>
+      <groupId>tech.neural7.trace2local</groupId>
+      <artifactId>trace2local-spring-boot-starter</artifactId>
     </dependency>
     <dependency>
-      <groupId>tech.neural7.tracevanta</groupId>
-      <artifactId>tracevanta-aws</artifactId>
+      <groupId>tech.neural7.trace2local</groupId>
+      <artifactId>trace2local-aws</artifactId>
     </dependency>
 
     <dependency>

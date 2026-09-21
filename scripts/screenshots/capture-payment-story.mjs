@@ -4,7 +4,7 @@
  * clareza da narrativa (passos em linguagem de negócio, glossário aplicado).
  *
  * Uso: node capture-payment-story.mjs
- *   (requer o payment-service rodando: app :8080, TraceVanta :9876)
+ *   (requer o payment-service rodando: app :8080, Trace2Local :9876)
  * Saída: ../../docs/qa/screenshots/19..21-*.png + relatório JSON no console
  */
 import puppeteer from "puppeteer-core";
@@ -20,7 +20,7 @@ mkdirSync(OUT, { recursive: true });
 const out = (name) => path.join(OUT, name);
 
 const EDGE = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
-const BASE = "http://127.0.0.1:9876/tracevanta";
+const BASE = "http://127.0.0.1:9876/trace2local";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -43,8 +43,8 @@ await sleep(1000);
 
 // ---- SIMPLICIDADE: endpoints descobertos e fluxo de 2 cliques
 const simplicity = await page.evaluate(async () => {
-  const endpoints = await (await fetch("/tracevanta/api/endpoints")).json();
-  const meta = await (await fetch("/tracevanta/api/meta")).json();
+  const endpoints = await (await fetch("/trace2local/api/endpoints")).json();
+  const meta = await (await fetch("/trace2local/api/meta")).json();
   return {
     endpoints: endpoints.map((e) => e.endpointId),
     metaPort: meta.port,
@@ -55,7 +55,7 @@ console.log("SIMPLICIDADE:", JSON.stringify(simplicity));
 
 // seleciona a execução do DUPLICADO (DynamoDB ERROR sem delta + guarda)
 const dupId = await page.evaluate(async () => {
-  const list = await (await fetch("/tracevanta/api/executions?limit=50")).json();
+  const list = await (await fetch("/trace2local/api/executions?limit=50")).json();
   const hasErrorDynamo = (nodes) => {
     for (const n of nodes) {
       if (n.kind === "DYNAMODB" && n.status === "ERROR") return n;
@@ -66,7 +66,7 @@ const dupId = await page.evaluate(async () => {
   };
   for (const s of list) {
     if (s.status !== "FAILED") continue;
-    const full = await (await fetch("/tracevanta/api/executions/" + s.executionId)).json();
+    const full = await (await fetch("/trace2local/api/executions/" + s.executionId)).json();
     const errNode = hasErrorDynamo(full.roots || []);
     const hasProcess = JSON.stringify(full).includes("ProcessarPagamento");
     if (errNode && hasProcess && !errNode.mutation) {
@@ -93,7 +93,7 @@ await sleep(1400);
 
 // ---- CONSISTÊNCIA: canvas × API
 const consistency = await page.evaluate(async (executionId) => {
-  const api = await (await fetch("/tracevanta/api/executions/" + executionId)).json();
+  const api = await (await fetch("/trace2local/api/executions/" + executionId)).json();
   const apiLabels = [];
   const walk = (nodes) => {
     for (const n of nodes) {
@@ -177,8 +177,8 @@ console.log("21-payment-notes.png");
 console.log("SIMULAÇÃO COGNITIVA (personas)…");
 const walk = await page.evaluate(async () => {
   const results = {};
-  const execId = window.__tvState?.selectedExecutionId;
-  const exec = await (await fetch("/tracevanta/api/executions/" + execId)).json();
+  const execId = window.__t2lState?.selectedExecutionId;
+  const exec = await (await fetch("/trace2local/api/executions/" + execId)).json();
   const byId = {};
   const walkNodes = (nodes) => {
     for (const n of nodes) {

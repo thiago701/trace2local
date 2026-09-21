@@ -4,7 +4,7 @@
 
 ## Contexto
 
-O contrato do `SpanProcessor` do OpenTelemetry é explícito no javadoc de `onStart` e `onEnd`: são chamados **sincronamente, na thread de execução, e não devem lançar exceção nem bloquear**. Essa é a thread que atende a requisição do desenvolvedor — a mesma cuja latência o TraceVanta promete não degradar em mais de 5% (NFR-1).
+O contrato do `SpanProcessor` do OpenTelemetry é explícito no javadoc de `onStart` e `onEnd`: são chamados **sincronamente, na thread de execução, e não devem lançar exceção nem bloquear**. Essa é a thread que atende a requisição do desenvolvedor — a mesma cuja latência o Trace2Local promete não degradar em mais de 5% (NFR-1).
 
 Há, portanto, exatamente um requisito duro: **entre a instrumentação e a montagem da árvore precisa existir um desacoplamento que jamais espere.**
 
@@ -12,12 +12,12 @@ A especificação original propunha um Ring Buffer baseado em LMAX Disruptor.
 
 ## Decisão
 
-**`ArrayBlockingQueue` limitada (padrão 4096 eventos) com política `offer()`** — nunca `put()`. Fila cheia significa **evento descartado**, contador `tracevanta.dropped` incrementado e aviso visível na UI ("N eventos descartados; a árvore pode estar incompleta"). Consumo por **uma thread virtual dedicada** que monta o TVEM e alimenta o hub SSE.
+**`ArrayBlockingQueue` limitada (padrão 4096 eventos) com política `offer()`** — nunca `put()`. Fila cheia significa **evento descartado**, contador `trace2local.dropped` incrementado e aviso visível na UI ("N eventos descartados; a árvore pode estar incompleta"). Consumo por **uma thread virtual dedicada** que monta o TVEM e alimenta o hub SSE.
 
 Corolários normativos:
 
 - Nenhuma operação bloqueante no caminho de ingest: sem I/O, sem `synchronized`, sem alocação além do evento imutável. Verificado por ArchUnit e por benchmark JMH (NFR-2: < 50 µs p99).
-- Erro interno do TraceVanta **nunca** propaga para a aplicação: tudo encapsulado, log em `debug`, contador na UI.
+- Erro interno do Trace2Local **nunca** propaga para a aplicação: tudo encapsulado, log em `debug`, contador na UI.
 - Perda é **declarada**, não escondida. É a invariante I3 do TVEM aplicada ao buffer: melhor uma árvore incompleta e honesta do que uma completa e inventada.
 
 ## Alternativas descartadas

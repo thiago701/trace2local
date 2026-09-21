@@ -1,8 +1,8 @@
 {
-  "name": "tracevanta-ui-screenshots",
+  "name": "trace2local-ui-screenshots",
   "private": true,
   "type": "module",
-  "description": "Captura de evidências visuais da UI do TraceVanta (headless Edge via CDP).",
+  "description": "Captura de evidências visuais da UI do Trace2Local (headless Edge via CDP).",
   "dependencies": {
     "puppeteer-core": "^24.0.0"
   }

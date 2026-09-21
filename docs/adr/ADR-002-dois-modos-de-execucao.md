@@ -17,15 +17,15 @@ Ao mesmo tempo, para uma aplicação Spring Boot local, subir um container extra
 
 Suportar **dois modos**, com o mesmo núcleo e o mesmo TVEM:
 
-**Modo A — Embedded.** TraceVanta dentro do processo da aplicação: coleta, montagem, servidor HTTP e UI no mesmo JVM. É o modo padrão e a experiência de referência.
+**Modo A — Embedded.** Trace2Local dentro do processo da aplicação: coleta, montagem, servidor HTTP e UI no mesmo JVM. É o modo padrão e a experiência de referência.
 
-**Modo B — Companion (Station).** A aplicação carrega apenas a ponte e um exporter; um processo separado (`tracevanta-station`, um container ao lado do LocalStack) recebe a telemetria, monta a árvore e serve a UI.
+**Modo B — Companion (Station).** A aplicação carrega apenas a ponte e um exporter; um processo separado (`trace2local-station`, um container ao lado do LocalStack) recebe a telemetria, monta a árvore e serve a UI.
 
 Regras que acompanham a decisão:
 
-1. O Station aceita **OTLP/HTTP padrão** em `/v1/traces` — qualquer serviço já instrumentado com OTel aparece nele sem código do TraceVanta —, mais um endpoint proprietário para o canal de mutação de dados (ADR-003), que não tem equivalente em OTLP.
+1. O Station aceita **OTLP/HTTP padrão** em `/v1/traces` — qualquer serviço já instrumentado com OTel aparece nele sem código do Trace2Local —, mais um endpoint proprietário para o canal de mutação de dados (ADR-003), que não tem equivalente em OTLP.
 2. Em Lambda, o flush **DEVE** ser síncrono no fim do handler, com teto de 200 ms. `BatchSpanProcessor` padrão perde telemetria: o ambiente congela antes do worker acordar.
-3. O modo é **detectado**, não configurado: presença de `AWS_LAMBDA_FUNCTION_NAME` ⇒ Companion; `tracevanta.station.endpoint` definido ⇒ Companion; caso contrário ⇒ Embedded.
+3. O modo é **detectado**, não configurado: presença de `AWS_LAMBDA_FUNCTION_NAME` ⇒ Companion; `trace2local.station.endpoint` definido ⇒ Companion; caso contrário ⇒ Embedded.
 
 ## Alternativas descartadas
 
@@ -33,7 +33,7 @@ Regras que acompanham a decisão:
 | :--- | :--- |
 | **Só Embedded, Lambda fora da v0.1** | Contraria o escopo escolhido pelo product owner; e Lambda é o ambiente onde o rastro se perde com mais frequência — é onde a ferramenta mais vale |
 | **Lambda Extension externa** (processo dentro do ambiente de execução) | Roda dentro do mesmo ambiente efêmero; não resolve a UI, e prende o desenho ao runtime da AWS. A Telemetry API vira uma opção futura de ingestão para o Station, não a arquitetura |
-| **Só Station, sempre** (um container para todos os casos) | Mata o zero-configuration e transforma o TraceVanta em "mais um Jaeger local", perdendo o diferencial (§2 da SPEC) |
+| **Só Station, sempre** (um container para todos os casos) | Mata o zero-configuration e transforma o Trace2Local em "mais um Jaeger local", perdendo o diferencial (§2 da SPEC) |
 | **Ler logs do CloudWatch/LocalStack** | Telemetria por log é lossy, sem estrutura e sem correlação confiável |
 
 ## Consequências

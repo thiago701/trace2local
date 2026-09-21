@@ -3,7 +3,7 @@
 ## Nosso compromisso
 
 Nós, como membros, contribuidores e mantenedores, nos comprometemos a tornar a
-participação no projeto TraceVanta uma experiência livre de assédio para todos,
+participação no projeto Trace2Local uma experiência livre de assédio para todos,
 independentemente de idade, corpo, deficiência, etnia, identidade e expressão
 de gênero, nível de experiência, nacionalidade, aparência, raça, religião,
 orientação sexual ou qualquer outra característica.

@@ -22,28 +22,35 @@ aws --endpoint-url=http://localstack:4566 dynamodb create-table \
   --key-schema AttributeName=pk,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST || true
 
+echo "[init] tabela DynamoDB (payments — demo payment-service)..."
+aws --endpoint-url=http://localstack:4566 dynamodb create-table \
+  --table-name payments \
+  --attribute-definitions AttributeName=pk,AttributeType=S \
+  --key-schema AttributeName=pk,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST || true
+
 echo "[init] fila SQS (orders-queue)..."
 aws --endpoint-url=http://localstack:4566 sqs create-queue \
   --queue-name orders-queue || true
 
 echo "[init] função Lambda order-processor (runtime java21)..."
-# TRACEVANTA_STATION_ENDPOINT aponta para o Station publicado no host (19877):
+# TRACE2LOCAL_STATION_ENDPOINT aponta para o Station publicado no host (19877):
 # de dentro do emulador Lambda, host.docker.internal alcança a máquina host.
 if ! aws --endpoint-url=http://localstack:4566 lambda create-function \
   --function-name order-processor \
   --runtime java21 \
   --role arn:aws:iam::000000000000:role/lambda-role \
-  --handler tech.neural7.tracevanta.examples.lambda.OrderProcessor::handleRequest \
+  --handler tech.neural7.trace2local.examples.lambda.OrderProcessor::handleRequest \
   --zip-file fileb:///bundle/lambda-sqs-bundle.jar \
   --timeout 30 \
-  --environment "Variables={TRACEVANTA_STATION_ENDPOINT=http://host.docker.internal:19877,TRACEVANTA_STATION_TOKEN=devtoken}"; then
+  --environment "Variables={TRACE2LOCAL_STATION_ENDPOINT=http://host.docker.internal:19877,TRACE2LOCAL_STATION_TOKEN=devtoken}"; then
   echo "[init] função já existia — atualizando o código e o ambiente..."
   aws --endpoint-url=http://localstack:4566 lambda update-function-code \
     --function-name order-processor \
     --zip-file fileb:///bundle/lambda-sqs-bundle.jar
   aws --endpoint-url=http://localstack:4566 lambda update-function-configuration \
     --function-name order-processor \
-    --environment "Variables={TRACEVANTA_STATION_ENDPOINT=http://host.docker.internal:19877,TRACEVANTA_STATION_TOKEN=devtoken}"
+    --environment "Variables={TRACE2LOCAL_STATION_ENDPOINT=http://host.docker.internal:19877,TRACE2LOCAL_STATION_TOKEN=devtoken}"
 fi
 
 echo "[init] invocação de fumaça (primeira chamada puxa a imagem java:21 e extrai o código — pode demorar)..."
@@ -68,4 +75,4 @@ fi
 echo "[init] resposta da função:"
 cat /tmp/out.json
 echo
-echo "[init] cenário pronto → UI do Station em http://localhost:19877/tracevanta"
+echo "[init] cenário pronto → UI do Station em http://localhost:19877/trace2local"

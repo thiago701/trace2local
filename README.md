@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/qa/screenshots/07-lambda-station-overview.png" alt="TraceVanta" width="96" style="border-radius:12px">
+<img src="docs/qa/screenshots/07-lambda-station-overview.png" alt="Trace2Local" width="96" style="border-radius:12px">
 
-# TraceVanta
+# Trace2Local
 
 **See your request travel through the system.**
 
@@ -12,17 +12,17 @@
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](#compatibilidade-v01)
 [![Maven](https://img.shields.io/badge/Maven-3.9%2B-C71A36.svg)](https://maven.apache.org)
 [![Version](https://img.shields.io/badge/version-0.1.0--SNAPSHOT-lightgrey.svg)](CHANGELOG.md)
-[![CI](https://github.com/thiago701/tracevanta/actions/workflows/ci.yml/badge.svg)](https://github.com/thiago701/tracevanta/actions/workflows/ci.yml)
+[![CI](https://github.com/thiago701/trace2local/actions/workflows/ci.yml/badge.svg)](https://github.com/thiago701/trace2local/actions/workflows/ci.yml)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 </div>
 
 ---
 
-O **TraceVanta** transforma a sua aplicação Java numa *runtime canvas* interativa:
+O **Trace2Local** transforma a sua aplicação Java numa *runtime canvas* interativa:
 descubra endpoints, dispare requisições do próprio navegador e acompanhe a árvore
 da execução em tempo real — código, **DynamoDB (delta before/after)**, SNS, SQS e
-SQL — em `http://localhost:9876/tracevanta`.
+SQL — em `http://localhost:9876/trace2local`.
 
 Ergonomia do Swagger UI, ambição do tracing distribuído: **nada sai da sua máquina**,
 tudo em memória, e a UI declara o que não conseguiu observar — nunca inventa.
@@ -31,14 +31,14 @@ tudo em memória, e a UI declara o que não conseguiu observar — nunca inventa
 
 ## 📚 Índice
 
-- [Por que TraceVanta](#-por-que-tracevanta)
+- [Por que Trace2Local](#-por-que-trace2local)
 - [Demonstração](#-demonstração)
 - [Quickstart](#-quickstart)
 - [Instalador Maven](#-instalador-maven)
 - [Instrumentação](#-instrumentação)
 - [Como funciona](#-como-funciona)
 - [Arquitetura e módulos](#-arquitetura-e-módulos)
-- [Configuração](#-configuração-tracevanta)
+- [Configuração](#-configuração-trace2local)
 - [Segurança](#-segurança)
 - [Compatibilidade](#-compatibilidade-v01)
 - [Testes e qualidade](#-testes-e-qualidade)
@@ -50,7 +50,7 @@ tudo em memória, e a UI declara o que não conseguiu observar — nunca inventa
 
 ---
 
-## ✨ Por que TraceVanta
+## ✨ Por que Trace2Local
 
 | | |
 |---|---|
@@ -60,7 +60,7 @@ tudo em memória, e a UI declara o que não conseguiu observar — nunca inventa
 | 🧩 **Domínio-agnóstico** | O núcleo não conhece "pedido" nem "cliente": e-commerce, logística, fintech, saúde — qualquer área de negócio funciona sem customização |
 | 🛡️ **Local-first** | Bind `127.0.0.1` por padrão, redaction **na origem**, token Bearer opcional no ingest, CSP restritivo — [SECURITY.md](SECURITY.md) |
 | 📡 **Dois modos** | **Embedded** (a UI sobe no seu JVM) ou **Companion/Station** (Lambda, `sam local` e **multi-serviço em UMA árvore** via OTLP) |
-| 🧪 **Testável** | Asserções sobre a árvore nos seus testes (`tracevanta-testing`), E2E com LocalStack real no CI |
+| 🧪 **Testável** | Asserções sobre a árvore nos seus testes (`trace2local-testing`), E2E com LocalStack real no CI |
 | 📦 **Honestidade por design** | Spans perdidos, delta indisponível, cobertura sem agente — tudo **declarado na UI**, nunca presumido (invariantes I1–I3) |
 
 ---
@@ -80,8 +80,8 @@ tudo em memória, e a UI declara o que não conseguiu observar — nunca inventa
 ```xml
 <!-- pom.xml -->
 <dependency>
-  <groupId>tech.neural7.tracevanta</groupId>
-  <artifactId>tracevanta-spring-boot-starter</artifactId>
+  <groupId>tech.neural7.trace2local</groupId>
+  <artifactId>trace2local-spring-boot-starter</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 </dependency>
 ```
@@ -91,28 +91,28 @@ tudo em memória, e a UI declara o que não conseguiu observar — nunca inventa
 public class PedidoController {
     @PostMapping("/pedidos")
     public Pedido criar(@RequestBody NovoPedido request) {
-        return service.criar(request); // @TraceVanta no serviço = nó BUSINESS na árvore
+        return service.criar(request); // @Trace2Local no serviço = nó BUSINESS na árvore
     }
 }
 ```
 
-Suba a app e abra **`http://localhost:9876/tracevanta`** — escolha `POST /pedidos`,
+Suba a app e abra **`http://localhost:9876/trace2local`** — escolha `POST /pedidos`,
 clique **EXECUTE REQUEST** e veja a requisição viajar.
 
 ### AWS Lambda (modo Companion com Station)
 
 ```bash
-docker run -d --name tracevanta-station -p 9876:9876 \
-  -e TRACEVANTA_BIND_ADDRESS=0.0.0.0 -e TRACEVANTA_ALLOW_NON_LOOPBACK=true \
-  -e TRACEVANTA_STATION_TOKEN=seu-token tracevanta-station:0.1.0
+docker run -d --name trace2local-station -p 9876:9876 \
+  -e TRACE2LOCAL_BIND_ADDRESS=0.0.0.0 -e TRACE2LOCAL_ALLOW_NON_LOOPBACK=true \
+  -e TRACE2LOCAL_STATION_TOKEN=seu-token trace2local-station:0.1.0
 ```
 
 ```java
-public class MinhaFuncao extends TraceVantaLambdaHandler<Map<String, String>, String> {
+public class MinhaFuncao extends Trace2LocalLambdaHandler<Map<String, String>, String> {
     @Override
     protected String handle(Map<String, String> input, Context ctx) { /* ... */ }
 }
-// envs da função: TRACEVANTA_STATION_ENDPOINT + TRACEVANTA_STATION_TOKEN
+// envs da função: TRACE2LOCAL_STATION_ENDPOINT + TRACE2LOCAL_STATION_TOKEN
 ```
 
 O runtime abre o span raiz (nó `LAMBDA`), correlaciona mutações e faz **flush
@@ -129,7 +129,7 @@ síncrono** no fim da invocação (ADR-002) — a árvore aparece no Station.
 
 ## 🧰 Instalador Maven
 
-O plugin `tracevanta-maven-plugin` faz a **configuração automática** do projeto
+O plugin `trace2local-maven-plugin` faz a **configuração automática** do projeto
 e a **engenharia reversa** dos recursos que aparecem no canvas — além de
 auditar os logs e sugerir/gerar o padrão compatível com **Datadog e
 OpenTelemetry**.
@@ -137,13 +137,13 @@ OpenTelemetry**.
 ### 1. Analisar (somente leitura — engenharia reversa)
 
 ```bash
-./mvnw tech.neural7.tracevanta:tracevanta-maven-plugin:0.1.0-SNAPSHOT:analyze
+./mvnw tech.neural7.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT:analyze
 ```
 
-Escaneia o bytecode compilado e gera `target/tracevanta/`:
+Escaneia o bytecode compilado e gera `target/trace2local/`:
 
 - **`canvas-map.md`** — o que será mapeado na UI: endpoints Spring (catálogo +
-  disparo), métodos `@TraceVanta` (nós BUSINESS), serviços AWS SDK v2 e JDBC;
+  disparo), métodos `@Trace2Local` (nós BUSINESS), serviços AWS SDK v2 e JDBC;
 - **`report.md`** — higiene de logs: usos de SLF4J, `System.out`,
   `printStackTrace`, e sugestões concretas (ex.: *"Substitua System.out por
   SLF4J em X — logs fora do SLF4J não correlacionam com o trace"*).
@@ -151,16 +151,16 @@ Escaneia o bytecode compilado e gera `target/tracevanta/`:
 ### 2. Configurar (aplica a instalação)
 
 ```bash
-./mvnw tech.neural7.tracevanta:tracevanta-maven-plugin:0.1.0-SNAPSHOT:configure
+./mvnw tech.neural7.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT:configure
 ```
 
 Idempotente (nunca sobrescreve arquivo existente):
 
 | Ação | Resultado |
 | :--- | :--- |
-| `pom.xml` | adiciona `tracevanta-bom` (import) + `tracevanta-spring-boot-starter` (backup em `pom.xml.tracevanta.bak`) |
-| `src/main/resources/tracevanta-business.md` | glossário de negócio para a aba STORY (se ausente) |
-| `src/main/resources/application-tracevanta.yml` | config inicial (porta, redaction, retention, delta DynamoDB) |
+| `pom.xml` | adiciona `trace2local-bom` (import) + `trace2local-spring-boot-starter` (backup em `pom.xml.trace2local.bak`) |
+| `src/main/resources/trace2local-business.md` | glossário de negócio para a aba STORY (se ausente) |
+| `src/main/resources/application-trace2local.yml` | config inicial (porta, redaction, retention, delta DynamoDB) |
 | `src/main/resources/logback-spring.xml` | padrão de log com correlação de trace nos DOIS padrões |
 
 ### 3. Logs portáteis (Datadog + OpenTelemetry)
@@ -190,17 +190,17 @@ onde faltam).
 
 ```java
 // AWS SDK v2 — delta EXACT do DynamoDB + semântica SNS/SQS
-DynamoDbClient ddb = TraceVantaAws.instrument(DynamoDbClient.builder(), traceVantaConfig).build();
+DynamoDbClient ddb = Trace2LocalAws.instrument(DynamoDbClient.builder(), traceVantaConfig).build();
 
 // SQL — semântica + delta inferred (opcional)
-DataSource ds = TraceVantaJdbc.wrap(myDataSource, traceVantaConfig);
+DataSource ds = Trace2LocalJdbc.wrap(myDataSource, traceVantaConfig);
 
 // Negócio — um nó BUSINESS por método
-@TraceVanta("CriarPedido")
+@Trace2Local("CriarPedido")
 public Pedido criar(NovoPedido r) { /* ... */ }
 
 // Qualquer biblioteca sem library instrumentation — SPI via ServiceLoader (AOT-safe)
-public interface TraceVantaExtension {
+public interface Trace2LocalExtension {
     default void contribute(NodeBuilder node, SpanView span) {}
     default Optional<DataMutation> captureMutation(MutationContext ctx) { return Optional.empty(); }
     default RedactionPolicy redactionPolicy() { return RedactionPolicy.INHERIT; }
@@ -215,13 +215,13 @@ public interface TraceVantaExtension {
 
 ```mermaid
 flowchart LR
-    I[Instrumentação<br/>starter · aws · jdbc · lambda · @TraceVanta] -->|SpanStart/End + MutationEvent| B[Ring Buffer 4096<br/>descarte declarado na borda]
+    I[Instrumentação<br/>starter · aws · jdbc · lambda · @Trace2Local] -->|SpanStart/End + MutationEvent| B[Ring Buffer 4096<br/>descarte declarado na borda]
     B --> A[Assembler · virtual thread<br/>TVEM · invariantes I1-I3]
     A --> S[ExecutionStore<br/>acervo LRU]
     S --> H[HTTP · REST + SSE 20fps] --> U[UI · canvas + inspector]
 ```
 
-1. **Ponte** (`tracevanta-otel`): um `SpanProcessor` *acrescentado* ao pipeline
+1. **Ponte** (`trace2local-otel`): um `SpanProcessor` *acrescentado* ao pipeline
    OTel do dev — nunca o substitui. Se você já exporta para o Jaeger, continua exportando.
 2. **Ring buffer** (ADR-006): fila limitada com `offer()`, nunca `put()` — sob
    rajada, eventos são descartados **e o descarte é exibido**.
@@ -236,9 +236,9 @@ flowchart LR
 
 | | **Embedded** (padrão) | **Companion / Station** |
 | :--- | :--- | :--- |
-| Onde roda a UI | No JVM da sua app, `:9876` | Container `tracevanta-station`, `:9876` |
+| Onde roda a UI | No JVM da sua app, `:9876` | Container `trace2local-station`, `:9876` |
 | Para | Spring Boot local, `docker compose`, testes | Lambda, `sam local`, **multi-serviço em uma árvore** |
-| Telemetria | SpanProcessor in-process | OTLP/HTTP `/v1/traces` + `/tvingest/v1/mutations` (Bearer opcional) |
+| Telemetria | SpanProcessor in-process | OTLP/HTTP `/v1/traces` + `/t2lingest/v1/mutations` (Bearer opcional) |
 | Flush em Lambda | — | **Síncrono no fim da invocação** (o ambiente congela), teto 200 ms |
 
 ---
@@ -249,26 +249,26 @@ Visão completa (regras de dependência, fluxo, SPI): **[docs/ARQUITETURA.md](do
 
 | Módulo | Papel |
 | :--- | :--- |
-| `tracevanta-bom` | BOM: versões do projeto **e** de terceiros — declare sem versão |
-| `tracevanta-core` | TVEM, ring buffer, assembler, redaction, config, SPI — POJO + JDK |
-| `tracevanta-otel` | Ponte OTel: `SpanProcessor`, `SemanticMapper` (anti-corrupção, ADR-008) |
-| `tracevanta-ui` | Assets da UI (WebJar, offline absoluto, zero referência externa) |
-| `tracevanta-server` | REST + SSE sobre `com.sun.net.httpserver` (sem framework) |
-| `tracevanta-spring-boot-starter` | Autoconfig Boot, catálogo, launcher, guarda de produção, hints AOT |
-| `tracevanta-aws` | Delta DynamoDB (EXACT) + semântica SNS/SQS |
-| `tracevanta-jdbc` | Semântica SQL + delta `inferred` |
-| `tracevanta-lambda` | `TraceVantaLambdaHandler` com flush síncrono |
-| `tracevanta-station` | Station standalone do modo Companion (ingest OTLP + mutações) |
-| `tracevanta-testing` | JUnit 5 + asserções sobre a árvore (para os seus testes) |
-| `tracevanta-architecture` | Regras ArchUnit que travam a arquitetura no CI |
+| `trace2local-bom` | BOM: versões do projeto **e** de terceiros — declare sem versão |
+| `trace2local-core` | TVEM, ring buffer, assembler, redaction, config, SPI — POJO + JDK |
+| `trace2local-otel` | Ponte OTel: `SpanProcessor`, `SemanticMapper` (anti-corrupção, ADR-008) |
+| `trace2local-ui` | Assets da UI (WebJar, offline absoluto, zero referência externa) |
+| `trace2local-server` | REST + SSE sobre `com.sun.net.httpserver` (sem framework) |
+| `trace2local-spring-boot-starter` | Autoconfig Boot, catálogo, launcher, guarda de produção, hints AOT |
+| `trace2local-aws` | Delta DynamoDB (EXACT) + semântica SNS/SQS |
+| `trace2local-jdbc` | Semântica SQL + delta `inferred` |
+| `trace2local-lambda` | `Trace2LocalLambdaHandler` com flush síncrono |
+| `trace2local-station` | Station standalone do modo Companion (ingest OTLP + mutações) |
+| `trace2local-testing` | JUnit 5 + asserções sobre a árvore (para os seus testes) |
+| `trace2local-architecture` | Regras ArchUnit que travam a arquitetura no CI |
 
 ---
 
-## ⚙️ Configuração (`tracevanta.*`)
+## ⚙️ Configuração (`trace2local.*`)
 
 | Propriedade | Padrão | Nota |
 | :--- | :--- | :--- |
-| `enabled` | `true` em dev | kill switch: `-Dtracevanta.enabled=false` desliga tudo |
+| `enabled` | `true` em dev | kill switch: `-Dtrace2local.enabled=false` desliga tudo |
 | `port` | `9876` | `0` = efêmera |
 | `bind-address` | `127.0.0.1` | alterar exige `allow-non-loopback=true` |
 | `buffer.capacity` | `4096` | eventos; descarte na borda é exibido na UI |
@@ -278,7 +278,7 @@ Visão completa (regras de dependência, fluxo, SPI): **[docs/ARQUITETURA.md](do
 | `aws.dynamodb.capture-before` | `true` (dev) | eleva `ReturnValues` e restaura a resposta (R-01) |
 | `jdbc.mutation-capture` | `off` | `off` \| `inferred` |
 | `station.endpoint` | — | modo Companion |
-| `station.token` | — | Bearer do ingest (env `TRACEVANTA_STATION_TOKEN`) |
+| `station.token` | — | Bearer do ingest (env `TRACE2LOCAL_STATION_TOKEN`) |
 | `flush-timeout-ms` | `200` | Lambda |
 
 ---
@@ -359,13 +359,13 @@ Visões DAG/Waterfall/Sequence e exportação OTLP entram na v0.2 — detalhes e
 
 1. **Ferramenta de DEV-TIME — não empacote em produção.** O starter se
    autodesabilita fora de dev e **falha o boot** se forçado sem
-   `tracevanta.i-know-what-im-doing=true` (SPEC §8.4).
+   `trace2local.i-know-what-im-doing=true` (SPEC §8.4).
 2. **Quem tem a máquina, tem a UI.** Bind `127.0.0.1`, sem autenticação — em
    loopback, auth seria teatro (ADR-007). Expor além do loopback exige flag
    explícita e emite WARN; para uso remoto, túnel SSH.
 3. **A captura do delta do DynamoDB modifica a sua requisição** (eleva
    `ReturnValues` e restaura a resposta — há teste provando a restauração;
-   R-01). Desligue com `tracevanta.aws.dynamodb.capture-before=false`.
+   R-01). Desligue com `trace2local.aws.dynamodb.capture-before=false`.
 4. **Redaction é mitigação, não garantia.** Campo de negócio com nome inocente
    passa — o limite está declarado, não escondido (SPEC §8.3).
 5. **Cobertura sem agente é limitada** — a UI diz "não instrumentado", nunca
@@ -375,9 +375,9 @@ Visões DAG/Waterfall/Sequence e exportação OTLP entram na v0.2 — detalhes e
 
 | Item | SPEC | v0.1 |
 | :--- | :--- | :--- |
-| `UpdateItem` before/after | §4.10: ambos em uma chamada | **FECHADO** com `TraceVantaAws.instrumentWithReadBack` (opcional: `before` do `ALL_OLD` + `after` exato por releitura dentro do span); o padrão `instrument` mantém `after` EXACT com `before=null` **declarado na UI** (a API do DynamoDB devolve UM conjunto por chamada) |
+| `UpdateItem` before/after | §4.10: ambos em uma chamada | **FECHADO** com `Trace2LocalAws.instrumentWithReadBack` (opcional: `before` do `ALL_OLD` + `after` exato por releitura dentro do span); o padrão `instrument` mantém `after` EXACT com `before=null` **declarado na UI** (a API do DynamoDB devolve UM conjunto por chamada) |
 | SSE `execution.completed` | §5.2: campos flat (`status`, `duration`, `metrics`) | **FECHADO**: `{"executionId","status","duration" (ISO-8601),"metrics","execution":{…}}` — flat conforme a SPEC, payload completo aninhado como extensão compatível |
-| `tracevanta.port=0` | §5.4: "mesma porta da app" | porta efêmera; **`GET /api/meta` expõe a porta real** (descoberta programática); mesmo-que-a-app fica para v0.2 (exige servir a UI junto do DispatcherServlet) |
+| `trace2local.port=0` | §5.4: "mesma porta da app" | porta efêmera; **`GET /api/meta` expõe a porta real** (descoberta programática); mesmo-que-a-app fica para v0.2 (exige servir a UI junto do DispatcherServlet) |
 | Schema por springdoc | §4.8 estratégia 1 | records via `RecordComponent` (integração springdoc na v0.2 — versão compatível com Boot 4 em auditoria) |
 | Catálogo Lambda | §4.8: parse de `template.yaml` | catálogo vazio (somente-observação), registrado como gap |
 | `jdbc.mutation-capture=before-image` | §4.10: opt-in com aviso | **rejeitado com erro explícito** (nunca rebaixado em silêncio) |
@@ -396,7 +396,7 @@ build reprodutível e assinatura GPG no release.
 
 <div align="center">
 
-**TraceVanta** — *See your request travel through the system.*
+**Trace2Local** — *See your request travel through the system.*
 
 Apache-2.0 © 2026 Neural7 Tech ·
 [Especificação](docs/SPEC.md) · [ADRs](docs/adr/) · [Arquitetura](docs/ARQUITETURA.md) · [Segurança](SECURITY.md)

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>tech.neural7.trace2local</groupId>
+    <artifactId>trace2local-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>trace2local-bom</artifactId>
+  <packaging>pom</packaging>
+  <name>Trace2Local — BOM</name>
+  <description>BOM que fixa as versões dos artefatos Trace2Local e das bibliotecas de terceiros do pipeline (OTel, AWS SDK, Jackson, testes). Importe este BOM e declare os artefatos SEM versão.</description>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- artefatos do projeto -->
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-otel</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-ui</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-server</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-aws</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-jdbc</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-lambda</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-spring-boot-starter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-station</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-testing</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-maven-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- OpenTelemetry -->
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-bom</artifactId>
+        <version>${version.opentelemetry}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-instrumentation-bom</artifactId>
+        <version>${version.opentelemetry.instrumentation}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.semconv</groupId>
+        <artifactId>opentelemetry-semconv</artifactId>
+        <version>${version.opentelemetry.semconv}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opentelemetry.proto</groupId>
+        <artifactId>opentelemetry-proto</artifactId>
+        <version>${version.opentelemetry.proto}</version>
+      </dependency>
+      <!-- Publicada só em canal -alpha (Risco R-04 aplicado à AWS); o BOM estável não a gerencia -->
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-aws-sdk-2.2</artifactId>
+        <version>${version.opentelemetry.instrumentation}-alpha</version>
+      </dependency>
+
+      <!-- AWS -->
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${version.awssdk}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-lambda-java-core</artifactId>
+        <version>${version.aws-lambda-core}</version>
+      </dependency>
+
+      <!-- JSON -->
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${version.jackson}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Spring Boot (apps que usam o starter como dependência sem o parent Boot) -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${version.spring-boot}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Testes -->
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${version.junit}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${version.assertj}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${version.mockito}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.jqwik</groupId>
+        <artifactId>jqwik</artifactId>
+        <version>${version.jqwik}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit-junit5</artifactId>
+        <version>${version.archunit}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers</artifactId>
+        <version>${version.testcontainers}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>localstack</artifactId>
+        <version>${version.testcontainers}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>${version.testcontainers}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

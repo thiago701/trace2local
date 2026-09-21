@@ -1,4 +1,4 @@
-# Arquitetura do TraceVanta
+# Arquitetura do Trace2Local
 
 > Visão de estrutura para quem vai **adotar**, **estender** ou **contribuir**.
 > Decisões registradas: [ADRs](adr/) · Especificação formal: [SPEC.md](SPEC.md).
@@ -23,18 +23,18 @@
 
 | Módulo | Papel | Depende de |
 |---|---|---|
-| `tracevanta-bom` | BOM: versões do projeto + de terceiros (OTel, AWS, Jackson, testes) | — |
-| `tracevanta-core` | TVEM (modelo de execução), ring buffer, assembler, redaction, config, SPI | — |
-| `tracevanta-otel` | Ponte OTel↔TVEM: `SpanProcessor`, mapper semântico, boot do SDK | core |
-| `tracevanta-ui` | Assets offline da UI (WebJar; zero referência externa) | — |
-| `tracevanta-server` | HTTP (REST+SSE) sobre `com.sun.net.httpserver`, servidor estático, launcher | core, ui |
-| `tracevanta-aws` | Instrumentação AWS SDK v2 (DynamoDB delta EXACT, SNS/SQS spans) | core, otel |
-| `tracevanta-jdbc` | Delta de dados via JDBC (`mutation-capture=inferred`) | core |
-| `tracevanta-lambda` | Modo Lambda: span raiz + flush síncrono + editor OTLP/mutações | core, otel |
-| `tracevanta-station` | Modo Companion: ingest OTLP + canal de mutação (multi-serviço) | core, otel, server |
-| `tracevanta-spring-boot-starter` | Autoconfig Boot: Embedded ou Companion, launcher, `@TraceVanta` | core, otel, server, aws |
-| `tracevanta-testing` | JUnit extension + assertions para os consumidores | core |
-| `tracevanta-architecture` | Regras ArchUnit que travam esta arquitetura no CI | — |
+| `trace2local-bom` | BOM: versões do projeto + de terceiros (OTel, AWS, Jackson, testes) | — |
+| `trace2local-core` | TVEM (modelo de execução), ring buffer, assembler, redaction, config, SPI | — |
+| `trace2local-otel` | Ponte OTel↔TVEM: `SpanProcessor`, mapper semântico, boot do SDK | core |
+| `trace2local-ui` | Assets offline da UI (WebJar; zero referência externa) | — |
+| `trace2local-server` | HTTP (REST+SSE) sobre `com.sun.net.httpserver`, servidor estático, launcher | core, ui |
+| `trace2local-aws` | Instrumentação AWS SDK v2 (DynamoDB delta EXACT, SNS/SQS spans) | core, otel |
+| `trace2local-jdbc` | Delta de dados via JDBC (`mutation-capture=inferred`) | core |
+| `trace2local-lambda` | Modo Lambda: span raiz + flush síncrono + editor OTLP/mutações | core, otel |
+| `trace2local-station` | Modo Companion: ingest OTLP + canal de mutação (multi-serviço) | core, otel, server |
+| `trace2local-spring-boot-starter` | Autoconfig Boot: Embedded ou Companion, launcher, `@Trace2Local` | core, otel, server, aws |
+| `trace2local-testing` | JUnit extension + assertions para os consumidores | core |
+| `trace2local-architecture` | Regras ArchUnit que travam esta arquitetura no CI | — |
 | `examples/*` | `order-service` (Spring) e `lambda-sqs` (serverless) — só demonstração | lib |
 
 Regra de dependência (travada por ArchUnit): `core` não conhece ninguém;
@@ -46,17 +46,17 @@ módulos de ponte conhecem só `core` (+ o SDK de terceiros que instrumentam);
 ```mermaid
 flowchart LR
     subgraph app["Aplicação do usuário"]
-        I[Instrumentação<br/>starter · aws · jdbc · lambda · @TraceVanta]
+        I[Instrumentação<br/>starter · aws · jdbc · lambda · @Trace2Local]
     end
-    subgraph core["tracevanta-core"]
-        B[TraceVantaRingBuffer<br/>descarte declarado na borda]
+    subgraph core["trace2local-core"]
+        B[Trace2LocalRingBuffer<br/>descarte declarado na borda]
         A[TraceAssembler<br/>virtual thread · I1-I3]
         S[ExecutionStore<br/>acervo LRU]
     end
-    subgraph srv["tracevanta-server"]
+    subgraph srv["trace2local-server"]
         H[HTTP · REST + SSE 20fps]
     end
-    subgraph ui["tracevanta-ui"]
+    subgraph ui["trace2local-ui"]
         U[UI · canvas + inspector]
     end
     I -->|SpanStart/End + MutationEvent| B --> A --> S --> H --> U
@@ -71,14 +71,14 @@ flowchart LR
 3. O **hub SSE** propaga `LiveEvent`s coalescidos (20 fps) para a UI, que
    reconstrói a árvore por `parentId` (snapshots parciais não são confiáveis).
 4. Modo **Embedded**: tudo no mesmo processo. Modo **Companion/Station**:
-   OTLP `/v1/traces` + mutações `/tvingest/v1/mutations` alimentam o mesmo
+   OTLP `/v1/traces` + mutações `/t2lingest/v1/mutations` alimentam o mesmo
    buffer — vários serviços viram UMA árvore (opcionalmente com Bearer token).
 
 ## Pontos de extensão (SPI)
 
 | SPI | Propósito | Exemplo de uso |
 |---|---|---|
-| `TraceVantaExtension` | Contribuir por nó (atributos, mutação capturada fora do pipeline) | instrumentar um cliente próprio (gRPC, Kafka) |
+| `Trace2LocalExtension` | Contribuir por nó (atributos, mutação capturada fora do pipeline) | instrumentar um cliente próprio (gRPC, Kafka) |
 | `NodeBuilder` / `SpanView` / `MutationContext` | Contrato da contribuição por nó | enriquecer nós com metadados da empresa |
 | `SdkTracerProviderConfigurer` (ServiceLoader) | Anexar o processor ao OTel do dev | app já instrumentada com OTel |
 | `EndpointDescriptor` + `ExecutionLauncher` | Catálogo e disparo da UI no Embedded | Spring MVC (built-in) ou outro framework |
@@ -86,8 +86,8 @@ flowchart LR
 
 ## Configuração e segurança
 
-- `TraceVantaConfig` é o modelo canônico; no Spring, `tracevanta.*` liga via
-  `TraceVantaProperties` (contrato travado por `PropertyBindingContractTest`).
+- `Trace2LocalConfig` é o modelo canônico; no Spring, `trace2local.*` liga via
+  `Trace2LocalProperties` (contrato travado por `PropertyBindingContractTest`).
 - Segurança: bind loopback obrigatório, redaction na origem, token Bearer
   opcional no ingest, headers de hardening — detalhes em [SECURITY.md](../SECURITY.md).
 

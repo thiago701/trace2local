@@ -1,6 +1,6 @@
 ---
 name: ✨ Feature request
-about: Sugira uma melhoria para o TraceVanta
+about: Sugira uma melhoria para o Trace2Local
 title: "[feature] "
 labels: enhancement
 assignees: []

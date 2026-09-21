@@ -1,4 +1,4 @@
-# Decisões de Arquitetura — TraceVanta
+# Decisões de Arquitetura — Trace2Local
 
 Registro das decisões estruturais (ADR = *Architecture Decision Record*). Uma decisão entra aqui quando **é cara de reverter**: muda o modelo de dados, a superfície pública, a topologia de processos ou a promessa do produto.
 
@@ -15,6 +15,6 @@ Formato: contexto → decisão → alternativas descartadas → consequências (
 | [007](ADR-007-local-first-sem-autenticacao.md) | Loopback-only, sem autenticação, redaction na origem | Aceita | **Alto** — é a promessa do produto |
 | [008](ADR-008-camada-semantica-anticorrupcao.md) | Nenhum nome de atributo OTel fora do módulo de ponte | Aceita | Médio |
 | [009](ADR-009-baseline-jdk-e-matriz-de-suporte.md) | Baseline de bytecode e matriz de versões suportadas | **Aceita** (D-1 no GATE 1) | **Alto** |
-| [010](ADR-010-distribuicao-licenca-e-compatibilidade.md) | Apache-2.0, Central Portal, `tech.neural7.tracevanta`, SemVer a partir do 1.0 | **Aceita** (D-4 no GATE 1) | Médio |
+| [010](ADR-010-distribuicao-licenca-e-compatibilidade.md) | Apache-2.0, Central Portal, `tech.neural7.trace2local`, SemVer a partir do 1.0 | **Aceita** (D-4 no GATE 1) | Médio |
 
 > Todas as decisões do GATE 1 foram aprovadas em [GATE-1-DECISOES.md](GATE-1-DECISOES.md) e nenhuma permanece em "Proposta". Uma decisão só sai de "Aceita" com novo registro; decisão superada não é apagada: ganha status `Substituída por ADR-NNN` e o histórico fica.

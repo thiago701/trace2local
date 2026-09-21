@@ -37,7 +37,7 @@
         "http.response.status_code" : "201"
       },
       "payload" : {
-        "request" : "{\"customerId\":\"C-E2E\",\"total\":250.0,\"password\":\"[TRACEVANTA_REDACTED]\"}",
+        "request" : "{\"customerId\":\"C-E2E\",\"total\":250.0,\"password\":\"[TRACE2LOCAL_REDACTED]\"}",
         "response" : null
       },
       "mutation" : null,

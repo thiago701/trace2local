@@ -1,16 +1,16 @@
-# EVIDÊNCIAS QA — E2E TraceVanta — cenário completo LocalStack
+# EVIDÊNCIAS QA — E2E Trace2Local — cenário completo LocalStack
 
 Data: 2026-09-21T15:21:31.781073600Z
 Ambiente: localstack/localstack:4.2 | container 5267d8e6da6e313c122ec72a3d974b3e59eb992026c013f7cfbcb5cd1b2a4ebf | Java 25.0.3
 Infra provisionada: tabela `orders` + tópico SNS `order-events` + fila SQS `billing-queue` (fanout SNS→SQS) + consumidor BillingConsumer na app
 
 ## JC-1 + JC-3 — POST /orders disparado pela UI, consumido pela fila na MESMA árvore
-App :18089 | TraceVanta :60431
+App :18089 | Trace2Local :60431
 - disparo → `execution.started` no SSE: **544 ms** (NFR-4: < 1 s)
 - execução **TV-00001** concluída em **2179 ms** | status=COMPLETED | nós=8 | profundidade=7
 - delta DynamoDB **EXACT** (E7): before={} item novo, after={pk=ORDER#8d6afae4, total=250.0}
 - JC-3 (E8): SNS→SQS→BillOrder correlacionado na MESMA árvore (SQS receive e BillOrder continuam o trace via AWSTraceHeader/Parent) | GetItem READ_ONLY
-- redaction (E11): payload do nó HTTP contém `[TRACEVANTA_REDACTED]` e NÃO contém a senha
+- redaction (E11): payload do nó HTTP contém `[TRACE2LOCAL_REDACTED]` e NÃO contém a senha
 - export .tvtrace (JC-4): manifest format=tvtrace, version 0.1.0
 - /api/health: status=ok dropped=0 internalErrors=0 connectedClients=1
 - evidência JSON: docs/qa/evidence-jc1-jc3-execution.json

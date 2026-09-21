@@ -1,16 +1,16 @@
-# tracevanta-station para o cenário lambda-sqs — exposto em 0.0.0.0:19877 para
+# trace2local-station para o cenário lambda-sqs — exposto em 0.0.0.0:19877 para
 # receber OTLP/mutações da função Lambda emulada no LocalStack (ADR-002/§8.1:
 # exposição sem auth é consequência declarada do modo Companion local).
 FROM maven:3.9-eclipse-temurin-25 AS build
 WORKDIR /build
 COPY . .
-RUN mvn -q -pl tracevanta-station -am -DskipTests package
+RUN mvn -q -pl trace2local-station -am -DskipTests package
 
 FROM eclipse-temurin:25-jre
 WORKDIR /app
-COPY --from=build /build/tracevanta-station/target/tracevanta-station-0.1.0-SNAPSHOT.jar station.jar
+COPY --from=build /build/trace2local-station/target/trace2local-station-0.1.0-SNAPSHOT.jar station.jar
 EXPOSE 19877
-ENV TRACEVANTA_PORT=19877
-ENV TRACEVANTA_BIND_ADDRESS=0.0.0.0
-ENV TRACEVANTA_ALLOW_NON_LOOPBACK=true
+ENV TRACE2LOCAL_PORT=19877
+ENV TRACE2LOCAL_BIND_ADDRESS=0.0.0.0
+ENV TRACE2LOCAL_ALLOW_NON_LOOPBACK=true
 ENTRYPOINT ["java", "-jar", "station.jar"]

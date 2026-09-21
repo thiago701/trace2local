@@ -4,7 +4,7 @@
 
 ## Contexto
 
-O TraceVanta será publicado como open source no Maven Central, sob a Neural7 Tech. Três escolhas precisam estar definidas antes do primeiro `deploy`, porque todas são caras de mudar depois: **licença**, **coordenadas** e **o que conta como API pública**.
+O Trace2Local será publicado como open source no Maven Central, sob a Neural7 Tech. Três escolhas precisam estar definidas antes do primeiro `deploy`, porque todas são caras de mudar depois: **licença**, **coordenadas** e **o que conta como API pública**.
 
 Fatos verificados em 2026-09-18:
 
@@ -17,19 +17,19 @@ Fatos verificados em 2026-09-18:
 
 **Licença: Apache-2.0.** MIT não traz concessão de patente, o que trava aprovação em jurídico corporativo; AGPL inviabiliza adoção numa biblioteca de dev-tooling (a obrigação de abrir o fonte de quem roda versão modificada como serviço é um não imediato em qualquer empresa).
 
-**Coordenadas: `tech.neural7.tracevanta`**, verificando `neural7.tech` por registro TXT — o domínio já pertence ao autor e a marca compõe com o produto. Alternativa imediata, se a verificação emperrar: `io.github.<usuário>`.
+**Coordenadas: `tech.neural7.trace2local`**, verificando `neural7.tech` por registro TXT — o domínio já pertence ao autor e a marca compõe com o produto. Alternativa imediata, se a verificação emperrar: `io.github.<usuário>`.
 
 **Publicação:** Central Publisher Portal, com `central-publishing-maven-plugin`, assinatura GPG e SBOM (CycloneDX) por release.
 
 **Compatibilidade.** SemVer a partir do 1.0.0. Em 0.x, a API pode quebrar entre *minors* — e isso **DEVE** estar no README, não subentendido. A superfície pública é **apenas**:
 
-1. `TraceVantaExtension` e os tipos do TVEM que ela expõe;
-2. as propriedades de configuração `tracevanta.*`;
-3. os contratos REST/SSE de `/tracevanta/api`.
+1. `Trace2LocalExtension` e os tipos do TVEM que ela expõe;
+2. as propriedades de configuração `trace2local.*`;
+3. os contratos REST/SSE de `/trace2local/api`.
 
 Todo o resto vive em pacotes `internal` e muda livremente — regra verificada por ArchUnit, não por convenção.
 
-**Pendência de nome:** ~~o repositório atual grafa "traceventa" nos arquivos~~ — resolvida no GATE 1 (D-5): arquivos renomeados para `tracevanta-*`. Resta verificar disponibilidade do nome no GitHub, no npm (caso a UI vire pacote) e como marca.
+**Pendência de nome:** ~~o repositório atual grafa "traceventa" nos arquivos~~ — resolvida no GATE 1 (D-5): arquivos renomeados para `trace2local-*`. Resta verificar disponibilidade do nome no GitHub, no npm (caso a UI vire pacote) e como marca.
 
 ## Alternativas descartadas
 

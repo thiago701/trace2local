@@ -5,17 +5,17 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>tech.neural7.tracevanta</groupId>
-    <artifactId>tracevanta-parent</artifactId>
+    <groupId>tech.neural7.trace2local</groupId>
+    <artifactId>trace2local-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <groupId>tech.neural7.tracevanta.examples</groupId>
+  <groupId>tech.neural7.trace2local.examples</groupId>
   <artifactId>lambda-sqs</artifactId>
   <version>0.1.0-SNAPSHOT</version>
-  <name>TraceVanta — lambda-sqs (Lambda + DynamoDB + SQS no LocalStack)</name>
-  <description>Projeto de teste/validação: AWS Lambda (runtime java21) instrumentada com tracevanta-lambda grava no DynamoDB (delta EXACT) e publica no SQS (LocalStack), exportando OTLP + mutações para o TraceVanta Station.</description>
+  <name>Trace2Local — lambda-sqs (Lambda + DynamoDB + SQS no LocalStack)</name>
+  <description>Projeto de teste/validação: AWS Lambda (runtime java21) instrumentada com trace2local-lambda grava no DynamoDB (delta EXACT) e publica no SQS (LocalStack), exportando OTLP + mutações para o Trace2Local Station.</description>
 
   <properties>
     <!-- o fat jar de deploy no LocalStack fica em target/ com este nome -->
@@ -24,12 +24,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>tech.neural7.tracevanta</groupId>
-      <artifactId>tracevanta-lambda</artifactId>
+      <groupId>tech.neural7.trace2local</groupId>
+      <artifactId>trace2local-lambda</artifactId>
     </dependency>
     <dependency>
-      <groupId>tech.neural7.tracevanta</groupId>
-      <artifactId>tracevanta-aws</artifactId>
+      <groupId>tech.neural7.trace2local</groupId>
+      <artifactId>trace2local-aws</artifactId>
     </dependency>
     <!-- aws-lambda-java-core é PROVIDED: a imagem java:21 do LocalStack/AWS já o
          fornece — embalar a própria cópia quebraria o instanceof do runtime (R-01). -->
@@ -47,7 +47,7 @@
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>sqs</artifactId>
     </dependency>
-    <!-- só para compilar: o overload TraceVantaAws.instrument(SnsClientBuilder)
+    <!-- só para compilar: o overload Trace2LocalAws.instrument(SnsClientBuilder)
          exige a classe SNS no classpath de compilação -->
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
@@ -90,8 +90,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>tech.neural7.tracevanta</groupId>
-      <artifactId>tracevanta-station</artifactId>
+      <groupId>tech.neural7.trace2local</groupId>
+      <artifactId>trace2local-station</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

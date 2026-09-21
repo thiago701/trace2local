@@ -1,4 +1,4 @@
-# Política de Segurança — TraceVanta
+# Política de Segurança — Trace2Local
 
 ## Versões suportadas
 
@@ -11,12 +11,12 @@ Reporte vulnerabilidades da versão mais recente do `main`.
 
 ## Postura de segurança (ADR-007)
 
-O TraceVanta é uma ferramenta de **desenvolvimento local** com consequências de
+O Trace2Local é uma ferramenta de **desenvolvimento local** com consequências de
 segurança declaradas, não acidentais:
 
 1. **Bind loopback por padrão** — a UI e a API só escutam em `127.0.0.1`;
-   expor fora exige `tracevanta.allow-non-loopback=true` (ou
-   `TRACEVANTA_ALLOW_NON_LOOPBACK=true` no Station) e emite avisos.
+   expor fora exige `trace2local.allow-non-loopback=true` (ou
+   `TRACE2LOCAL_ALLOW_NON_LOOPBACK=true` no Station) e emite avisos.
 2. **Redaction NA ORIGEM** (SPEC §8.3) — payloads, atributos e chaves
    sensíveis são redigidos antes de entrar no buffer; a UI nunca vê o dado
    cru. Cobertura: chaves (`password`, `token`, `authorization`, `apiKey`,
@@ -24,9 +24,9 @@ segurança declaradas, não acidentais:
    JWT, chaves AWS `AKIA…`, PEM, `Bearer …`, CPF/CNPJ, cartão com Luhn,
    tokens GitHub `ghp_…`, hashes bcrypt/argon2). **Mitigação, não garantia** —
    campo de negócio com nome inocente passa (limite declarado).
-3. **Token de ingest opcional** — com `tracevanta.station.token`
-   (`TRACEVANTA_STATION_TOKEN`), as rotas de ingest do Station
-   (`/v1/traces` e `/tvingest/v1/mutations`) exigem
+3. **Token de ingest opcional** — com `trace2local.station.token`
+   (`TRACE2LOCAL_STATION_TOKEN`), as rotas de ingest do Station
+   (`/v1/traces` e `/t2lingest/v1/mutations`) exigem
    `Authorization: Bearer <token>` (comparação em tempo constante); o modo
    Lambda e o starter enviam o header automaticamente. **Recomendado sempre
    que `allow-non-loopback=true`.**
@@ -44,7 +44,7 @@ segurança declaradas, não acidentais:
   acervo. Por isso o loopback é obrigatório por padrão e a exposição é uma
   decisão explícita. Se você precisa de acesso remoto à UI, coloque um proxy
   autenticado na frente (SSH tunnel ou reverse proxy com auth).
-- O **token protege apenas o ingest** (`/v1/traces`, `/tvingest/v1/mutations`);
+- O **token protege apenas o ingest** (`/v1/traces`, `/t2lingest/v1/mutations`);
   as rotas da UI continuam locais.
 - Redaction é mitigação de vazamento acidental, não proteção contra atacante
   com acesso ao processo.
@@ -71,7 +71,7 @@ Novas versões são auditadas no bump (política: manter pinos ≥ versão corri
 ## Reportando vulnerabilidades
 
 - **Canal preferencial:** GitHub Security Advisory privado em
-  https://github.com/thiago701/tracevanta/security/advisories/new
+  https://github.com/thiago701/trace2local/security/advisories/new
 - E-mail: `security@neural7.tech` (PGP sob demanda)
 
 Política: resposta em até 7 dias úteis; correção publicada no `main` com

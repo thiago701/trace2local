@@ -20,7 +20,7 @@ mkdirSync(OUT, { recursive: true });
 const out = (name) => path.join(OUT, name);
 
 const EDGE = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
-const BASE = "http://127.0.0.1:19877/tracevanta";
+const BASE = "http://127.0.0.1:19877/trace2local";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -42,7 +42,7 @@ await sleep(800);
 // seleciona a execução do DUPLICADO: tem a guarda e um nó DynamoDB ERROR
 console.log("procurando a execução do duplicado (DynamoDB ERROR)…");
 const selectedId = await page.evaluate(async () => {
-  const list = await (await fetch("/tracevanta/api/executions?limit=50")).json();
+  const list = await (await fetch("/trace2local/api/executions?limit=50")).json();
   const findErrorNode = (nodes) => {
     for (const n of nodes) {
       if (n.status === "ERROR" && (n.kind === "DYNAMODB")) return n;
@@ -60,7 +60,7 @@ const selectedId = await page.evaluate(async () => {
   };
   for (const summary of list) {
     if (summary.status !== "FAILED") continue;
-    const full = await (await fetch("/tracevanta/api/executions/" + summary.executionId)).json();
+    const full = await (await fetch("/trace2local/api/executions/" + summary.executionId)).json();
     if (hasGuard(full.roots || []) && findErrorNode(full.roots || [])) {
       const item = [...document.querySelectorAll(".exec-card")]
         .find((r) => r.textContent.includes(summary.executionId));
@@ -87,7 +87,7 @@ await sleep(1500);
 
 // consistência UI↔API
 const report = await page.evaluate(async (executionId) => {
-  const api = await (await fetch("/tracevanta/api/executions/" + executionId)).json();
+  const api = await (await fetch("/trace2local/api/executions/" + executionId)).json();
   const apiLabels = [];
   const walk = (nodes) => {
     for (const n of nodes) {

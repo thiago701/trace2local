@@ -7,8 +7,8 @@ spring:
 server:
   port: 8080
 
-# TraceVanta: uma dependência, zero configuração — tudo abaixo são os padrões.
-tracevanta:
+# Trace2Local: uma dependência, zero configuração — tudo abaixo são os padrões.
+trace2local:
   enabled: true
   port: 9876
   bind-address: 127.0.0.1
@@ -27,4 +27,4 @@ orders:
 
 logging:
   level:
-    tech.neural7.tracevanta: info
+    tech.neural7.trace2local: info

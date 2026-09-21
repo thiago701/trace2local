@@ -1,5 +1,5 @@
 # App de exemplo das jornadas JC-1/JC-2/JC-3 (SPEC §3.1, E9).
-# Uso: docker compose up  →  http://localhost:9876/tracevanta
+# Uso: docker compose up  →  http://localhost:9876/trace2local
 services:
   localstack:
     image: localstack/localstack:4.2
@@ -42,7 +42,7 @@ services:
       dockerfile: examples/order-service/Dockerfile
     ports:
       - "8080:8080"   # a aplicação
-      - "9876:9876"   # TraceVanta Embedded
+      - "9876:9876"   # Trace2Local Embedded
     environment:
       - LOCALSTACK_ENDPOINT=http://localstack:4566
       - ORDERS_SNS_TOPIC_ARN=arn:aws:sns:us-east-1:000000000000:order-events
@@ -56,7 +56,7 @@ services:
         condition: service_completed_successfully
 
   # Modo Companion (ADR-002, M7): rode com `docker compose --profile companion up`
-  tracevanta-station:
+  trace2local-station:
     profiles: ["companion"]
     build:
       context: ../..

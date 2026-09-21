@@ -1,4 +1,4 @@
-# order-service + TraceVanta Embedded (SPEC E1/E9)
+# order-service + Trace2Local Embedded (SPEC E1/E9)
 FROM maven:3.9-eclipse-temurin-25 AS build
 WORKDIR /build
 COPY . .
