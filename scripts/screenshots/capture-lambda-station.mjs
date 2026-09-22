@@ -285,6 +285,10 @@ console.log("checagens de UX v2…");
 const ux = await page.evaluate(() => {
   const results = {};
   results.waterfallBars = document.querySelectorAll("g.tv-node .timebar-total").length;
+  // por projeto: sem API HTTP, o aviso é de PROJETO (não "modo somente-observação")
+  const noApiNote = document.querySelector("#endpoints .sidebar-note")?.textContent || "";
+  results.projectScopedNoApi = noApiNote.includes("não expõe API HTTP descoberta")
+    && !noApiNote.includes("somente-observação");
   results.summaryVisible = !document.getElementById("exec-summary").classList.contains("hidden");
   results.summaryText = document.getElementById("exec-summary").textContent.replace(/\s+/g, " ").trim();
   results.richCards = document.querySelectorAll(".exec-card .root-label").length;
@@ -322,7 +326,8 @@ const uxOk =
   && ux.filterEmptyShown
   && ux.legendItems >= 5
   && ux.inspectorSections >= 2
-  && ux.inspectorCollapsibleHeaders >= 1;
+  && ux.inspectorCollapsibleHeaders >= 1
+  && ux.projectScopedNoApi;
 console.log(uxOk ? "  UX v2: todas as checagens passaram ✓" : "  UX v2: FALHA em uma ou mais checagens ✗");
 
 // ---- checagens de v3 (dashboard, comparar, deep link)

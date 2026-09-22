@@ -74,6 +74,17 @@ O Station do compose roda com **token de ingest** (`TRACE2LOCAL_STATION_TOKEN=de
 no Station e na função): OTLP e mutações exigem `Authorization: Bearer devtoken`
 — a Lambda e o DemoRun enviam automaticamente (ADR-007/§8.1).
 
+Se o container do Station for recriado (estado em memória zerado), repopule com o
+`LambdaSqsDemoRun` (acima) e re-rogue a **invocação de fumaça** do init com o
+script `scripts/smoke.sh` (mesma lógica do init, com retry):
+
+```sh
+docker run --rm --entrypoint /bin/sh --network lambda-sqs_default \
+  -e AWS_ACCESS_KEY_ID=test -e AWS_SECRET_ACCESS_KEY=test -e AWS_DEFAULT_REGION=us-east-1 \
+  -v "$PWD/examples/lambda-sqs/scripts/smoke.sh:/smoke.sh:ro" \
+  amazon/aws-cli:2.22.0 /smoke.sh
+```
+
 ## Detalhes de implementação
 
 - **Endpoint do LocalStack** (dentro da função): cascata `localstack.endpoint`

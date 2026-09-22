@@ -75,6 +75,11 @@ async function loadMeta() {
     $("env-app").textContent = "app: " + (state.meta.app || "?");
     $("env-mode").textContent = "mode: " + (state.meta.mode || "?");
     document.title = "Trace2Local — " + (state.meta.app || "");
+    // identidade do PROJETO no cabeçalho da seção de API
+    if (state.meta.app && state.meta.app !== "station" && state.meta.app !== "?") {
+      $("endpoints-app").textContent = state.meta.app;
+      $("endpoints-app").classList.remove("hidden");
+    }
   } catch (e) {
     $("env-app").textContent = "app: offline";
   }
@@ -153,7 +158,16 @@ function renderEndpoints() {
   const container = $("endpoints");
   container.innerHTML = "";
   if (!state.endpoints.length) {
-    container.innerHTML = '<p class="sidebar-note">Nenhum endpoint descoberto — a UI opera em modo somente-observação.</p>';
+    const app = state.meta && state.meta.app
+      && state.meta.app !== "station" && state.meta.app !== "?" ? state.meta.app : null;
+    // por projeto: sem API HTTP, avisa em escopo de PROJETO (não um modo genérico)
+    container.innerHTML = app
+      ? '<p class="sidebar-note"><strong>O projeto ' + esc(app) + " não expõe API HTTP descoberta.</strong><br>" +
+        "A observação continua por projeto: dispare a aplicação e veja na árvore os spans, " +
+        "bancos, mensageria e Lambdas deste projeto.</p>"
+      : '<p class="sidebar-note"><strong>Este projeto não expõe API HTTP descoberta.</strong><br>' +
+        "A observação continua por projeto: dispare a aplicação e veja na árvore os spans, " +
+        "bancos, mensageria e Lambdas deste projeto.</p>";
     return;
   }
   for (const ep of state.endpoints) {

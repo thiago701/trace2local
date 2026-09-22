@@ -4,6 +4,37 @@
 > Restrições respeitadas: **ADR-005** (zero referência externa — `UiOfflineTest` verde)
 > e **CSP `default-src 'self'; style-src 'self'; script-src 'self'`** (zero estilo/script inline).
 
+## v7 — Enquadramento POR PROJETO (API do projeto no lugar de "modo observação")
+
+**Objetivo**: o Trace2Local roda localmente DENTRO de um projeto principal —
+a UI deve falar daquele projeto, não de um agregado genérico de vários.
+
+**O que mudou**:
+- O cabeçalho da seção de endpoints virou **`API DO PROJETO`** com uma
+  **pill do nome do app** (`#endpoints-app`) — em modo embedded é o
+  `spring.application.name` do projeto importador (ex.: `payment-service`);
+  a pill fica oculta quando o nome é `station`/`?` (companion/desconhecido).
+- O estado vazio deixou de ser "**a UI opera em modo somente-observação**"
+  (frase genérica de ferramenta) e passou a ser um **aviso em escopo de
+  projeto**: *"O projeto `<nome>` não expõe API HTTP descoberta. A observação
+  continua por projeto: dispare a aplicação e veja na árvore os spans, bancos,
+  mensageria e Lambdas deste projeto."* — sem API, a ferramenta só avisa que
+  o projeto não possui API; spans/bancos/mensageria/Lambdas seguem observados.
+- Fallback seguro: se o meta ainda não chegou (boot) ou o nome for
+  `station`/`?`, o aviso usa "**Este projeto** não expõe API HTTP descoberta."
+
+**Validação (scripts de captura estendidos, rodadas ao vivo)**:
+```
+payment (embedded, :9876): SIMPLICIDADE projectPill="payment-service" ✓
+                           → RESULTADO: TODAS AS VALIDAÇÕES PASSARAM ✓
+station (companion, :19877): UX v2 projectScopedNoApi=true ✓
+                             (nota "não expõe API HTTP descoberta" presente;
+                             "somente-observação" ausente — checagem DOM)
+                             → UX v2/v3/v4: todas as checagens passaram ✓
+```
+Gates: `UiOfflineTest` verde (ADR-005) + consistência UI↔API preservada
+(3 árvores: 3/2/5 nós, labels idênticos).
+
 ## v6 — Ações de detalhamento de INFRA/DEVOPS (UX revisada)
 
 **Objetivo**: botões/links que detalham ONDE cada URL, variável e recurso vive

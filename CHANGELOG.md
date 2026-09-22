@@ -5,6 +5,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### UI por projeto (API DO PROJETO)
+
+- O Trace2Local roda localmente no contexto de UM projeto principal: a seção de endpoints da sidebar virou **API DO PROJETO** com pill do nome do app importador (ex.: `payment-service`, via `spring.application.name`; oculta no modo station).
+- Fim da frase genérica "a UI opera em modo somente-observação": sem API HTTP, o aviso agora é **por projeto** — *"O projeto X não expõe API HTTP descoberta. A observação continua por projeto…"* (spans/bancos/mensageria/Lambdas seguem observados); fallback "Este projeto…" quando o nome ainda não chegou ou é `station`/`?`.
+- Validação nos scripts de captura: `projectPill === "payment-service"` (payment) e nota de projeto sem "somente-observação" (station) + `UiOfflineTest` verde.
+
 ### Ações de detalhamento de INFRA/DEVOPS (aba INFRA)
 
 - **`InfraIndexer`** (server): engenharia reversa dos arquivos de infra — `*.tf` (recursos AWS + URLs/ARNs), `docker-compose*.yml`, `.env*` e `application*.yml` — cataloga URLs, ARNs, variáveis de ambiente e recursos Terraform com a **fonte exata (arquivo:linha)**; valores de chaves sensíveis são mascarados com `[OCULTO]` (critério do Redactor, ADR-007).

@@ -48,6 +48,7 @@ const simplicity = await page.evaluate(async () => {
   return {
     endpoints: endpoints.map((e) => e.endpointId),
     metaPort: meta.port,
+    projectPill: document.querySelector("#endpoints-app")?.textContent || "",
     tabs: [...document.querySelectorAll("#tabs .tab")].map((t) => t.textContent),
   };
 });
@@ -230,6 +231,7 @@ console.log("  " + JSON.stringify(walk, null, 2).replace(/\n/g, "\n  "));
 const passed =
   consistency.labelsEqual
   && simplicity.endpoints.length >= 3
+  && simplicity.projectPill === "payment-service"
   && clarity.stepsCount >= 4
   && clarity.allStepsReadable
   && clarity.hasBusinessVerb
