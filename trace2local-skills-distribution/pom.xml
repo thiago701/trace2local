@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>tech.neural7.trace2local</groupId>
+    <artifactId>trace2local-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>trace2local-skills-distribution</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Trace2Local — Skills Distribution</name>
+  <description>Distribuição de Skills reutilizáveis da Squad AI para fácil integração em projetos. Contém SKILL.md templates e recursos compartilhados.</description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <build>
+    <plugins>
+      <!-- Maven Assembly Plugin para garantir que resources são inclusos -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <configuration>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+
+      <!-- Maven JAR Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <implementationTitle>${project.artifactId}</implementationTitle>
+              <implementationVersion>${project.version}</implementationVersion>
+            </manifest>
+            <manifestEntries>
+              <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+              <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <!-- Maven Source Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Maven Javadoc Plugin (opcional, ajustado para este módulo de resources) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.6.3</version>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+
+      <!-- Shade Plugin para bundle de dependencies (opcional) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>${project.artifactId}-${project.version}-with-dependencies</finalName>
+              <createDependencyReducedPom>true</createDependencyReducedPom>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>**/*.md</include>
+          <include>**/*.json</include>
+          <include>**/*.yaml</include>
+          <include>**/*.yml</include>
+          <include>**/*.txt</include>
+          <include>**/*.properties</include>
+        </includes>
+      </resource>
+    </resources>
+  </build>
+</project>

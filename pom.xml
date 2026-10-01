@@ -88,6 +88,7 @@
     <module>examples/order-service</module>
     <module>examples/lambda-sqs</module>
     <module>examples/payment-service</module>
+    <module>trace2local-skills-distribution</module>
   </modules>
 
   <properties>

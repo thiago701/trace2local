@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+  Exemplo: Payment Service com Trace2Local APENAS em desenvolvimento
+  Garante que Trace2Local NUNCA suba para produção
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>payment-service</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>Payment Service - Secure</name>
+  <description>Payment service com Trace2Local apenas em desenvolvimento</description>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.0.0</version>
+  </parent>
+
+  <properties>
+    <maven.compiler.source>25</maven.compiler.source>
+    <maven.compiler.target>25</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <!-- 🔒 Gerenciamento de dependências: Trace2Local disponível, mas NÃO em principal -->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-bom</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <!-- 🚀 Dependências principais (NÃO inclui Trace2Local aqui!) -->
+  <dependencies>
+    <!-- Spring Boot Starters -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- OpenTelemetry base (pode ir em qualquer lugar) -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-api</artifactId>
+    </dependency>
+
+    <!-- Testes -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <!-- 🔐 PROFILES: Separação clara entre DEV e PROD -->
+  <profiles>
+    <!-- ================= PROFILE: DEV (Desenvolvimento Local) ================= -->
+    <profile>
+      <id>dev</id>
+      <activation>
+        <!-- ✅ Ativa por padrão quando não especificado (desenvolvimento local) -->
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+      <properties>
+        <spring.profiles.active>dev</spring.profiles.active>
+      </properties>
+
+      <dependencies>
+        <!-- ✅ APENAS em dev: Trace2Local Spring Boot Starter -->
+        <dependency>
+          <groupId>tech.neural7.trace2local</groupId>
+          <artifactId>trace2local-spring-boot-starter</artifactId>
+          <scope>provided</scope>  <!-- 🔒 Compile-time only, não em JAR -->
+        </dependency>
+
+        <!-- ✅ APENAS em dev: Skills Distribution -->
+        <dependency>
+          <groupId>tech.neural7.trace2local</groupId>
+          <artifactId>trace2local-skills-distribution</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+
+      <build>
+        <plugins>
+          <!-- Maven Shade: NÃO faz shade de trace2local -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <configuration>
+              <artifactSet>
+                <excludes>
+                  <exclude>tech.neural7.trace2local:*</exclude>
+                </excludes>
+              </artifactSet>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- ================= PROFILE: PROD (Produção / CI) ================= -->
+    <profile>
+      <id>prod</id>
+      <activation>
+        <!-- ✅ Ativa quando env var CI está definida (GitHub Actions) -->
+        <property>
+          <name>env.CI</name>
+        </property>
+      </activation>
+
+      <properties>
+        <spring.profiles.active>prod</spring.profiles.active>
+      </properties>
+
+      <!-- 🚫 NÃO inclui Trace2Local -->
+      <!-- Se adicionar trace2local aqui, quebra o contrato! -->
+
+      <build>
+        <plugins>
+          <!-- Enforcer: Verificar que trace2local NÃO está incluído -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <version>3.4.1</version>
+            <executions>
+              <execution>
+                <id>verify-no-trace2local</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>enforce</goal>
+                </goals>
+                <configuration>
+                  <rules>
+                    <bannedDependencies>
+                      <excludes>
+                        <exclude>tech.neural7.trace2local:*</exclude>
+                      </excludes>
+                      <message>❌ ERRO: Trace2Local detectado em build PROD! Não deve estar em produção.</message>
+                    </bannedDependencies>
+                  </rules>
+                  <fail>true</fail>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Exec: Verificação extra no JAR final -->
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <id>verify-jar-clean</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>bash</executable>
+                  <arguments>
+                    <argument>-c</argument>
+                    <argument>
+                      set -e
+                      JAR_FILE=$(find ${project.build.directory} -name "${project.artifactId}*.jar" -type f | head -1)
+                      if [ -z "$JAR_FILE" ]; then
+                        echo "⚠️  Nenhum JAR encontrado"
+                        exit 0
+                      fi
+                      if jar tf "$JAR_FILE" | grep -i "trace2local" > /dev/null; then
+                        echo "❌ ERRO CRÍTICO: Trace2Local encontrado em JAR de PRODUÇÃO!"
+                        echo "Arquivo: $JAR_FILE"
+                        jar tf "$JAR_FILE" | grep -i "trace2local"
+                        exit 1
+                      else
+                        echo "✅ Verificado: Trace2Local NÃO está em JAR de PRODUÇÃO"
+                      fi
+                    </argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+  <build>
+    <plugins>
+      <!-- Spring Boot Maven Plugin -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>com.example.payment.PaymentServiceApplication</mainClass>
+        </configuration>
+      </plugin>
+
+      <!-- Maven Assembly (comum a ambos profiles) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>${project.artifactId}-${project.version}</finalName>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
