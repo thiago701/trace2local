@@ -22,7 +22,7 @@
 
   <build>
     <plugins>
-      <!-- Maven Assembly Plugin para garantir que resources são inclusos -->
+      <!-- Maven Resources Plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
@@ -41,13 +41,8 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <implementationTitle>${project.artifactId}</implementationTitle>
-              <implementationVersion>${project.version}</implementationVersion>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
             </manifest>
-            <manifestEntries>
-              <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
-              <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
-            </manifestEntries>
           </archive>
         </configuration>
       </plugin>
@@ -67,7 +62,7 @@
         </executions>
       </plugin>
 
-      <!-- Maven Javadoc Plugin (opcional, ajustado para este módulo de resources) -->
+      <!-- Maven Javadoc Plugin (skip para este módulo) -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
@@ -76,31 +71,12 @@
           <skip>true</skip>
         </configuration>
       </plugin>
-
-      <!-- Shade Plugin para bundle de dependencies (opcional) -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.0</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <finalName>${project.artifactId}-${project.version}-with-dependencies</finalName>
-              <createDependencyReducedPom>true</createDependencyReducedPom>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
 
     <resources>
       <resource>
         <directory>src/main/resources</directory>
-        <filtering>true</filtering>
+        <filtering>false</filtering>
         <includes>
           <include>**/*.md</include>
           <include>**/*.json</include>
