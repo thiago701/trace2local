@@ -36,8 +36,11 @@ public class ConfigureMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
 
-    /** Versão do Trace2Local a adicionar (padrão: a do próprio plugin). */
-    @Parameter(defaultValue = "${project.version}", property = "trace2local.version")
+    /**
+     * Versão do Trace2Local a adicionar (padrão: a do próprio plugin). Não usar {@code ${project.version}}:
+     * dentro de um Mojo ele é a versão do app que roda o goal, não a do Trace2Local.
+     */
+    @Parameter(defaultValue = "${plugin.version}", property = "trace2local.version")
     private String trace2localVersion;
 
     @Override
