@@ -13,6 +13,8 @@ public final class Trace2LocalPipeline implements AutoCloseable {
 
     private final Trace2LocalRingBuffer buffer;
     private final TraceAssembler assembler;
+    /** Logs correlacionados (linha do tempo estilo CloudWatch). */
+    private final LogStore logs = new LogStore();
 
     private Trace2LocalPipeline(Trace2LocalConfig cfg) {
         this.buffer = new Trace2LocalRingBuffer(cfg.bufferCapacity());
@@ -33,6 +35,7 @@ public final class Trace2LocalPipeline implements AutoCloseable {
     public void start() {
         assembler.start();
         DataMutationChannel.setSink(event -> buffer.offer(event));
+        tech.neural7.trace2local.spi.LogChannel.setSink(logs::append);
     }
 
     public void addListener(Consumer<LiveEvent> listener) {
@@ -47,6 +50,11 @@ public final class Trace2LocalPipeline implements AutoCloseable {
         return assembler;
     }
 
+    /** Acervo de logs correlacionados por trace/RequestId. */
+    public LogStore logs() {
+        return logs;
+    }
+
     public TraceAssembler assembler() {
         return assembler;
     }
@@ -54,6 +62,7 @@ public final class Trace2LocalPipeline implements AutoCloseable {
     @Override
     public void close() {
         DataMutationChannel.setSink(null);
+        tech.neural7.trace2local.spi.LogChannel.setSink(null);
         assembler.close();
         buffer.close();
     }

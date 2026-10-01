@@ -3,104 +3,113 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Trace2Local — runtime canvas</title>
+  <title>Trace2Local — Resonance</title>
   <meta name="color-scheme" content="dark">
+  <meta name="description" content="Trace2Local Resonance: anatomia, linha do tempo, investigação e mocks da execução local (LocalStack/AWS).">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
-  <header id="topbar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">▚</span>
-      <h1>TRACE2LOCAL</h1>
-    </div>
-    <div class="env-info">
-      <span id="env-app" class="pill">app: —</span>
-      <span id="env-mode" class="pill">mode: —</span>
-    </div>
-    <div class="conn">
-      <span id="conn-dot" class="dot"></span>
-      <span id="conn-text">CONNECTING…</span>
-      <span id="dropped-badge" class="pill warn hidden" title="Eventos descartados na borda do buffer (ADR-006)">0 descartados</span>
-    </div>
-  </header>
+  <div id="app">
+    <header id="topbar">
+      <button type="button" class="icon ghost" id="btn-rail" title="Mostrar/ocultar painel lateral ( [ )" aria-label="Mostrar ou ocultar painel lateral">
+        <svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div><h1>TRACE2LOCAL</h1><small>RESONANCE</small></div>
+      </div>
+      <div class="top-meta">
+        <span id="env-app" class="chip">app —</span>
+        <span id="env-mode" class="chip">modo —</span>
+      </div>
+      <div class="top-spacer"></div>
+      <button type="button" class="cmd-trigger" id="btn-palette" aria-label="Buscar e navegar (Ctrl+K)">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="grow">Buscar execução, componente, insight…</span>
+        <span class="kbds"><kbd>Ctrl</kbd> <kbd>K</kbd></span>
+      </button>
+      <div class="top-spacer"></div>
+      <span id="engine-chip" class="chip engine-chip" title="Motor de micro-decisões (ADR-011)" role="button" tabindex="0">motor —</span>
+      <div class="conn" aria-live="polite">
+        <span id="conn-led" class="led"></span>
+        <span id="conn-text">conectando…</span>
+      </div>
+    </header>
 
-  <div id="layout">
-    <aside id="sidebar">
-      <section id="endpoints-section">
-        <h2>API DO PROJETO <span id="endpoints-app" class="pill hidden"></span></h2>
-        <div id="endpoints" class="list" role="list" aria-label="Endpoints descobertos"></div>
-      </section>
-      <section id="recent-section">
-        <h2>RECENT EXECUTIONS <span id="recent-count" class="count hidden">0</span>
-          <button type="button" id="btn-clear" class="small" title="Limpar todo o histórico de execuções">LIMPAR</button></h2>
-        <div class="search-wrap">
-          <input id="recent-filter" class="search-input" type="search"
-                 placeholder="Filtrar por rótulo, status ou trigger…"
-                 aria-label="Filtrar execuções recentes" autocomplete="off">
+    <aside id="rail" aria-label="Projeto, execuções e insights">
+      <nav class="rail-tabs" aria-label="Seções do painel lateral">
+        <button type="button" data-rail="exec" class="active">EXECUÇÕES <span id="rail-exec-count" class="badge-count hidden">0</span></button>
+        <button type="button" data-rail="api">API</button>
+        <button type="button" data-rail="ins">INSIGHTS <span id="rail-ins-count" class="badge-count err hidden">0</span></button>
+      </nav>
+      <div class="rail-body" id="rail-exec">
+        <div class="rail-search">
+          <input id="exec-filter" type="search" placeholder="Filtrar por rótulo, status, trigger…" aria-label="Filtrar execuções" autocomplete="off">
         </div>
-        <div id="recent" class="list" role="list" aria-label="Execuções recentes"></div>
-      </section>
-      <section id="warnings-section" class="hidden">
-        <h2>AVISOS</h2>
-        <div id="warnings" class="list" role="list" aria-label="Avisos de honestidade"></div>
-      </section>
+        <div id="exec-list" role="list" aria-label="Execuções recentes"></div>
+        <div class="row" id="exec-actions">
+          <button type="button" class="small ghost" id="btn-clear" title="Limpar o acervo de execuções (o histórico/baseline é mantido)">Limpar acervo</button>
+        </div>
+      </div>
+      <div class="rail-body hidden" id="rail-api">
+        <div class="rail-section-title">API DO PROJETO <span id="api-app" class="chip hidden"></span></div>
+        <div id="endpoints" role="list" aria-label="Endpoints descobertos"></div>
+      </div>
+      <div class="rail-body hidden" id="rail-ins">
+        <div class="rail-section-title">PONTOS DE ATENÇÃO <span class="muted">· ranqueados</span></div>
+        <div id="ins-list" role="list" aria-label="Insights preditivos"></div>
+      </div>
     </aside>
 
-    <main id="canvas-wrap">
-      <div id="canvas-header">
-        <nav id="tabs" aria-label="Modos de visualização">
-          <button type="button" id="tab-canvas" class="tab active">CANVAS</button>
-          <button type="button" id="tab-story" class="tab">STORY</button>
-          <button type="button" id="tab-dashboard" class="tab">DASHBOARD</button>
-          <button type="button" id="tab-compare" class="tab">COMPARAR</button>
-          <button type="button" id="tab-infra" class="tab">INFRA</button>
+    <main id="stage">
+      <div class="stage-head">
+        <nav class="seg views" id="views" aria-label="Modos de exame">
+          <button type="button" data-view="anatomy" title="Anatomia do ecossistema (1)">Anatomia</button>
+          <button type="button" data-view="tree" title="Árvore da execução (2)">Árvore</button>
+          <button type="button" data-view="timeline" title="Linha do tempo + CloudWatch (3)">Linha do tempo</button>
+          <button type="button" data-view="investigate" title="Investigação técnica + executiva (4)">Investigação</button>
+          <button type="button" data-view="story" title="Narrativa de negócio (5)">Narrativa</button>
+          <button type="button" data-view="dashboard" title="Painel e histórico (6)">Painel</button>
+          <button type="button" data-view="compare" title="Comparar execuções (7)">Comparar</button>
+          <button type="button" data-view="infra" title="Infra & DevOps (8)">Infra</button>
+          <button type="button" data-view="mocks" title="Mock Connect — simular APIs e variações (9)">Mocks <span id="mocks-count" class="badge-count hidden">0</span></button>
         </nav>
-        <span id="canvas-title">EXECUTION CANVAS</span>
-        <div id="exec-summary" class="hidden"></div>
-        <div id="view-buttons">
-          <button type="button" id="btn-notes" class="small" title="Anotações de storytelling ao lado dos nós">NOTAS</button>
-          <button type="button" id="btn-legend" class="small" title="Legenda dos tipos de nó">LEGENDA</button>
-          <button type="button" id="btn-shortcuts" class="small" title="Atalhos de teclado">ATALHOS</button>
-          <button type="button" id="zoom-in" class="icon" title="Aproximar (Ctrl++)">＋</button>
-          <button type="button" id="zoom-out" class="icon" title="Afastar (Ctrl+-)">－</button>
-          <button type="button" id="zoom-fit" class="icon" title="Ajustar à tela (F)">⤢</button>
-          <button type="button" id="btn-export" title="Exportar .tvtrace" disabled>EXPORTAR .tvtrace</button>
+        <div class="stage-tools">
+          <button type="button" class="small" id="btn-export" disabled title="Exportar a execução (.tvtrace)">Exportar</button>
+          <button type="button" class="small ghost" id="btn-help" title="Atalhos (?)">?</button>
         </div>
       </div>
-      <div id="canvas" tabindex="0" aria-label="Canvas de execução — use as setas para navegar entre nós">
-        <svg id="tree" xmlns="http://www.w3.org/2000/svg"></svg>
-        <div id="canvas-empty" class="canvas-hint">
-          <p class="glyph" aria-hidden="true">▚</p>
-          <p class="big">Nenhuma execução selecionada.</p>
-          <p>Escolha um endpoint à esquerda, edite o payload e clique em <strong>EXECUTE REQUEST</strong> — ou dispare a aplicação por fora e veja a árvore crescer aqui em tempo real.</p>
-        </div>
-        <div id="canvas-loading" class="skeleton hidden">
-          <div class="bars">
-            <i></i><i></i><i></i>
-          </div>
-        </div>
-        <div id="legend-pop" class="pop hidden" role="dialog" aria-label="Legenda"></div>
-        <div id="shortcuts-pop" class="pop hidden" role="dialog" aria-label="Atalhos de teclado"></div>
+      <div class="exec-strip hidden" id="exec-strip" aria-live="polite"></div>
+      <div class="views-host" id="views-host">
+        <section class="view canvas hidden" id="view-anatomy" aria-label="Anatomia do ecossistema"></section>
+        <section class="view canvas hidden" id="view-tree" aria-label="Árvore da execução"></section>
+        <section class="view hidden" id="view-timeline" aria-label="Linha do tempo"></section>
+        <section class="view hidden" id="view-investigate" aria-label="Investigação"></section>
+        <section class="view hidden" id="view-story" aria-label="Narrativa"></section>
+        <section class="view hidden" id="view-dashboard" aria-label="Painel"></section>
+        <section class="view hidden" id="view-compare" aria-label="Comparar"></section>
+        <section class="view hidden" id="view-infra" aria-label="Infra e DevOps"></section>
+        <section class="view hidden" id="view-mocks" aria-label="Mock Connect"></section>
       </div>
-      <div id="dashboard-view" class="view-panel hidden" aria-label="Dashboard"></div>
-      <div id="compare-view" class="view-panel hidden" aria-label="Comparação de execuções"></div>
-      <div id="story-view" class="view-panel hidden" aria-label="Storytelling da execução"></div>
-      <div id="infra-view" class="view-panel hidden" aria-label="Catálogo de infra e DevOps"></div>
+      <aside id="drawer" aria-label="Inspetor do passo" aria-hidden="true"></aside>
     </main>
+
+    <footer id="statusbar">
+      <span id="sb-buffer">buffer —</span><span class="sep"></span>
+      <span id="sb-pipeline">análise —</span><span class="sep"></span>
+      <span id="sb-logs">logs —</span><span class="sep"></span>
+      <span id="sb-jev">Jev —</span>
+      <span class="grow"></span>
+      <span id="sb-dropped" class="warn hidden"></span>
+      <span class="muted">local-first · nada sai da máquina sem opt-in</span>
+    </footer>
   </div>
 
-  <footer id="inspector" class="hidden" aria-live="polite">
-    <div id="inspector-head">
-      <h2>INSPECTOR PANEL</h2>
-      <span id="inspector-title"></span>
-      <button type="button" id="inspector-close" title="Fechar (Esc)">✕</button>
-    </div>
-    <div id="inspector-body"></div>
-  </footer>
-
+  <div id="palette" class="hidden" role="dialog" aria-modal="true" aria-label="Paleta de comandos"></div>
   <div id="toasts" role="status" aria-live="polite"></div>
+  <div id="tooltip" class="tooltip hidden" role="tooltip"></div>
 
-  <script src="app.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

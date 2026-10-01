@@ -17,7 +17,7 @@ import tech.neural7.trace2local.config.Trace2LocalConfig;
  * delta. Uma linha por cliente:
  *
  * <pre>{@code
- * Trace2LocalAws.instrument(dynamoDbClientBuilder, traceVantaConfig);
+ * Trace2LocalAws.instrument(dynamoDbClientBuilder, trace2localConfig);
  * }</pre>
  */
 public final class Trace2LocalAws {
@@ -134,6 +134,11 @@ public final class Trace2LocalAws {
                     if (delegate == null) {
                         delegate = io.opentelemetry.instrumentation.awssdk.v2_2.AwsSdkTelemetry
                                 .builder(tech.neural7.trace2local.otel.Trace2LocalOtel.get())
+                                // SQS/SNS: traceparent (+ baggage) nos ATRIBUTOS da mensagem, a partir
+                                // do span do PRODUTOR — o consumidor vira filho do nó SNS/SQS na árvore
+                                // (sem isso, SNS → Lambda ficava pendurado no passo de negócio e o nó SNS
+                                // aparecia como "sem consumidor" — achado no finance-pix)
+                                .setUseConfiguredPropagatorForMessaging(true)
                                 .build()
                                 .createExecutionInterceptor();
                     }

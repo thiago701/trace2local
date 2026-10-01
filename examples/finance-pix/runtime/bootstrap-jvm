@@ -1,0 +1,7 @@
+#!/bin/sh
+# Runtime custom provided.al2023 — Java 25 (JRE enxuto via jlink) executando o loop da Runtime API.
+# Flags pensadas para cold start de Lambda: GC serial, só C1, heap proporcional à memória da função.
+set -e
+JAVA_OPTS="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:MaxRAMPercentage=75 -Xss512k -Djava.net.preferIPv4Stack=true"
+exec "$LAMBDA_TASK_ROOT/jre/bin/java" $JAVA_OPTS $EXTRA_JAVA_OPTS \
+  -cp "$LAMBDA_TASK_ROOT/finance-pix.jar" tech.neural7.trace2local.examples.pix.runtime.Bootstrap

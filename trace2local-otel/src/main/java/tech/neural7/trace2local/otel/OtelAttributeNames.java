@@ -35,6 +35,14 @@ public final class OtelAttributeNames {
     public static final String HTTP_METHOD = "http.request.method";
     public static final String HTTP_ROUTE = "http.route";
     public static final String HTTP_STATUS = "http.response.status_code";
+    /** Host do par remoto numa chamada de saída (fronteira externa). */
+    public static final String SERVER_ADDRESS = "server.address";
+    /** Porta do par remoto numa chamada de saída. */
+    public static final String SERVER_PORT = "server.port";
+    /** URL completa da requisição de saída (sem credenciais; query redigida). */
+    public static final String URL_FULL = "url.full";
+    /** Nome lógico do serviço remoto (ex.: "DICT (BACEN)"). */
+    public static final String PEER_SERVICE = "peer.service";
 
     // FaaS / Lambda (estável)
     public static final String FAAS_NAME = "faas.name";

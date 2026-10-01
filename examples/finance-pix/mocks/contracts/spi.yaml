@@ -1,0 +1,37 @@
+openapi: 3.0.3
+info:
+  title: SPI — Sistema de Pagamentos Instantâneos (liquidação, simulado)
+  version: "1.0"
+servers:
+  - url: http://spi.bacen.local:8080/spi/v1
+paths:
+  /settlements:
+    post:
+      operationId: liquidar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [endToEndId, amount, payerIspb, receiverIspb]
+              properties:
+                endToEndId: {type: string}
+                amount: {type: number}
+                payerIspb: {type: string}
+                receiverIspb: {type: string}
+      responses:
+        "201":
+          description: liquidada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [endToEndId, status]
+                properties:
+                  endToEndId: {type: string}
+                  status: {type: string, enum: [SETTLED, REJECTED]}
+                  settledAt: {type: string, format: date-time}
+              example: {endToEndId: E60701190202610011200abcdef12345, status: SETTLED, settledAt: "2026-10-01T12:00:00Z"}
+        "503":
+          description: SPI indisponível (janela de contingência)

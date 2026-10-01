@@ -27,7 +27,7 @@ public class AntiCorruptionLayerTest {
      * para não flagrar propriedades do próprio SDK AWS (aws.region, aws.accessKeyId…).
      */
     private static final Pattern ATTRIBUTE_LITERAL = Pattern.compile(
-            "\"(db|messaging|rpc|http|code)\\.[a-z0-9_.]+\""
+            "\"(db|messaging|rpc|http|code|faas|server)\\.[a-z0-9_.]+\""
             + "|\"aws\\.(dynamodb|sqs|sns|s3|lambda|log|eks|ecs|ec2|kinesis|bedrock|sagemaker|sdk)\\.[a-z0-9_.]+\"");
 
     @Test

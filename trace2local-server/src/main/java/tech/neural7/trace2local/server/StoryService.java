@@ -23,7 +23,9 @@ import static tech.neural7.trace2local.otel.OtelAttributeNames.HTTP_ROUTE;
 import static tech.neural7.trace2local.otel.OtelAttributeNames.HTTP_STATUS;
 import static tech.neural7.trace2local.otel.OtelAttributeNames.MESSAGING_DESTINATION;
 import static tech.neural7.trace2local.otel.OtelAttributeNames.MESSAGING_OPERATION;
+import static tech.neural7.trace2local.otel.OtelAttributeNames.PEER_SERVICE;
 import static tech.neural7.trace2local.otel.OtelAttributeNames.RPC_METHOD;
+import static tech.neural7.trace2local.otel.OtelAttributeNames.SERVER_ADDRESS;
 
 /**
  * Descoberta de especificação e regras de negócio por CONTEXTO, DOCS e
@@ -74,7 +76,7 @@ public final class StoryService {
         String base = switch (kind) {
             case HTTP_SERVER -> "Porta de entrada: requisição " + method(attrs) + " " + route(attrs)
                     + statusSuffix(attrs) + ".";
-            case HTTP_CLIENT -> "Chamada externa " + method(attrs) + " para " + (route(attrs).isBlank() ? node.label() : route(attrs)) + ".";
+            case HTTP_CLIENT -> clientNote(attrs, node);
             case BUSINESS -> businessNote(node.label());
             case DYNAMODB -> dynamoNote(attrs, node);
             case SQS -> "Mensageria SQS: " + messaging(attrs) + " em " + queue(attrs, node) + ".";
@@ -233,6 +235,37 @@ public final class StoryService {
     private String method(Map<String, String> attrs) {
         String m = attrs.getOrDefault(HTTP_METHOD, "");
         return m.isBlank() ? "HTTP" : m;
+    }
+
+    /**
+     * Chamada a parceiro: quem (peer.service ou host), qual rota do contrato e o status — e se a
+     * resposta veio do Mock Connect (simulada) ou foi só repassada da API real.
+     */
+    private String clientNote(Map<String, String> attrs, Node node) {
+        String peer = attrs.getOrDefault(PEER_SERVICE, "");
+        if (peer.isBlank()) {
+            peer = attrs.getOrDefault(SERVER_ADDRESS, "");
+        }
+        String r = attrs.getOrDefault(HTTP_ROUTE, "");
+        StringBuilder sb = new StringBuilder("Chamada externa ").append(method(attrs));
+        if (!peer.isBlank()) {
+            sb.append(" a ").append(peer);
+        }
+        if (!r.isBlank()) {
+            sb.append(peer.isBlank() ? " " : " (").append(r).append(peer.isBlank() ? "" : ")");
+        }
+        if (peer.isBlank() && r.isBlank()) {
+            sb.append(" — ").append(node.label() != null && !node.label().isBlank() ? node.label() : "serviço externo");
+        }
+        sb.append(statusSuffix(attrs)).append('.');
+        String mock = attrs.getOrDefault(tech.neural7.trace2local.otel.Trace2LocalAttributes.MOCK, "");
+        if (!mock.isBlank()) {
+            boolean passthrough = mock.contains("passthrough=true") || mock.contains("proxy=true");
+            sb.append(passthrough && !mock.contains("variation=")
+                    ? " Repasse pelo Mock Connect: a resposta é a da API real."
+                    : " Resposta SIMULADA pelo Mock Connect — não veio da API real.");
+        }
+        return sb.toString();
     }
 
     private String route(Map<String, String> attrs) {

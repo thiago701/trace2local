@@ -1,0 +1,12 @@
+# Varredura de segredos (gitleaks). Os "segredos" de RedactorTest são FIXTURES públicas
+# (ex.: AKIAIOSFODNN7EXAMPLE, da documentação da AWS) que provam a redação — não são credenciais.
+title = "trace2local"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "fixtures de teste da redação"
+paths = [
+  '''trace2local-core/src/test/java/tech/neural7/trace2local/internal/RedactorTest\.java''',
+]

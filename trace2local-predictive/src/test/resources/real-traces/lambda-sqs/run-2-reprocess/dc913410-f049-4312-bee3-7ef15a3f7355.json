@@ -1,0 +1,318 @@
+{
+ "execution": {
+  "executionId": "dc913410-f049-4312-bee3-7ef15a3f7355",
+  "traceId": "23fb4e971208aa3d26b4913884b6c0bf",
+  "status": "COMPLETED",
+  "trigger": "LAMBDA_EVENT",
+  "startedAt": "2026-10-01T02:36:58.443191263Z",
+  "duration": 1063,
+  "roots": [
+   {
+    "nodeId": "978c49da2dc799f3",
+    "parentId": null,
+    "kind": "LAMBDA",
+    "label": "order-processor",
+    "status": "OK",
+    "startedAt": "2026-10-01T02:36:58.443191263Z",
+    "selfTime": 3,
+    "totalTime": 32,
+    "attributes": {
+     "t2l.execution.id": "dc913410-f049-4312-bee3-7ef15a3f7355",
+     "faas.invocation_id": "dc913410-f049-4312-bee3-7ef15a3f7355",
+     "faas.name": "order-processor",
+     "t2l.trigger": "lambda_event"
+    },
+    "payload": null,
+    "mutation": null,
+    "error": null,
+    "children": [
+     {
+      "nodeId": "ebfc2d1822e5ac91",
+      "parentId": "978c49da2dc799f3",
+      "kind": "DYNAMODB",
+      "label": "DynamoDB: orders",
+      "status": "OK",
+      "startedAt": "2026-10-01T02:36:58.444434880Z",
+      "selfTime": 19,
+      "totalTime": 19,
+      "attributes": {
+       "aws.dynamodb.table_names": "orders",
+       "http.request.method": "POST",
+       "rpc.system": "aws-api",
+       "http.response.status_code": "200",
+       "server.port": "4566",
+       "db.operation": "PutItem",
+       "db.system": "dynamodb",
+       "rpc.service": "DynamoDb",
+       "aws.request_id": "6302ea27-b715-4860-ab38-c599c2a967f5",
+       "url.full": "http://172.18.0.3:4566/",
+       "server.address": "172.18.0.3",
+       "rpc.method": "PutItem"
+      },
+      "payload": null,
+      "mutation": {
+       "kind": "CREATE",
+       "target": "orders",
+       "key": "ORDER-C4",
+       "before": {
+        "customerId": "C-DIEGO",
+        "total": 75.5,
+        "pk": "ORDER-C4",
+        "status": "BILLED"
+       },
+       "after": {
+        "total": 75.5,
+        "pk": "ORDER-C4",
+        "customerId": "C-DIEGO"
+       },
+       "deltas": [
+        {
+         "path": "status",
+         "before": "BILLED",
+         "after": null
+        }
+       ],
+       "fidelity": "EXACT"
+      },
+      "error": null,
+      "children": []
+     },
+     {
+      "nodeId": "a9952de0deeb20f3",
+      "parentId": "978c49da2dc799f3",
+      "kind": "SQS",
+      "label": "SQS: orders-queue",
+      "status": "OK",
+      "startedAt": "2026-10-01T02:36:58.465568671Z",
+      "selfTime": 8,
+      "totalTime": 8,
+      "attributes": {
+       "messaging.system": "aws_sqs",
+       "messaging.operation.type": "publish",
+       "messaging.destination.name": "orders-queue",
+       "aws.sqs.queue.url": "http://172.18.0.3:4566/000000000000/orders-queue"
+      },
+      "payload": null,
+      "mutation": null,
+      "error": null,
+      "children": [
+       {
+        "nodeId": "d6a4249f49da6c5f",
+        "parentId": "a9952de0deeb20f3",
+        "kind": "LAMBDA",
+        "label": "order-billing",
+        "status": "OK",
+        "startedAt": "2026-10-01T02:36:59.479358064Z",
+        "selfTime": 1,
+        "totalTime": 27,
+        "attributes": {
+         "t2l.execution.id": "70c089f4-8201-4184-a533-e75588ce1839",
+         "faas.invocation_id": "70c089f4-8201-4184-a533-e75588ce1839",
+         "faas.name": "order-billing",
+         "t2l.trigger": "lambda_event"
+        },
+        "payload": null,
+        "mutation": null,
+        "error": null,
+        "children": [
+         {
+          "nodeId": "fbdd6f8f49f6d231",
+          "parentId": "d6a4249f49da6c5f",
+          "kind": "DYNAMODB",
+          "label": "DynamoDB: orders",
+          "status": "OK",
+          "startedAt": "2026-10-01T02:36:59.480474987Z",
+          "selfTime": 25,
+          "totalTime": 25,
+          "attributes": {
+           "aws.dynamodb.table_names": "orders",
+           "http.request.method": "POST",
+           "rpc.system": "aws-api",
+           "http.response.status_code": "200",
+           "server.port": "4566",
+           "db.operation": "UpdateItem",
+           "db.system": "dynamodb",
+           "rpc.service": "DynamoDb",
+           "aws.request_id": "7f9f3a35-8acc-4b43-8714-80998fdd56c4",
+           "url.full": "http://172.18.0.3:4566/",
+           "server.address": "172.18.0.3",
+           "rpc.method": "UpdateItem"
+          },
+          "payload": null,
+          "mutation": {
+           "kind": "UPDATE",
+           "target": "orders",
+           "key": "ORDER-C4",
+           "before": {
+            "customerId": "C-DIEGO",
+            "total": 75.5,
+            "pk": "ORDER-C4"
+           },
+           "after": {
+            "customerId": "C-DIEGO",
+            "total": 75.5,
+            "pk": "ORDER-C4",
+            "status": "BILLED"
+           },
+           "deltas": [
+            {
+             "path": "status",
+             "before": null,
+             "after": "BILLED"
+            }
+           ],
+           "fidelity": "EXACT"
+          },
+          "error": null,
+          "children": []
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "metrics": {
+   "nodeCount": 5,
+   "maxDepth": 4,
+   "lostSpans": 0,
+   "droppedEvents": 0
+  },
+  "warnings": []
+ },
+ "logs": [
+  {
+   "timestamp": "2026-10-01T02:36:58.443330711Z",
+   "level": "INFO",
+   "logger": "stdout",
+   "message": "INFO pedido ORDER-C4 recebido (cliente C-DIEGO, total 75.50)",
+   "spanId": "978c49da2dc799f3",
+   "requestId": "dc913410-f049-4312-bee3-7ef15a3f7355",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]3a38d2e684c148f3134b54354db8db3a",
+   "source": "APP",
+   "traceId": "23fb4e971208aa3d26b4913884b6c0bf"
+  },
+  {
+   "timestamp": "2026-10-01T02:36:58.465444147Z",
+   "level": "INFO",
+   "logger": "stdout",
+   "message": "INFO pedido ORDER-C4 gravado na tabela orders",
+   "spanId": "978c49da2dc799f3",
+   "requestId": "dc913410-f049-4312-bee3-7ef15a3f7355",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]3a38d2e684c148f3134b54354db8db3a",
+   "source": "APP",
+   "traceId": "23fb4e971208aa3d26b4913884b6c0bf"
+  },
+  {
+   "timestamp": "2026-10-01T02:36:58.475257730Z",
+   "level": "INFO",
+   "logger": "stdout",
+   "message": "INFO evento OrderCreated de ORDER-C4 publicado em orders-queue",
+   "spanId": "978c49da2dc799f3",
+   "requestId": "dc913410-f049-4312-bee3-7ef15a3f7355",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]3a38d2e684c148f3134b54354db8db3a",
+   "source": "APP",
+   "traceId": "23fb4e971208aa3d26b4913884b6c0bf"
+  },
+  {
+   "timestamp": "2026-10-01T02:36:58.494Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "START RequestId: dc913410-f049-4312-bee3-7ef15a3f7355 Version: $LATEST",
+   "spanId": null,
+   "requestId": "dc913410-f049-4312-bee3-7ef15a3f7355",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]3a38d2e684c148f3134b54354db8db3a",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:36:58.498Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "END RequestId: dc913410-f049-4312-bee3-7ef15a3f7355",
+   "spanId": null,
+   "requestId": "dc913410-f049-4312-bee3-7ef15a3f7355",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]3a38d2e684c148f3134b54354db8db3a",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:36:58.499Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "REPORT RequestId: dc913410-f049-4312-bee3-7ef15a3f7355\tDuration: 48.54 ms\tBilled Duration: 49 ms\tMemory Size: 512 MB\tMax Memory Used: 512 MB",
+   "spanId": null,
+   "requestId": "dc913410-f049-4312-bee3-7ef15a3f7355",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]3a38d2e684c148f3134b54354db8db3a",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:36:59.479566788Z",
+   "level": "INFO",
+   "logger": "stdout",
+   "message": "INFO cobrança iniciada para ORDER-C4 (mensagem 5c81341e-13f8-4c4d-a821-91884673a742)",
+   "spanId": "d6a4249f49da6c5f",
+   "requestId": "70c089f4-8201-4184-a533-e75588ce1839",
+   "logGroup": "/aws/lambda/order-billing",
+   "logStream": "2026/10/01/[$LATEST]4ac229f9399204767bcbc22d9b81608e",
+   "source": "APP",
+   "traceId": "23fb4e971208aa3d26b4913884b6c0bf"
+  },
+  {
+   "timestamp": "2026-10-01T02:36:59.506845419Z",
+   "level": "INFO",
+   "logger": "stdout",
+   "message": "INFO pedido ORDER-C4 marcado como BILLED",
+   "spanId": "d6a4249f49da6c5f",
+   "requestId": "70c089f4-8201-4184-a533-e75588ce1839",
+   "logGroup": "/aws/lambda/order-billing",
+   "logStream": "2026/10/01/[$LATEST]4ac229f9399204767bcbc22d9b81608e",
+   "source": "APP",
+   "traceId": "23fb4e971208aa3d26b4913884b6c0bf"
+  },
+  {
+   "timestamp": "2026-10-01T02:36:59.520Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "START RequestId: 70c089f4-8201-4184-a533-e75588ce1839 Version: $LATEST",
+   "spanId": null,
+   "requestId": "70c089f4-8201-4184-a533-e75588ce1839",
+   "logGroup": "/aws/lambda/order-billing",
+   "logStream": "2026/10/01/[$LATEST]4ac229f9399204767bcbc22d9b81608e",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:36:59.525Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "END RequestId: 70c089f4-8201-4184-a533-e75588ce1839",
+   "spanId": null,
+   "requestId": "70c089f4-8201-4184-a533-e75588ce1839",
+   "logGroup": "/aws/lambda/order-billing",
+   "logStream": "2026/10/01/[$LATEST]4ac229f9399204767bcbc22d9b81608e",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:36:59.526Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "REPORT RequestId: 70c089f4-8201-4184-a533-e75588ce1839\tDuration: 39.09 ms\tBilled Duration: 40 ms\tMemory Size: 512 MB\tMax Memory Used: 512 MB",
+   "spanId": null,
+   "requestId": "70c089f4-8201-4184-a533-e75588ce1839",
+   "logGroup": "/aws/lambda/order-billing",
+   "logStream": "2026/10/01/[$LATEST]4ac229f9399204767bcbc22d9b81608e",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  }
+ ]
+}

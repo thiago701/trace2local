@@ -29,6 +29,8 @@ public final class InfraIndexer {
     private static final Pattern URL = Pattern.compile("https?://[^\\s\"'<>]+");
     private static final Pattern ARN = Pattern.compile("arn:aws:[^\\s\"'<>]+");
     private static final Pattern TF_RESOURCE = Pattern.compile("resource\\s+\"([a-z0-9_]+)\"\\s+\"([^\"]+)\"");
+    /** Nome REAL do recurso no bloco (o rótulo local do Terraform raramente é o nome na AWS). */
+    private static final Pattern TF_NAME_ATTR = Pattern.compile("^\\s*(name|function_name|queue_name|topic_name|table_name)\\s*=\\s*(.+?)\\s*$");
     private static final Pattern ENV_ASSIGN = Pattern.compile("^\\s*-?\\s*([A-Za-z_][A-Za-z0-9_]*)=(.+)$");
 
     private static final int MAX_FILES = 3000;
@@ -59,6 +61,9 @@ public final class InfraIndexer {
         try (var stream = Files.list(dir)) {
             for (Path path : stream.toList()) {
                 String name = path.getFileName().toString();
+                if (Files.isSymbolicLink(path)) {
+                    continue; // sem seguir links: nada de fuga da raiz varrida nem ciclo
+                }
                 if (Files.isDirectory(path)) {
                     if (name.equals(".git") || name.equals("target") || name.equals("node_modules")
                             || name.equals(".idea") || name.equals(".mvn")) {
@@ -121,7 +126,9 @@ public final class InfraIndexer {
                 Matcher tf = TF_RESOURCE.matcher(line);
                 while (tf.find()) {
                     String type = tf.group(1).replace("aws_", "");
-                    String name = tf.group(2);
+                    // resource "aws_dynamodb_table" "transfers" { name = "pix-transfers" } → pix-transfers;
+                    // nome interpolado (each.key, ${local.x}) fica como expressão: nunca inventado
+                    String name = terraformName(lines, i).orElse(tf.group(2));
                     add(out, "RECURSO_TERRAFORM", type, name, name,
                             new Source(rel, lineNo, kind));
                 }
@@ -130,7 +137,8 @@ public final class InfraIndexer {
             // URLs e ARNs
             Matcher urls = URL.matcher(line);
             while (urls.find()) {
-                String value = urls.group();
+                // credencial em URL (user:senha@host, ?token=…) nunca vai para a UI
+                String value = tech.neural7.trace2local.internal.TextRedactor.redact(urls.group());
                 add(out, "URL", "url", value, value, new Source(rel, lineNo, kind));
             }
             Matcher arns = ARN.matcher(line);
@@ -150,6 +158,40 @@ public final class InfraIndexer {
                 }
             }
         }
+    }
+
+    /**
+     * Procura o atributo de nome no NÍVEL 1 do bloco do recurso (ignora blocos aninhados, como
+     * {@code attribute { name = "transferId" }} da tabela DynamoDB).
+     */
+    static java.util.Optional<String> terraformName(List<String> lines, int resourceLine) {
+        int depth = 0;
+        for (int j = resourceLine; j < lines.size() && j < resourceLine + 200; j++) {
+            String l = lines.get(j);
+            int hash = l.indexOf('#');
+            String code = hash >= 0 && !l.substring(0, hash).contains("\"") ? l.substring(0, hash) : l;
+            if (j > resourceLine && depth == 1) {
+                Matcher m = TF_NAME_ATTR.matcher(code);
+                if (m.find()) {
+                    String v = m.group(2).trim();
+                    if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) {
+                        v = v.substring(1, v.length() - 1);
+                    }
+                    return v.isBlank() ? java.util.Optional.empty() : java.util.Optional.of(v);
+                }
+            }
+            for (char c : code.toCharArray()) {
+                if (c == '{') {
+                    depth++;
+                } else if (c == '}') {
+                    depth--;
+                }
+            }
+            if (j > resourceLine && depth <= 0) {
+                break;
+            }
+        }
+        return java.util.Optional.empty();
     }
 
     private static String relative(Path file) {

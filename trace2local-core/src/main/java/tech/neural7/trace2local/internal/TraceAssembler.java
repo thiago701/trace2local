@@ -50,7 +50,12 @@ public final class TraceAssembler implements AutoCloseable, ExecutionStore {
     private final CopyOnWriteArrayList<Consumer<LiveEvent>> listeners = new CopyOnWriteArrayList<>();
     private final ConcurrentHashMap<String, ExecutionAcc> live = new ConcurrentHashMap<>();
     private final Map<String, Execution> completed;
+    /** traceId → execução concluída (para a continuação tardia — §4.11). */
+    private final Map<String, CompletedRef> completedByTrace = new ConcurrentHashMap<>();
     private final List<Trace2LocalExtension> extensions;
+    private final java.util.concurrent.atomic.LongAdder reopened = new java.util.concurrent.atomic.LongAdder();
+
+    private record CompletedRef(String executionId, long completedAtNanos) {}
 
     private final Thread worker;
     private volatile boolean closed;
@@ -378,11 +383,32 @@ public final class TraceAssembler implements AutoCloseable, ExecutionStore {
             return;
         }
 
-        // I1 — órfãos cujo pai nunca chegou são reparentados na raiz, nunca descartados
+        // §4.11 — continuação TARDIA: o pai dos órfãos está numa execução já concluída
+        // do mesmo trace (consumidor SQS/SNS real chegou depois da quiescência do
+        // produtor) ⇒ funde na árvore do produtor em vez de nascer separada
+        ExecutionAcc target = mergeTargetFor(acc);
+        if (target != null) {
+            mergeInto(acc, target);
+            return;
+        }
+
+        // I1 — órfãos cujo pai nunca chegou são reparentados na raiz, nunca descartados.
+        // Exceção honesta: o PONTO DE ENTRADA (Lambda/servidor HTTP) chamado por um salto não
+        // instrumentado (API Gateway/X-Ray, balanceador) tem pai remoto por definição — é a
+        // raiz legítima, não um órfão; o id do pai fica registrado em ENTRY_REMOTE_PARENT.
         int orphanCount = 0;
-        for (List<NodeAcc> waiting : acc.orphansByParent.values()) {
-            for (NodeAcc orphan : waiting) {
+        // só quando o trace NÃO tem outra parte conhecida: continuação separada de um produtor
+        // já observado (janela de fusão desligada/expirada) continua sendo órfã honesta
+        boolean singleEntry = acc.orphansByParent.size() == 1
+                && acc.orphansByParent.values().iterator().next().size() == 1
+                && (acc.traceId == null || !completedByTrace.containsKey(acc.traceId));
+        for (Map.Entry<String, List<NodeAcc>> waiting : acc.orphansByParent.entrySet()) {
+            for (NodeAcc orphan : waiting.getValue()) {
                 orphan.parentId = null;
+                if (singleEntry && (orphan.kind == NodeKind.LAMBDA || orphan.kind == NodeKind.HTTP_SERVER)) {
+                    orphan.attributes.put(ENTRY_REMOTE_PARENT, waiting.getKey());
+                    continue;
+                }
                 orphan.status = NodeStatus.ORPHANED;
                 orphanCount++;
             }
@@ -460,7 +486,9 @@ public final class TraceAssembler implements AutoCloseable, ExecutionStore {
                 acc.traceId,
                 status,
                 acc.trigger,
-                acc.firstAt,
+                // início = o span mais antigo (no ingest OTLP o primeiro EVENTO processado
+                // é o FIM de algum span — usá-lo deslocava logs e a linha do tempo)
+                spanStart != null ? spanStart : acc.firstAt,
                 duration,
                 List.copyOf(roots),
                 new ExecutionMetrics(acc.nodes.size(), maxDepth(roots), acc.lostSpans, buffer.dropped()),
@@ -468,6 +496,12 @@ public final class TraceAssembler implements AutoCloseable, ExecutionStore {
 
         synchronized (completed) {
             completed.put(acc.executionId, execution);
+        }
+        if (acc.traceId != null) {
+            completedByTrace.put(acc.traceId, new CompletedRef(acc.executionId, System.nanoTime()));
+            if (completedByTrace.size() > Math.max(64, cfg.retentionMaxExecutions() * 2)) {
+                pruneCompletedIndex();
+            }
         }
         live.remove(acc.traceId, acc);
         emit(new LiveEvent.ExecutionCompleted(acc.executionId, execution));
@@ -543,7 +577,8 @@ public final class TraceAssembler implements AutoCloseable, ExecutionStore {
     // ---------------------------------------------------------------- acc
 
     private ExecutionAcc accFor(String traceId, String executionId, Trigger trigger, Instant at) {
-        return live.compute(traceId, (k, existing) -> {
+        String[] renamedFrom = new String[1];
+        ExecutionAcc result = live.compute(traceId, (k, existing) -> {
             ExecutionAcc acc = existing;
             if (acc == null) {
                 acc = new ExecutionAcc();
@@ -557,6 +592,9 @@ public final class TraceAssembler implements AutoCloseable, ExecutionStore {
             // tardio com outro t2l.execution.id (ex.: consumidor SQS continuando o
             // trace) não pode renomear a execução no meio do caminho
             if (executionId != null && acc.executionIdGenerated) {
+                if (acc.started && !executionId.equals(acc.executionId)) {
+                    renamedFrom[0] = acc.executionId; // a UI já conhece o provisório
+                }
                 acc.executionId = executionId;
                 acc.executionIdGenerated = false;
             }
@@ -572,6 +610,10 @@ public final class TraceAssembler implements AutoCloseable, ExecutionStore {
             acc.lastProcessedNanos = System.nanoTime();
             return acc;
         });
+        if (renamedFrom[0] != null) {
+            emit(new LiveEvent.ExecutionRenamed(renamedFrom[0], result.executionId, traceId));
+        }
+        return result;
     }
 
     private void emit(LiveEvent event) {
@@ -615,7 +657,135 @@ public final class TraceAssembler implements AutoCloseable, ExecutionStore {
         synchronized (completed) {
             completed.clear();
         }
+        completedByTrace.clear();
         live.clear();
+    }
+
+    /** Execuções tardias fundidas na árvore do produtor desde o boot (observabilidade). */
+    public long reopenedExecutions() {
+        return reopened.sum();
+    }
+
+    // ---------------------------------------------------------------- continuação tardia
+
+    /**
+     * Execução JÁ concluída do mesmo trace que contém o pai de algum órfão desta
+     * execução tardia — "descongelada" para receber os nós (mesmo executionId,
+     * mesma árvore). Fora da janela, desligado ou sem pai conhecido: {@code null}
+     * (a execução tardia segue separada, com aviso honesto de órfão).
+     */
+    private ExecutionAcc mergeTargetFor(ExecutionAcc late) {
+        long window = cfg.lateContinuationMs();
+        if (window <= 0 || late.traceId == null || late.orphansByParent.isEmpty()) {
+            return null;
+        }
+        CompletedRef ref = completedByTrace.get(late.traceId);
+        if (ref == null || ref.executionId().equals(late.executionId)
+                || (System.nanoTime() - ref.completedAtNanos()) > window * 1_000_000L) {
+            return null;
+        }
+        Execution e;
+        synchronized (completed) {
+            e = completed.get(ref.executionId());
+        }
+        if (e == null) {
+            completedByTrace.remove(late.traceId);
+            return null;
+        }
+        ExecutionAcc acc = new ExecutionAcc();
+        acc.traceId = late.traceId;
+        acc.executionId = e.executionId();
+        acc.executionIdGenerated = false;
+        acc.trigger = e.trigger() != null ? e.trigger() : Trigger.EXTERNAL;
+        acc.firstAt = e.startedAt();
+        acc.lastAt = e.startedAt() != null && e.duration() != null ? e.startedAt().plus(e.duration()) : e.startedAt();
+        acc.started = true;
+        acc.sawStart = true;
+        acc.lostSpans = e.metrics() != null ? e.metrics().lostSpans() : 0;
+        if (e.roots() != null) {
+            for (Node root : e.roots()) {
+                thaw(acc, root, null);
+            }
+        }
+        boolean parentKnown = late.orphansByParent.keySet().stream().anyMatch(acc.nodes::containsKey);
+        if (!parentKnown) {
+            return null; // mesmo traceId, mas nenhum elo causal — não funde por coincidência
+        }
+        for (Warning w : e.warnings()) {
+            // "sem consumidor observado" é recalculado na nova conclusão
+            if (!(w.message() != null && w.message().contains("sem consumidor observado"))) {
+                acc.warnings.add(w);
+            }
+        }
+        return acc;
+    }
+
+    /** Move os nós da execução tardia para a árvore de destino e a conclui de novo. */
+    private void mergeInto(ExecutionAcc late, ExecutionAcc target) {
+        for (NodeAcc n : late.nodes.values()) {
+            target.nodes.putIfAbsent(n.nodeId, n);
+        }
+        for (Map.Entry<String, List<NodeAcc>> en : late.orphansByParent.entrySet()) {
+            NodeAcc parent = target.nodes.get(en.getKey());
+            for (NodeAcc orphan : en.getValue()) {
+                if (parent != null) {
+                    attach(parent, orphan);
+                } else {
+                    target.orphansByParent.computeIfAbsent(en.getKey(), k -> new ArrayList<>()).add(orphan);
+                }
+            }
+        }
+        target.openSpans.addAll(late.openSpans);
+        target.warnings.addAll(late.warnings);
+        target.lostSpans += late.lostSpans;
+        if (late.lastAt != null && (target.lastAt == null || late.lastAt.isAfter(target.lastAt))) {
+            target.lastAt = late.lastAt;
+        }
+        late.completed = true;
+        late.orphansByParent.clear();
+        live.remove(late.traceId, late);
+        reopened.increment();
+        emit(new LiveEvent.ExecutionMerged(late.executionId, target.executionId, late.traceId));
+        complete(target);
+    }
+
+    private void thaw(ExecutionAcc acc, Node n, NodeAcc parent) {
+        NodeAcc node = new NodeAcc(n.nodeId(), n.kind(), n.label());
+        node.status = n.status();
+        // produtor SNS marcado "aguardando consumo" volta a OK: o consumidor pode estar chegando
+        if (node.status == NodeStatus.ORPHANED && n.kind() == NodeKind.SNS && (n.children() == null || n.children().isEmpty())) {
+            node.status = NodeStatus.OK;
+        }
+        node.startedAt = n.startedAt();
+        node.endedAt = n.startedAt() != null && n.totalTime() != null ? n.startedAt().plus(n.totalTime()) : null;
+        if (n.attributes() != null) {
+            node.attributes.putAll(n.attributes());
+        }
+        node.payload = n.payload();
+        node.mutation = n.mutation();
+        node.error = n.error();
+        if (parent != null) {
+            node.parent = parent;
+            node.parentId = parent.nodeId;
+            parent.children.add(node);
+        } else {
+            node.parentId = n.parentId();
+        }
+        acc.nodes.put(node.nodeId, node);
+        if (node.endedAt == null) {
+            acc.openSpans.add(node.nodeId);
+        }
+        if (n.children() != null) {
+            for (Node c : n.children()) {
+                thaw(acc, c, node);
+            }
+        }
+    }
+
+    private void pruneCompletedIndex() {
+        long window = Math.max(cfg.lateContinuationMs(), 1) * 1_000_000L;
+        long now = System.nanoTime();
+        completedByTrace.entrySet().removeIf(en -> (now - en.getValue().completedAtNanos()) > window);
     }
 
     @Override
@@ -645,6 +815,12 @@ public final class TraceAssembler implements AutoCloseable, ExecutionStore {
     }
 
     // ---------------------------------------------------------------- estado mutável
+
+    /**
+     * Atributo do nó de entrada cujo chamador não é instrumentado (API Gateway, X-Ray,
+     * balanceador): guarda o id do span-pai remoto que nunca chegará ao Trace2Local.
+     */
+    public static final String ENTRY_REMOTE_PARENT = "t2l.entry.remote_parent";
 
     static final class NodeAcc implements NodeBuilder.MutableNode {
         final String nodeId;

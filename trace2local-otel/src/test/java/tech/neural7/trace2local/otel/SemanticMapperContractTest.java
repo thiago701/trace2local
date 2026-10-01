@@ -71,7 +71,7 @@ class SemanticMapperContractTest {
                 AttributeKey.stringKey("db.query.text"), "UPDATE orders SET total=? WHERE id=?"));
 
         assertThat(mapper.kindOf(span)).contains(NodeKind.SQL);
-        assertThat(mapper.labelOf(span).text()).isEqualTo("SQL: orders");
+        assertThat(mapper.labelOf(span).text()).isEqualTo("SQL: UPDATE orders");
         assertThat(mapper.inspectorFieldsOf(span)).containsEntry("db.operation", "UPDATE");
     }
 

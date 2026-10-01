@@ -54,6 +54,35 @@ class StoryServiceTest {
     }
 
     @Test
+    void externalCallNamesThePartnerRouteStatusAndMockOrigin() {
+        Map<String, String> attrs = Map.of(
+                tech.neural7.trace2local.otel.OtelAttributeNames.HTTP_METHOD, "GET",
+                tech.neural7.trace2local.otel.OtelAttributeNames.PEER_SERVICE, "KYC & Limites",
+                tech.neural7.trace2local.otel.OtelAttributeNames.HTTP_ROUTE, "/v2/customers/{id}/limits",
+                tech.neural7.trace2local.otel.OtelAttributeNames.HTTP_STATUS, "200",
+                tech.neural7.trace2local.otel.Trace2LocalAttributes.MOCK, "binding=mock-kyc; stub=consultarLimites");
+        Node call = new Node("c1", null, NodeKind.HTTP_CLIENT, "GET KYC & Limites /v2/customers/{id}/limits", NodeStatus.OK,
+                Instant.now(), Duration.ofMillis(2), Duration.ofMillis(2), attrs, null, null, null, List.of());
+
+        String note = service.noteFor(call);
+
+        // regressão: a nota dizia "Chamada externa GET para ao serviço."
+        assertThat(note).doesNotContain("para ao")
+                .contains("GET a KYC & Limites (/v2/customers/{id}/limits)").contains("status 200")
+                .contains("SIMULADA pelo Mock Connect");
+
+        Map<String, String> passthrough = new java.util.HashMap<>(attrs);
+        passthrough.put(tech.neural7.trace2local.otel.Trace2LocalAttributes.MOCK, "binding=mock-af; stub=s1; passthrough=true");
+        Node real = new Node("c2", null, NodeKind.HTTP_CLIENT, "POST Antifraude", NodeStatus.OK,
+                Instant.now(), Duration.ofMillis(2), Duration.ofMillis(2), passthrough, null, null, null, List.of());
+        assertThat(service.noteFor(real)).contains("resposta é a da API real");
+
+        Node bare = new Node("c3", null, NodeKind.HTTP_CLIENT, "GET parceiro", NodeStatus.OK,
+                Instant.now(), Duration.ofMillis(2), Duration.ofMillis(2), Map.of(), null, null, null, List.of());
+        assertThat(service.noteFor(bare)).isEqualTo("Chamada externa HTTP — GET parceiro.");
+    }
+
+    @Test
     void humanizesCamelCaseBusinessNames() {
         assertThat(StoryService.humanize("CreateOrder")).isEqualTo("Create Order");
         assertThat(StoryService.humanize("confirmOrderBilling")).isEqualTo("Confirm Order Billing");

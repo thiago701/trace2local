@@ -1,78 +1,80 @@
 #!/bin/sh
-# Provisionamento do cenário Lambda + DynamoDB + SQS no LocalStack (compose).
-# Roda dentro do container amazon/aws-cli; o fat jar está em /bundle (read-only).
+# Provisionamento + jornada REAL do cenário Lambda + DynamoDB + SQS + CloudWatch Logs
+# no LocalStack (compose). Roda dentro do container amazon/aws-cli; o fat jar está
+# em /bundle (read-only). As funções falam com o Station pela rede do compose.
 set -e
+EP=http://localstack:4566
+STATION_ENV="TRACE2LOCAL_STATION_ENDPOINT=http://trace2local-station:19877,TRACE2LOCAL_STATION_TOKEN=devtoken"
+aws_ls() { aws --endpoint-url=$EP "$@"; }
 
 echo "[init] aguardando o LocalStack responder..."
-until aws --endpoint-url=http://localstack:4566 dynamodb list-tables >/dev/null 2>&1; do
+until aws_ls dynamodb list-tables >/dev/null 2>&1; do
   sleep 1
 done
 
-echo "[init] tabela DynamoDB (orders)..."
-aws --endpoint-url=http://localstack:4566 dynamodb create-table \
-  --table-name orders \
-  --attribute-definitions AttributeName=pk,AttributeType=S \
-  --key-schema AttributeName=pk,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST || true
-
-echo "[init] tabela DynamoDB (idempotency — cenário de monitoramento de idempotência)..."
-aws --endpoint-url=http://localstack:4566 dynamodb create-table \
-  --table-name idempotency \
-  --attribute-definitions AttributeName=pk,AttributeType=S \
-  --key-schema AttributeName=pk,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST || true
-
-echo "[init] tabela DynamoDB (payments — demo payment-service)..."
-aws --endpoint-url=http://localstack:4566 dynamodb create-table \
-  --table-name payments \
-  --attribute-definitions AttributeName=pk,AttributeType=S \
-  --key-schema AttributeName=pk,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST || true
+for t in orders idempotency payments; do
+  echo "[init] tabela DynamoDB ($t)..."
+  aws_ls dynamodb create-table --table-name $t \
+    --attribute-definitions AttributeName=pk,AttributeType=S \
+    --key-schema AttributeName=pk,KeyType=HASH \
+    --billing-mode PAY_PER_REQUEST >/dev/null || true
+done
 
 echo "[init] fila SQS (orders-queue)..."
-aws --endpoint-url=http://localstack:4566 sqs create-queue \
-  --queue-name orders-queue || true
+QUEUE_URL=$(aws_ls sqs create-queue --queue-name orders-queue --query QueueUrl --output text)
+QUEUE_ARN=$(aws_ls sqs get-queue-attributes --queue-url "$QUEUE_URL" --attribute-names QueueArn --query Attributes.QueueArn --output text)
 
-echo "[init] função Lambda order-processor (runtime java21)..."
-# TRACE2LOCAL_STATION_ENDPOINT aponta para o Station publicado no host (19877):
-# de dentro do emulador Lambda, host.docker.internal alcança a máquina host.
-if ! aws --endpoint-url=http://localstack:4566 lambda create-function \
-  --function-name order-processor \
-  --runtime java21 \
-  --role arn:aws:iam::000000000000:role/lambda-role \
-  --handler tech.neural7.trace2local.examples.lambda.OrderProcessor::handleRequest \
-  --zip-file fileb:///bundle/lambda-sqs-bundle.jar \
-  --timeout 30 \
-  --environment "Variables={TRACE2LOCAL_STATION_ENDPOINT=http://host.docker.internal:19877,TRACE2LOCAL_STATION_TOKEN=devtoken}"; then
-  echo "[init] função já existia — atualizando o código e o ambiente..."
-  aws --endpoint-url=http://localstack:4566 lambda update-function-code \
-    --function-name order-processor \
-    --zip-file fileb:///bundle/lambda-sqs-bundle.jar
-  aws --endpoint-url=http://localstack:4566 lambda update-function-configuration \
-    --function-name order-processor \
-    --environment "Variables={TRACE2LOCAL_STATION_ENDPOINT=http://host.docker.internal:19877,TRACE2LOCAL_STATION_TOKEN=devtoken}"
-fi
-
-echo "[init] invocação de fumaça (primeira chamada puxa a imagem java:21 e extrai o código — pode demorar)..."
-# o gateway do LocalStack espera o Payload base64 (comportamento verificado no 4.2)
-PAYLOAD_B64=$(printf '%s' '{"orderId":"ORDER-C1","customerId":"C-COMPOSE","total":"99.90"}' | base64 -w0)
-OK=0
-for attempt in 1 2 3 4 5 6; do
-  if aws --endpoint-url=http://localstack:4566 lambda invoke \
-    --function-name order-processor \
-    --payload "$PAYLOAD_B64" \
-    /tmp/out.json 2>/tmp/err.json; then
-    OK=1
-    break
+deploy() { # nome handler
+  echo "[init] função Lambda $1 (java21) → $2"
+  if ! aws_ls lambda create-function --function-name "$1" --runtime java21 \
+      --role arn:aws:iam::000000000000:role/lambda-role \
+      --handler "$2" --zip-file fileb:///bundle/lambda-sqs-bundle.jar \
+      --timeout 30 --memory-size 512 \
+      --environment "Variables={$STATION_ENV}" >/dev/null; then
+    echo "[init] $1 já existia — atualizando código e ambiente..."
+    aws_ls lambda update-function-code --function-name "$1" --zip-file fileb:///bundle/lambda-sqs-bundle.jar >/dev/null
+    aws_ls lambda wait function-updated --function-name "$1" || true
+    aws_ls lambda update-function-configuration --function-name "$1" --environment "Variables={$STATION_ENV}" >/dev/null
   fi
-  echo "[init] tentativa $attempt falhou ($(head -c 200 /tmp/err.json)) — aguardando o emulador aquecer..."
-  sleep 15
-done
-if [ "$OK" != "1" ]; then
-  echo "[init] FATAL: a função não respondeu após 6 tentativas"
-  exit 1
+  aws_ls lambda wait function-active-v2 --function-name "$1" || true
+}
+deploy order-processor tech.neural7.trace2local.examples.lambda.OrderProcessor::handleRequest
+deploy order-billing tech.neural7.trace2local.examples.lambda.OrderBillingSqsHandler::handleRequest
+deploy idempotent-processor tech.neural7.trace2local.examples.lambda.IdempotentProcessor::handleRequest
+
+echo "[init] event source mapping orders-queue → order-billing (consumidor real)..."
+if [ -z "$(aws_ls lambda list-event-source-mappings --function-name order-billing --query 'EventSourceMappings[0].UUID' --output text | grep -v None)" ]; then
+  aws_ls lambda create-event-source-mapping --function-name order-billing \
+    --event-source-arn "$QUEUE_ARN" --batch-size 1 >/dev/null
 fi
-echo "[init] resposta da função:"
-cat /tmp/out.json
-echo
+
+invoke() { # função payload-json rótulo
+  # o gateway do LocalStack espera o Payload base64 (comportamento verificado no 4.2)
+  P=$(printf '%s' "$2" | base64 -w0)
+  for attempt in 1 2 3 4 5 6; do
+    if aws_ls lambda invoke --function-name "$1" --payload "$P" /tmp/out.json >/tmp/meta.json 2>/tmp/err.json; then
+      echo "[init] $3 → $(cat /tmp/out.json)"
+      return 0
+    fi
+    echo "[init] $3: tentativa $attempt falhou ($(head -c 160 /tmp/err.json)) — aguardando o emulador aquecer..."
+    sleep 15
+  done
+  echo "[init] FATAL: $1 não respondeu"; exit 1
+}
+
+echo "[init] jornadas (a primeira chamada puxa a imagem java:21 — pode demorar)..."
+invoke order-processor '{"orderId":"ORDER-C1","customerId":"C-ANA","total":"99.90"}' "J1 pedido feliz"
+invoke order-processor '{"orderId":"ORDER-C2","customerId":"C-BRUNO","total":"249.00"}' "J2 pedido feliz"
+invoke order-processor '{"orderId":"ORDER-C3","customerId":"C-CARLA","total":"9999.00","fail":"true"}' "J3 recusa por limite de crédito (FunctionError esperado)"
+invoke idempotent-processor '{"idempotencyKey":"PAY-777","payload":"{\"valor\":120}"}' "J4 idempotência — 1ª entrega"
+invoke idempotent-processor '{"idempotencyKey":"PAY-777","payload":"{\"valor\":120}"}' "J5 idempotência — reentrega"
+invoke order-processor '{"orderId":"ORDER-C4","customerId":"C-DIEGO","total":"75.50"}' "J6 pedido feliz"
+
+echo "[init] aguardando o consumidor order-billing drenar a fila..."
+for i in $(seq 1 30); do
+  N=$(aws_ls sqs get-queue-attributes --queue-url "$QUEUE_URL" --attribute-names ApproximateNumberOfMessages ApproximateNumberOfMessagesNotVisible \
+      --query 'sum([to_number(Attributes.ApproximateNumberOfMessages), to_number(Attributes.ApproximateNumberOfMessagesNotVisible)])' --output text 2>/dev/null || echo 0)
+  [ "$N" = "0" ] && break
+  sleep 2
+done
 echo "[init] cenário pronto → UI do Station em http://localhost:19877/trace2local"

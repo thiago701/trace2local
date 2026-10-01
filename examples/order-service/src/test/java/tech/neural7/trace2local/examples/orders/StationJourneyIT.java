@@ -109,7 +109,7 @@ class StationJourneyIT {
     }
 
     @Autowired
-    tech.neural7.trace2local.config.Trace2LocalConfig traceVantaConfig;
+    tech.neural7.trace2local.config.Trace2LocalConfig trace2LocalConfig;
 
     @BeforeAll
     static void provisionInfra() throws Exception {
@@ -148,7 +148,7 @@ class StationJourneyIT {
         // a app em modo Companion NÃO sobe o servidor embedded: o modo é DETECTADO
         // por trace2local.station.endpoint (ADR-002, regra 3) — o endpoint do Station
         // está configurado e o SDK exporta OTLP para ele
-        assertThat(traceVantaConfig.stationEndpoint()).isNotBlank();
+        assertThat(trace2LocalConfig.stationEndpoint()).isNotBlank();
 
         // disparo direto na app (no modo Companion não há launcher de UI — o dev usa o próprio fluxo)
         long t0 = System.nanoTime();

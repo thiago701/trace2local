@@ -97,7 +97,8 @@ public final class OtlpTraceReceiver implements HttpHandler {
             // a mensagem de status pode ser vazia (instrumentações só gravam o
             // evento `exception`); o ErrorInfo completo vem dos eventos do span —
             // sem isso, a árvore ficaria vermelha SEM dizer por quê
-            String type = "OTLP:" + span.getStatus().getCode();
+            // sem evento "exception" o erro é só o STATUS do span (ex.: "HTTP 502" na raiz da Lambda)
+            String type = "status do span";
             String message = span.getStatus().getMessage();
             String stack = null;
             for (var event : span.getEventsList()) {
@@ -126,9 +127,23 @@ public final class OtlpTraceReceiver implements HttpHandler {
         tech.neural7.trace2local.model.Trigger trigger =
                 tech.neural7.trace2local.otel.Trace2LocalAttributes.parseTrigger(
                         attributes.get(tech.neural7.trace2local.otel.Trace2LocalAttributes.TRIGGER));
+        // payloads capturados na origem (Trace2LocalHttp, filtro web) viajam como atributos
+        // internos: viram o Payload do nó (Requisição/Resposta no inspector), não atributos
+        String payloadRequest = cap(attributes.remove(tech.neural7.trace2local.otel.Trace2LocalAttributes.PAYLOAD_REQUEST));
+        String payloadResponse = cap(attributes.remove(tech.neural7.trace2local.otel.Trace2LocalAttributes.PAYLOAD_RESPONSE));
         // OTLP não carrega o canal de mutação: execução entra sem delta (declarado)
         pipeline.buffer().offer(new SpanEndEvent(traceId, spanId, parentSpanId, executionId, trigger,
-                kind, label.text(), attributes, start, end, error, errorInfo, null, null, linkedSpanIds, true));
+                kind, label.text(), attributes, start, end, error, errorInfo, payloadRequest, payloadResponse,
+                linkedSpanIds, true));
+    }
+
+    private String cap(String payload) {
+        if (payload == null || payload.isEmpty()) {
+            return null;
+        }
+        int max = Math.max(1024, cfg.payloadMaxBytes());
+        return payload.length() > max
+                ? payload.substring(0, max) + tech.neural7.trace2local.internal.Redactor.TRUNCATED : payload;
     }
 
     private static String stringValue(io.opentelemetry.proto.common.v1.AnyValue value) {

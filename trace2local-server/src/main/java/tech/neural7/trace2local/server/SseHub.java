@@ -51,11 +51,33 @@ public final class SseHub implements java.util.function.Consumer<LiveEvent>, Aut
         flusher.start();
     }
 
+    /** Teto de conexões SSE simultâneas (cada aba = 1; protege contra exaustão — prontidão corporativa). */
+    public static final int MAX_SUBSCRIBERS = 32;
+
+    /** Há vaga para mais um assinante? */
+    public boolean hasCapacity() {
+        return subscribers.size() < MAX_SUBSCRIBERS;
+    }
+
     /** Registra um assinante (uma conexão HTTP) e envia os snapshots iniciais. */
     public void subscribe(OutputStream out, Runnable onDisconnect) {
         Subscriber subscriber = new Subscriber(out, onDisconnect);
         subscribers.add(subscriber);
         writeSnapshot(subscriber);
+    }
+
+    /**
+     * Evento de aplicação para todos os assinantes (ex.: {@code insights.updated}
+     * das Regras Preditivas) — entra na mesma coalescência de 20 fps.
+     */
+    public void broadcast(String event, com.fasterxml.jackson.databind.JsonNode data) {
+        if (closed || data == null) {
+            return;
+        }
+        Frame frame = new Frame(event, data, "*");
+        for (Subscriber subscriber : subscribers) {
+            subscriber.offer(frame);
+        }
     }
 
     public int connectedClients() {
@@ -97,6 +119,10 @@ public final class SseHub implements java.util.function.Consumer<LiveEvent>, Aut
                 node.set("execution", JsonCodec.MAPPER.valueToTree(c.execution()));
                 yield new Frame("execution.completed", node, c.executionId());
             }
+            case LiveEvent.ExecutionMerged m -> new Frame("execution.merged",
+                    JsonCodec.MAPPER.valueToTree(m), "*");
+            case LiveEvent.ExecutionRenamed r -> new Frame("execution.renamed",
+                    JsonCodec.MAPPER.valueToTree(r), "*");
             case LiveEvent.SystemWarning w -> new Frame("system.warning",
                     JsonCodec.MAPPER.valueToTree(w.warning()), "*");
         };

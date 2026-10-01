@@ -21,7 +21,8 @@ public record Trace2LocalConfig(
         String stationToken,
         long flushTimeoutMs,
         long quiescenceMs,
-        String infraScanDirs) {
+        String infraScanDirs,
+        long lateContinuationMs) {
 
     public static Builder builder() {
         return new Builder();
@@ -48,6 +49,7 @@ public record Trace2LocalConfig(
         private long flushTimeoutMs = 200;
         private long quiescenceMs = 5_000;
         private String infraScanDirs = "";
+        private long lateContinuationMs = 600_000;
 
         public Builder enabled(boolean v) { this.enabled = v; return this; }
         public Builder basePath(String v) { this.basePath = v; return this; }
@@ -77,11 +79,21 @@ public record Trace2LocalConfig(
          */
         public Builder infraScanDirs(String v) { this.infraScanDirs = v == null ? "" : v; return this; }
 
+        /**
+         * Janela de CONTINUAÇÃO TARDIA (padrão 10 min; 0 desliga): um span que
+         * chega para um traceId cuja execução já foi concluída — típico do
+         * consumidor SQS/SNS real, que roda segundos depois do produtor (event
+         * source mapping, cold start, retries) — REABRE aquela execução em vez de
+         * nascer órfão numa execução separada (SPEC §4.11). Env
+         * {@code TRACE2LOCAL_LATE_CONTINUATION_MS}.
+         */
+        public Builder lateContinuationMs(long v) { this.lateContinuationMs = Math.max(0, v); return this; }
+
         public Trace2LocalConfig build() {
             return new Trace2LocalConfig(enabled, basePath, port, bindAddress, allowNonLoopback,
                     bufferCapacity, retentionMaxExecutions, payloadMaxBytes, redactionMode,
                     dynamoDbCaptureBefore, jdbcMutationCapture, stationEndpoint, stationToken,
-                    flushTimeoutMs, quiescenceMs, infraScanDirs);
+                    flushTimeoutMs, quiescenceMs, infraScanDirs, lateContinuationMs);
         }
     }
 }

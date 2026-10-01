@@ -16,7 +16,9 @@ import org.springframework.core.env.Environment;
  */
 public final class ProductionGuard {
 
-    public static final String[] DEV_PROFILES = {"dev", "development", "local", "localstack"};
+    /** Perfis de desenvolvimento. {@code trace2local} é o opt-in explícito: liga o starter E carrega o
+     *  {@code application-trace2local.yml} gerado pelo {@code mvn trace2local:configure}. */
+    public static final String[] DEV_PROFILES = {"dev", "development", "local", "localstack", "trace2local"};
 
     private ProductionGuard() {}
 

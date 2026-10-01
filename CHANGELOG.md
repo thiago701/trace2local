@@ -5,6 +5,87 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) · Versiona
 
 ## [0.1.0-SNAPSHOT] — em desenvolvimento
 
+### Instalação e início revisados; restos do nome antigo removidos (2026-10-01)
+
+- **Corrigido**: o `META-INF/services` do starter (`SdkTracerProviderConfigurer`) apontava para uma classe do nome anterior do projeto, inexistente — apps com o autoconfigure do OTel recebiam `ServiceConfigurationError` e o processor nunca era anexado. Agora aponta para `Trace2LocalOtelConfigurer` (teste `OtelConfigurerServiceLoaderTest`).
+- **Renomeado**: últimos restos do nome anterior no código — nomes de bean `traceVanta*` → `trace2Local*` (**muda nomes de bean**; quem os referenciava por nome deve atualizar), parâmetro do aspecto, constante do plugin Maven, javadocs e testes de integração. Nova guarda `ProjectNamingTest` (L0): nome legado fora do histórico e provider de `ServiceLoader` sem classe falham o build.
+- **Perfil `trace2local`** passa a ligar o starter (junto de `dev`, `development`, `local`, `localstack`): um único perfil liga a ferramenta **e** carrega o `application-trace2local.yml` gerado pelo `mvn trace2local:configure`, cuja mensagem final agora mostra o comando exato.
+- Exemplos `order-service`/`payment-service` injetam `Trace2LocalConfig` por `ObjectProvider` — sobem fora de dev com o cliente cru (validado com `--spring.profiles.active=prod`).
+- README, seção **Começar** reescrita como guia passo a passo: instalar a lib, dependência Maven **e** Gradle, iniciar com o perfil (Maven, Windows, IDE, contêiner), conferir pela linha de boot, enriquecer a árvore (tabela por integração, padrão `ObjectProvider` seguro para produção), configuração comentada, Lambda + Station com variáveis, MCP com o build do jar e "Não apareceu nada?".
+
+### Demo no Windows só com Docker e README revisado (2026-10-01)
+
+- `examples/finance-pix/scripts/up.ps1` (+ `up.cmd`): sobe a stack alvo no Windows usando **só o Docker Desktop** — inicia o Docker se preciso, confere portas, build em container Linux (`Dockerfile.build`, BuildKit com cache do `~/.m2`), compose, Terraform em container, chamada real ao `POST /pix/transfers`, abre a UI; `-SkipBuild`, `-Down` (remove também os containers de Lambda criados pelo LocalStack) e `-CaBundle` para proxy corporativo com inspeção TLS (Maven e Terraform confiam na CA).
+- `.gitattributes`: `bootstrap-*` da Lambda, `*.sql`, `*.tf` e Dockerfiles sempre LF (CRLF quebrava o runtime custom em checkouts Windows); `*.ps1`/`*.cmd` em CRLF.
+- README: status do projeto, requisitos por cenário, demo no Windows, FAQ e canais de suporte.
+
+### Stack alvo financeira, Mock Connect e identidade Resonance (2026-10-01)
+
+**Validação na stack alvo — [examples/finance-pix](examples/finance-pix/README.md) ([análise](docs/qa/finance-pix/ANALISE-RESULTADOS.md))**
+- Serviço Pix completo: API Gateway (OpenAPI) → Lambda **Java 25** (JVM jlink + CDS **e** nativo GraalVM 25, runtime `provided.al2023`) → DynamoDB · Postgres (RDS) · SQS → Lambda · SNS → Lambda · 5 parceiros com contrato OpenAPI; Terraform no LocalStack 4.9.
+- `scripts/journeys.py`: 12 jornadas reais conferidas contra o estado real em 6 níveis — **61/61 em JVM e em nativo**; `scripts/bench.py`: cold start nativo 808 ms × JVM 2 191 ms.
+- Critério de aceite multinível + usabilidade: [docs/qa/ACEITE.md](docs/qa/ACEITE.md).
+
+**Mock Connect ([ADR-016](docs/adr/ADR-016-mock-connect.md), [MOCKS.md](docs/MOCKS.md)) — novo módulo `trace2local-mocks`**
+- Modelo do Kafka Connect: source → transforms (+ predicates) → sink, config plana validada por chave, `${env:…}`, `PASSWORD` mascarado, REST API espelhando a do Connect, plugins por `ServiceLoader` com classloader isolado por JAR.
+- 21 plugins: sources `openapi`/`observed`/`inline`/`proxy`; transforms `set-field`/`remove-field`/`rename-field`/`set-status`/`set-header`/`latency`/`fault`/`template`; predicates `path-matches`/`method-is`/`header-matches`/`body-matches`/`call-count`/`probability`; sinks `embedded`/`wiremock`/`file`.
+- **Conselheiro** a partir dos traces: API indisponível, resposta que decide o fluxo, só caminho feliz, dependência lenta, fora do contrato — com evidência navegável e variações prontas; variação **sob demanda** por W3C baggage (`t2l.mock=<id>`).
+- Roteamento opcional no cliente (`Trace2LocalHttp` + `TRACE2LOCAL_MOCKS_ROUTING=on`), marca `X-Trace2Local-Mock` → `t2l.mock` → selo SIM/↪; interoperabilidade WireMock (import, export com variações assadas, publicação).
+
+**UI Resonance v4 ([UX-RESONANCE.md](docs/UX-RESONANCE.md))**
+- Subtítulo e nome: **Resonance** (antes "Ressonância").
+- Identidade agnóstica a tema: preto profundo/ônix, ciano neon como único ponto focal (CTA sólido com texto escuro), títulos industriais em caixa alta, microcópia espaçada, tech-glow sutil em ícones lineares, cards elevados; nenhum emoji; contraste AA medido em todos os tokens e superfícies.
+- Visão **Mocks** (tecla 9): sugestões, bindings (pausar/retomar/reiniciar/exportar/remover com confirmação), journal, plugins, editor com validação; selo **SIM/↪** na árvore; seção Mock Connect no inspetor; parâmetros do contrato na aba API; disparo pelo Station segue o `traceId`.
+- Loop de usabilidade na stack alvo (`scripts/ux-loop/persona-loop-pix.mjs`, 6 personas + auditoria de contraste): **69/69**.
+
+**Servidor MCP ([ADR-017](docs/adr/ADR-017-servidor-mcp.md), [MCP.md](docs/MCP.md)) — novo módulo `trace2local-mcp`**
+- Model Context Protocol (stdio e Streamable HTTP em loopback) sobre a API local: 17 ferramentas de leitura (`diagnose_failure`, `get_execution`, `get_step`, `compare_executions`, `explain_execution`, insights, topologia, logs, Mock Connect…) + 4 de mutação com opt-in (`dispatch_endpoint`, `apply_mock_suggestion`, `put_mock_binding`, `control_mock_binding`) e 3 prompts.
+- Somente leitura e dados estruturais por padrão; base só loopback; `Origin` validado no HTTP; respeita o RequestGuard. E2E na stack alvo: **14/14** ([MCP-E2E.md](docs/qa/MCP-E2E.md)).
+
+**Lib (integrações para Lambda/serverless)**
+- `Trace2LocalTraceContext` (traceparent/baggage/AWSTraceHeader de API Gateway, SQS e SNS), `LambdaTriggerSemantics`, `Trace2LocalHttp`, `Trace2LocalBusiness`, `Trace2LocalMessaging`; propagadores trace + baggage; runtime Lambda *pass-through* sem Station e com diagnóstico de flush; `TRACE2LOCAL_JDBC_MUTATION_CAPTURE` e `TRACE2LOCAL_FLUSH_TIMEOUT_MS` por ambiente.
+
+### Corrigido
+- Nenhum trace das Lambdas com `Sampled=0` vindo do API Gateway (sampler `alwaysOn` em ferramenta local).
+- Raiz falsamente ÓRFÃ quando o chamador não é instrumentado; consumidor SNS fora do lugar (propagação de mensageria do SDK).
+- Execução fantasma "em curso" no modo Station: novo evento `execution.renamed` quando o id provisório vira o declarado pela raiz.
+- Narrativa "Chamada externa GET para ao serviço" → nomeia parceiro, rota, status e origem simulada.
+- Índice de IaC usava o rótulo local do Terraform (`transfers`, `fn`) em vez do nome real do recurso — componentes fantasmas na Anatomia.
+- SQL rotulado sem operação (`SQL: UPDATE accounts`).
+- **IDEM-002 falso positivo** na stack alvo: o Δ inferido do JDBC usa o WHERE parametrizado (`transfer_id = ?`) como chave — transferências diferentes pareciam "a mesma entidade". Chave com placeholder não identifica entidade; novo cenário-controle `controle-sql-inferido-chave-template`.
+- **SEC-PII-001 falso positivo**: valor já mascarado pelo parceiro ("J*** S***", CPF "***.456.789-**") era acusado de "sem redação" só pelo nome do campo; novo controle `controle-dado-pessoal-ja-mascarado` (benchmark: **35 cenários, 15 controles, precisão/recall 1,00, 0 FP**).
+- **Homologação**: regra respeitada saía *violada* quando o texto citava siglas em caixa alta ("API de iniciação… (API Gateway)") — siglas eram lidas como estados esperados; agora estado = valor observado nos deltas ou forma de enum (SETTLED, IN_REVIEW); regra sobre o **caminho de falha** ("falha no provedor … deve ficar FAILED") não é violada quando nada falhou — fica inconclusiva com a dica de exercitar o caso negativo. Testes `acronymsInTheRuleAreNotTakenAsExpectedStates` e `ruleAboutTheFailurePathIsNotViolatedWhenNothingFailed`; benchmark Jev rotulado inalterado (política 0,96).
+
+
+### UI v3 (Resonance) + Inteligência + Regras Assíncronas Preditivas + prontidão corporativa (2026-09-30)
+
+**UI/UX (reescrita — [docs/UX-RESONANCE.md](docs/UX-RESONANCE.md))**
+- Nova UI em ES modules (sem build step, zero dependência externa, CSP estrita): **Anatomia** (anéis por zona: núcleo · fronteira local · fronteira externa · declarado no IaC; "contraste" percorrendo as conexões na ordem real dos spans), **Árvore** (esquerda→direita, mini-Gantt, papel arquitetural, Δ de dados, marcadores de insight, caminho crítico, pílula "⧗ fila", minimapa, teclado), **Linha do tempo** (capítulos + "espera na fila", espera hachurada, cursor narrado "AGORA", logs CloudWatch com nível/classe/log group/stream), **Investigação** (visões executiva + técnica), Narrativa, Painel (inteligência + baseline), Comparar, Infra; inspector por passo; paleta **Ctrl+K**; barra de status; deep link `?execution=&view=`.
+- **Loop de usabilidade por persona** (`scripts/ux-loop`, Playwright) contra o Station vivo: 42/42 checks (inclui CSP servida, anti-CSRF, mobile 390 px, nomes acessíveis).
+
+**Logs estilo CloudWatch ([ADR-012](docs/adr/ADR-012-logs-cloudwatch-na-linha-do-tempo.md))**
+- `LogEntry`/`LogStore` no core (índice por trace e RequestId, dedupe preferindo a linha real, redaction de texto livre); captura do stdout da Lambda com START/END/REPORT; ingest `/t2lingest/v1/logs`; **tail do CloudWatch do LocalStack** no Station (RequestId entre START/END, **dobra de stack trace** num único ERROR); alinhamento das linhas de plataforma ao span da invocação (marcado `≈`).
+
+**Inteligência ([ADR-011](docs/adr/ADR-011-motores-de-micro-decisao-jev.md)) e Regras Preditivas ([ADR-013](docs/adr/ADR-013-regras-assincronas-preditivas.md), [PREDICTIVE.md](docs/PREDICTIVE.md))**
+- Novo módulo **`trace2local-predictive`**: pipeline assíncrono não bloqueante, 12 analisadores / **20 regras** (performance assíncrona, regressão, outlier, N+1, leituras redundantes, idempotência, resiliência, dado sensível, consumidor órfão/parado, hotspot, tendência de erro, mudança de forma, deriva/segredo em Terraform, cobertura vs gate), ranking com feedback/supressões/retratação, baseline por fluxo persistido.
+- **Micro-decisões** com cascata cassete → **Jev** (opt-in por chave) → determinístico local, política de fusão calibrada por benchmark, egress estrutural sanitizado, orçamento e disjuntor; laudo executivo/técnico por execução; explicação por template local ou LLM opcional (só por POST).
+- Benchmarks: preditivo 33 cenários (13 controles) com precisão/recall 1,00; Jev 106 itens rotulados (política 0,96); **traces reais** do LocalStack como regressão; Jev ao vivo em traces reais (0 falhas, ~US$ 0,001).
+- [AGENTS.md](AGENTS.md) com a seção **Predictive Async Rules — Continuous Evolution** e o processo de promoção experimental.
+
+**Correções vindas do caso real Lambda + LocalStack ([VALIDACAO-CASOS-REAIS.md](docs/qa/VALIDACAO-CASOS-REAIS.md))**
+- **Continuação tardia** ([ADR-014](docs/adr/ADR-014-continuacao-tardia-assincrona.md)): consumidor via *event source mapping* que chega após a quiescência é fundido na árvore do produtor (`execution.merged`); antes nascia execução `PARTIAL` com aviso falso.
+- Início da execução = span mais antigo (no ingest OTLP o primeiro evento é um fim de span).
+- `IDEM-001` não dispara mais em chave nova (`before = {}` do SDK) — analisador e interceptor DynamoDB corrigidos + controle no benchmark.
+- Motor determinístico: frames de stack = diagnóstico; "reentrega ignorada" = evento de negócio; recusa protegida = risco baixo/apta (divergências reveladas pelo Jev ao vivo, viraram gabarito).
+- Build: `forceCreation` do jar antes do shade (fat jar não reaproveita classes velhas em build incremental).
+- `OtelAttributeNames.SERVER_ADDRESS`; ACL do ADR-008 passa a cobrir `faas.*` e `server.*`.
+
+**Segurança ([ADR-015](docs/adr/ADR-015-endurecimento-corporativo-ui-api.md), [SEGURANCA-CORPORATIVA.md](docs/SEGURANCA-CORPORATIVA.md))**
+- `RequestGuard`: allowlist de `Host` (DNS rebinding → 421), anti-CSRF (`X-Trace2Local: 1` + Origin → 403), token de UI opcional/gerado no perfil `corporate` com cookie `HttpOnly; SameSite=Strict` (`Secure` opcional); CSP endurecida + COOP/CORP/Permissions-Policy; respostas sem detalhe interno; SSE limitado; XSS da UI antiga eliminado; `InfraIndexer` sem credenciais de URL nem symlinks; `UiCspComplianceTest`.
+- Demo `lambda-sqs`: consumidor real por ESM, logs de negócio, glossário montado, portas só em `127.0.0.1`, Station não-root a partir do jar pronto.
+- **Quebra de contrato (0.x):** clientes de `POST/DELETE` na API precisam enviar `X-Trace2Local: 1`.
+
+
 ### UI por projeto (API DO PROJETO)
 
 - O Trace2Local roda localmente no contexto de UM projeto principal: a seção de endpoints da sidebar virou **API DO PROJETO** com pill do nome do app importador (ex.: `payment-service`, via `spring.application.name`; oculta no modo station).

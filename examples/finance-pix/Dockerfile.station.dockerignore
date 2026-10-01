@@ -1,0 +1,3 @@
+# contexto = raiz do repo; só o jar do Station entra na imagem
+**
+!trace2local-station/target/trace2local-station-0.1.0-SNAPSHOT.jar

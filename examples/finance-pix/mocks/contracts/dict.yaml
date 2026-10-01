@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: DICT — Diretório de Identificadores de Contas Transacionais (simulado)
+  version: "2.0"
+  description: Consulta de chaves Pix. Contrato fictício inspirado no fluxo público do Pix; sem dados reais.
+servers:
+  - url: http://dict.bacen.local:8080/api/v2
+paths:
+  /entries/{key}:
+    get:
+      operationId: consultarChave
+      parameters:
+        - {name: key, in: path, required: true, schema: {type: string}}
+        - {name: PI-RequestingParticipant, in: header, required: false, schema: {type: string}}
+      responses:
+        "200":
+          description: chave encontrada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Entry'}
+              examples:
+                email:
+                  value:
+                    key: joao@pix.example
+                    keyType: EMAIL
+                    account: {participant: "60701190", branch: "0001", accountNumber: "0007654321", accountType: CACC}
+                    owner: {type: NATURAL_PERSON, name: "J*** S***", taxIdNumber: "***.456.789-**"}
+        "404":
+          description: chave inexistente
+          content:
+            application/json:
+              example: {code: ENTRY_NOT_FOUND, message: "chave não encontrada"}
+components:
+  schemas:
+    Entry:
+      type: object
+      required: [key, keyType, account, owner]
+      properties:
+        key: {type: string}
+        keyType: {type: string, enum: [CPF, CNPJ, EMAIL, PHONE, EVP]}
+        account:
+          type: object
+          required: [participant, accountNumber, accountType]
+          properties:
+            participant: {type: string, description: ISPB}
+            branch: {type: string}
+            accountNumber: {type: string}
+            accountType: {type: string, enum: [CACC, SVGS, SLRY, TRAN]}
+        owner:
+          type: object
+          required: [type, name]
+          properties:
+            type: {type: string, enum: [NATURAL_PERSON, LEGAL_PERSON]}
+            name: {type: string}
+            taxIdNumber: {type: string}

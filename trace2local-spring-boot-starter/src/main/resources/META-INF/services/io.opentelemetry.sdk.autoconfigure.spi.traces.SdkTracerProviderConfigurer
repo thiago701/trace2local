@@ -1,1 +1,1 @@
-tech.neural7.tracevanta.spring.TraceVantaOtelConfigurer
+tech.neural7.trace2local.spring.Trace2LocalOtelConfigurer

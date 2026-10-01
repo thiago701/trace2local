@@ -1,0 +1,10 @@
+# Deploy na AWS real (o Trace2Local se desliga sozinho: sem Station endpoint).
+# Copie para aws.tfvars (NÃO versione) e ajuste.
+localstack          = false
+environment         = "dev"
+lambda_runtime      = "java25"                       # runtime gerenciado, ou provided.al2023 com o pacote nativo
+lambda_package      = "../../target/finance-pix.jar" # runtime gerenciado aceita o JAR sombreado
+vpc_id              = "vpc-xxxxxxxx"
+private_subnet_ids  = ["subnet-aaaa", "subnet-bbbb"]
+# Credenciais do RDS: senha gerenciada pelo Secrets Manager (manage_master_user_password).
+# Em produção, leia o segredo na inicialização (ou use RDS Proxy + IAM auth) — PIX_DB_PASSWORD fica vazio aqui.

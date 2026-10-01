@@ -23,6 +23,14 @@ class ProductionGuardTest {
     }
 
     @Test
+    void trace2localProfileIsTheExplicitOptIn() {
+        // o perfil com o nome da ferramenta liga o starter e carrega application-trace2local.yml (configure)
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("trace2local");
+        assertThat(ProductionGuard.decide(env, false, true, false)).isTrue();
+    }
+
+    @Test
     void prodWithoutExplicitEnableAutoDisables() {
         MockEnvironment env = new MockEnvironment();
         env.setActiveProfiles("prod");

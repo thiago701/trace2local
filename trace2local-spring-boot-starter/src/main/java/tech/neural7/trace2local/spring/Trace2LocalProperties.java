@@ -39,6 +39,8 @@ public class Trace2LocalProperties {
 
     /** Janela de quiescência do assembler, ms (fluxos só-OTLP e produtor aguardando consumidor). */
     private long quiescenceMs = 3000;
+    /** Janela de continuação tardia (consumidor assíncrono que chega após a quiescência); 0 desliga. */
+    private long lateContinuationMs = 600_000;
 
     /** Diretórios do catálogo de infra da UI (aba INFRA), separados por vírgula. */
     private String infraScanDirs = "";
@@ -134,6 +136,7 @@ public class Trace2LocalProperties {
                 .stationToken(station.token)
                 .flushTimeoutMs(flushTimeoutMs)
                 .quiescenceMs(quiescenceMs)
+                .lateContinuationMs(lateContinuationMs)
                 .infraScanDirs(infra.scanDirs)
                 .build();
     }
@@ -152,6 +155,8 @@ public class Trace2LocalProperties {
     public void setFlushTimeoutMs(long flushTimeoutMs) { this.flushTimeoutMs = flushTimeoutMs; }
     public long getQuiescenceMs() { return quiescenceMs; }
     public void setQuiescenceMs(long quiescenceMs) { this.quiescenceMs = quiescenceMs; }
+    public long getLateContinuationMs() { return lateContinuationMs; }
+    public void setLateContinuationMs(long lateContinuationMs) { this.lateContinuationMs = lateContinuationMs; }
     public String getInfraScanDirs() { return infra.scanDirs; }
     public void setInfraScanDirs(String infraScanDirs) { this.infra.scanDirs = infraScanDirs; }
     public boolean isIKnowWhatImDoing() { return iKnowWhatImDoing; }

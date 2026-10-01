@@ -186,7 +186,70 @@ class Trace2LocalHttpServerTest {
         return HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url))
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                         .header("Content-Type", "application/json")
+                        .header("X-Trace2Local", "1")
                         .build(),
                 HttpResponse.BodyHandlers.ofString());
+    }
+
+    private static HttpResponse<String> raw(String url, String method, String body, String... headers) throws Exception {
+        HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(url))
+                .method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body));
+        for (int i = 0; i + 1 < headers.length; i += 2) {
+            b.header(headers[i], headers[i + 1]);
+        }
+        return HttpClient.newHttpClient().send(b.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    /**
+     * Prontidão corporativa (revisão de segurança 2026-09-30): CSRF por requisição
+     * simples e DNS rebinding contra a UI local são bloqueados SEM autenticação.
+     */
+    @Test
+    void guardBlocksCsrfAndDnsRebinding() throws Exception {
+        Trace2LocalConfig cfg = Trace2LocalConfig.builder().port(0).build();
+        try (Trace2LocalPipeline pipeline = Trace2LocalPipeline.start(cfg)) {
+            Trace2LocalHttpServer server = Trace2LocalHttpServer.builder(cfg, pipeline)
+                    .launcher(req -> new ExecutionLauncher.LaunchResult("TV-1", "4bf92f3577b34da6a3ce929d0e0e4736"))
+                    .build();
+            server.start();
+            try {
+                String base = "http://127.0.0.1:" + server.port() + "/trace2local";
+                String body = "{\"endpointId\":\"post:/orders\"}";
+                // 1) POST "simples" de outra página (text/plain, sem cabeçalho) ⇒ 403
+                assertThat(raw(base + "/api/execute", "POST", body, "Content-Type", "text/plain").statusCode()).isEqualTo(403);
+                // 2) DELETE do histórico sem prova de mesma origem ⇒ 403
+                assertThat(raw(base + "/api/executions", "DELETE", null).statusCode()).isEqualTo(403);
+                // 3) Origin cruzado mesmo com o cabeçalho ⇒ 403
+                assertThat(raw(base + "/api/execute", "POST", body, "Content-Type", "application/json",
+                        "X-Trace2Local", "1", "Origin", "https://evil.example").statusCode()).isEqualTo(403);
+                // 4) mesma origem + cabeçalho, mas Content-Type errado ⇒ 415
+                assertThat(raw(base + "/api/execute", "POST", body, "Content-Type", "text/plain",
+                        "X-Trace2Local", "1").statusCode()).isEqualTo(415);
+                // 5) mesma origem legítima ⇒ 202
+                assertThat(raw(base + "/api/execute", "POST", body, "Content-Type", "application/json",
+                        "X-Trace2Local", "1", "Origin", "http://127.0.0.1:" + server.port()).statusCode()).isEqualTo(202);
+                // 6) cabeçalhos endurecidos
+                HttpResponse<String> ui = httpGet(base + "/");
+                assertThat(ui.headers().firstValue("Content-Security-Policy").orElse(""))
+                        .contains("frame-ancestors 'none'").contains("object-src 'none'").contains("base-uri 'none'");
+                assertThat(ui.headers().firstValue("Cross-Origin-Opener-Policy")).hasValue("same-origin");
+                // 7) limit inválido não derruba a rota (antes: NumberFormatException ⇒ conexão abortada)
+                assertThat(httpGet(base + "/api/executions?limit=abc").statusCode()).isEqualTo(200);
+            } finally {
+                server.close();
+            }
+        }
+    }
+
+    @Test
+    void hostAllowlistDefeatsDnsRebinding() {
+        RequestGuard guard = new RequestGuard(Trace2LocalConfig.builder().port(0).build());
+        assertThat(guard.hostAllowed("127.0.0.1:9876")).isTrue();
+        assertThat(guard.hostAllowed("localhost:9876")).isTrue();
+        assertThat(guard.hostAllowed("[::1]:9876")).isTrue();
+        // rebinding: o nome do atacante resolve para 127.0.0.1, mas o Host denuncia
+        assertThat(guard.hostAllowed("evil.example:9876")).isFalse();
+        assertThat(guard.hostAllowed("127.0.0.1.nip.io:9876")).isFalse();
+        assertThat(guard.hostAllowed(null)).isFalse();
     }
 }

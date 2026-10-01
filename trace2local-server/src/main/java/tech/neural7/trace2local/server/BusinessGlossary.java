@@ -52,6 +52,28 @@ public final class BusinessGlossary {
         return entries.isEmpty();
     }
 
+    /** Termos documentados (termo em minúsculas → descrição), na ordem do arquivo. */
+    public Map<String, String> entries() {
+        return java.util.Collections.unmodifiableMap(entries);
+    }
+
+    /** Glossário montado a partir de um texto (testes, Station com arquivo montado). */
+    public static BusinessGlossary fromText(String markdown) {
+        BusinessGlossary g = new BusinessGlossary(false);
+        try {
+            g.parse(new java.io.ByteArrayInputStream(markdown.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception ignored) {
+            // best-effort
+        }
+        return g;
+    }
+
+    private BusinessGlossary(boolean loadClasspath) {
+        if (loadClasspath) {
+            loadFromClasspath();
+        }
+    }
+
     private void loadFromClasspath() {
         try (InputStream in = BusinessGlossary.class.getClassLoader()
                 .getResourceAsStream("trace2local-business.md")) {
@@ -60,6 +82,15 @@ public final class BusinessGlossary {
             }
         } catch (Throwable ignored) {
             // glossário é best-effort: sem ele, a storytelling usa só a semântica
+        }
+        // modo Companion: o Station não tem o classpath da app — arquivo montado no container
+        String file = System.getProperty("trace2local.business-file", System.getenv("TRACE2LOCAL_BUSINESS_FILE"));
+        if (file != null && !file.isBlank()) {
+            try (InputStream in = java.nio.file.Files.newInputStream(java.nio.file.Path.of(file.trim()))) {
+                parse(in);
+            } catch (Throwable ignored) {
+                // arquivo ilegível: segue com o que já carregou
+            }
         }
     }
 

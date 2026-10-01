@@ -1,0 +1,101 @@
+# finance-pix — validação do Trace2Local na stack alvo:
+#   API Gateway (OpenAPI) → Lambda Java 25 (JVM jlink ou nativo GraalVM, runtime provided.al2023)
+#   → DynamoDB · Postgres (RDS na AWS; container aqui) · SQS → Lambda · SNS → Lambda
+#   → 5 APIs externas: DICT, Antifraude, SPI, Notificações (WireMock) e KYC (AUSENTE de propósito:
+#     "API indisponível no ambiente local" — o Mock Connect sugere e pluga o mock).
+#
+# Passo a passo: ./scripts/up.sh   (build → compose up → terraform apply → jornadas opcionais)
+# UI: http://localhost:19877/trace2local   ·   Mock Connect: http://localhost:19878
+# Tudo publicado SÓ no loopback do host (LocalStack, Postgres e WireMock não têm autenticação).
+services:
+  localstack:
+    image: localstack/localstack:4.9
+    ports:
+      - "127.0.0.1:4568:4566"
+    environment:
+      - SERVICES=apigateway,lambda,dynamodb,sqs,sns,s3,iam,sts,logs,cloudwatch
+      - AWS_DEFAULT_REGION=us-east-1
+      - PERSISTENCE=0
+      - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=180
+      - LAMBDA_DOCKER_NETWORK=pix-demo
+      - LAMBDA_KEEPALIVE_MS=600000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [pix]
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "127.0.0.1:15432:5432"
+    environment:
+      - POSTGRES_DB=pix
+      - POSTGRES_USER=pix
+      - POSTGRES_PASSWORD=pix-local-only   # credencial de demo, só local
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pix -d pix"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    networks: [pix]
+
+  # parceiros externos simulados (contratos em mocks/contracts, stubs em mocks/wiremock)
+  partners:
+    image: wiremock/wiremock:3.13.1
+    command: ["--port", "8080", "--disable-banner"]
+    ports:
+      - "127.0.0.1:18080:8080"
+    volumes:
+      - ./mocks/wiremock:/home/wiremock:ro
+    networks:
+      pix:
+        aliases:
+          - dict.bacen.local
+          - antifraude.partner.local
+          - spi.bacen.local
+          - notify.partner.local
+          # kyc.bureau.local NÃO existe aqui — o bureau só existe na rede do parceiro
+
+  trace2local-station:
+    build:
+      context: ../..
+      dockerfile: examples/finance-pix/Dockerfile.station
+    ports:
+      - "127.0.0.1:19877:19877"
+      - "127.0.0.1:19878:19878"
+    environment:
+      - TRACE2LOCAL_STATION_TOKEN=devtoken
+      - TRACE2LOCAL_ALLOWED_HOSTS=localhost,127.0.0.1
+      - TRACE2LOCAL_CLOUDWATCH_ENDPOINT=http://localstack:4566
+      - TRACE2LOCAL_CLOUDWATCH_REGION=us-east-1
+      - TRACE2LOCAL_CLOUDWATCH_LOG_GROUP_PREFIX=/aws/lambda/pix-
+      - TRACE2LOCAL_BUSINESS_FILE=/business/trace2local-business.md
+      - TRACE2LOCAL_INFRA_SCAN_DIRS=/infra
+      # Mock Connect (ADR-016): contratos dos parceiros + estado; URL anunciada às Lambdas
+      - TRACE2LOCAL_MOCKS_DIR=/mocks
+      - TRACE2LOCAL_MOCKS_STATE_FILE=/data/mocks-state.json
+      - TRACE2LOCAL_MOCKS_ADVERTISED_URL=http://trace2local-station:19878
+      # catálogo de endpoints a partir do contrato (disparo pela UI → API Gateway)
+      - TRACE2LOCAL_OPENAPI_SPEC=/infra/openapi/pix-api.yaml
+      - TRACE2LOCAL_OPENAPI_BASE_URL=http://localstack:4566/restapis/pixapi/local/_user_request_
+    volumes:
+      - ./trace2local-business.md:/business/trace2local-business.md:ro
+      - ./infra/terraform:/infra/terraform:ro
+      - ./openapi:/infra/openapi:ro
+      - ./mocks:/mocks
+      # estado do Mock Connect (bindings) sobrevive a rebuild/restart do Station
+      - station-data:/data
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/19877 && echo ok"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    networks: [pix]
+
+volumes:
+  station-data:
+
+networks:
+  pix:
+    name: pix-demo

@@ -73,11 +73,13 @@ public final class IdempotentProcessor extends Trace2LocalLambdaHandler<Map<Stri
                                 "payload", AttributeValue.fromS(payload),
                                 "createdAt", AttributeValue.fromS(Instant.now().toString())))
                         .conditionExpression("attribute_not_exists(pk)"));
+                System.out.println("INFO chave de idempotência " + key + " registrada — efeito aplicado uma única vez");
                 return "{\"status\":\"created\",\"key\":\"" + key + "\"}";
             } catch (ConditionalCheckFailedException duplicate) {
                 // idempotência PRESERVADA: a condição recusou a segunda escrita;
                 // o nó DynamoDB fica VERMELHO com o erro e SEM delta — o monitor
                 // enxerga exatamente o que aconteceu (e o que NÃO aconteceu)
+                System.out.println("WARN chave " + key + " já processada — reentrega ignorada sem efeito colateral");
                 return "{\"status\":\"duplicate_ignored\",\"key\":\"" + key + "\"}";
             }
         } finally {

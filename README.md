@@ -1,404 +1,451 @@
 <div align="center">
 
-<img src="docs/qa/screenshots/07-lambda-station-overview.png" alt="Trace2Local" width="96" style="border-radius:12px">
+<img src="docs/assets/logo.svg" alt="Trace2Local Resonance" width="96">
 
 # Trace2Local
 
-**See your request travel through the system.**
+**Veja a sua requisição atravessar o sistema — localmente, antes de chegar à nuvem.**
 
-*Uma dependência. Zero configuração. A árvore completa do que a sua aplicação fez — ao vivo, no navegador, sem deixar a sua máquina.*
+Observabilidade de *dev-time* para Java e AWS: cada requisição ou evento vira uma árvore de execução ao vivo —
+código, DynamoDB/SQL com o dado antes → depois, SQS/SNS com o consumidor na mesma árvore, logs CloudWatch,
+laudo de homologação, regras preditivas e mocks de parceiros. Nada sai da sua máquina.
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](#compatibilidade-v01)
-[![Maven](https://img.shields.io/badge/Maven-3.9%2B-C71A36.svg)](https://maven.apache.org)
-[![Version](https://img.shields.io/badge/version-0.1.0--SNAPSHOT-lightgrey.svg)](CHANGELOG.md)
 [![CI](https://github.com/thiago701/trace2local/actions/workflows/ci.yml/badge.svg)](https://github.com/thiago701/trace2local/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-21%20%7C%2025-orange.svg)](#compatibilidade)
+[![GraalVM](https://img.shields.io/badge/GraalVM-Native%20Image-0d6efd.svg)](#compatibilidade)
+[![Version](https://img.shields.io/badge/version-0.1.0--SNAPSHOT-lightgrey.svg)](CHANGELOG.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+[Começar](#começar) · [Demo de 10 minutos](#demo-de-10-minutos-stack-financeira-completa) · [Documentação](#documentação) · [FAQ](#perguntas-frequentes) · [Segurança](SECURITY.md) · [Contribuir](CONTRIBUTING.md)
+
+<img src="docs/qa/screenshots/v4-resonance/03-inspetor-kyc-simulado.png" alt="UI Resonance: árvore de um Pix (API Gateway, Lambda, DynamoDB, Postgres, SQS, SNS, parceiros) com o inspetor mostrando a resposta simulada pelo Mock Connect" width="900">
 
 </div>
 
 ---
 
-O **Trace2Local** transforma a sua aplicação Java numa *runtime canvas* interativa:
-descubra endpoints, dispare requisições do próprio navegador e acompanhe a árvore
-da execução em tempo real — código, **DynamoDB (delta before/after)**, SNS, SQS e
-SQL — em `http://localhost:9876/trace2local`.
+> [!NOTE]
+> **Status: preview (`0.1.0-SNAPSHOT`).** Funcional e validado na stack alvo, ainda sem release no Maven Central;
+> em `0.x` a API pode mudar entre minors ([política](docs/adr/ADR-010-distribuicao-licenca-e-compatibilidade.md)).
+> Ferramenta de **desenvolvimento** — não é APM de produção.
 
-Ergonomia do Swagger UI, ambição do tracing distribuído: **nada sai da sua máquina**,
-tudo em memória, e a UI declara o que não conseguiu observar — nunca inventa.
+## Por que o Trace2Local
 
----
-
-## 📚 Índice
-
-- [Por que Trace2Local](#-por-que-trace2local)
-- [Demonstração](#-demonstração)
-- [Quickstart](#-quickstart)
-- [Instalador Maven](#-instalador-maven)
-- [Instrumentação](#-instrumentação)
-- [Como funciona](#-como-funciona)
-- [Arquitetura e módulos](#-arquitetura-e-módulos)
-- [Configuração](#-configuração-trace2local)
-- [Segurança](#-segurança)
-- [Compatibilidade](#-compatibilidade-v01)
-- [Testes e qualidade](#-testes-e-qualidade)
-- [Documentação](#-documentação)
-- [Roadmap](#-roadmap)
-- [Declarações de honestidade](#️-leia-antes-de-usar)
-- [Contribuindo](#-contribuindo)
-- [Licença](#-licença)
-
----
-
-## ✨ Por que Trace2Local
+Em sistemas serverless e orientados a eventos, a pergunta "o que aconteceu com esta requisição?" atravessa uma
+Lambda, duas filas, três tabelas e quatro parceiros. Logs soltos não respondem; APM de produção chega tarde e não
+roda no seu notebook. O Trace2Local responde **onde você desenvolve**:
 
 | | |
 |---|---|
-| 🔍 **Árvore em tempo real** | Cada requisição vira uma árvore de nós (HTTP, negócio, banco, mensageria) com waterfall de tempos, self-time e erros — a UI reconstrói a árvore como o assembler faz |
-| 📊 **Delta de dados EXACT** | `before/after` real do DynamoDB (ADR-003) e delta `inferred` de SQL — mutações correlacionadas por `spanId`, fora do pipeline OTel |
-| 🔌 **Sem agente, sem config** | Uma dependência Maven. Nada de `-javaagent` — compatível com **GraalVM Native Image** (a razão de existir do produto) |
-| 🧩 **Domínio-agnóstico** | O núcleo não conhece "pedido" nem "cliente": e-commerce, logística, fintech, saúde — qualquer área de negócio funciona sem customização |
-| 🛡️ **Local-first** | Bind `127.0.0.1` por padrão, redaction **na origem**, token Bearer opcional no ingest, CSP restritivo — [SECURITY.md](SECURITY.md) |
-| 📡 **Dois modos** | **Embedded** (a UI sobe no seu JVM) ou **Companion/Station** (Lambda, `sam local` e **multi-serviço em UMA árvore** via OTLP) |
-| 🧪 **Testável** | Asserções sobre a árvore nos seus testes (`trace2local-testing`), E2E com LocalStack real no CI |
-| 📦 **Honestidade por design** | Spans perdidos, delta indisponível, cobertura sem agente — tudo **declarado na UI**, nunca presumido (invariantes I1–I3) |
+| **Árvore ao vivo** | Cada execução vira uma árvore (HTTP, negócio, DynamoDB, SQL, SQS, SNS, Lambda, parceiros) com tempos, self time, erros e caminho crítico. Consumidores assíncronos entram **na mesma árvore**, com a espera na fila. |
+| **Dado antes → depois** | Δ exato do DynamoDB e Δ inferido de SQL, correlacionados ao passo — fora do pipeline OTel, redigidos na origem. |
+| **Logs onde importam** | Logs da app e do CloudWatch (LocalStack) presos ao passo e à invocação, numa linha do tempo narrada. |
+| **Homologação** | Laudo executivo e técnico: desfecho, risco, **regras de negócio × fluxo** com veredito, checklist — cada decisão com o motor e a confiança. |
+| **Regras preditivas** | N+1, idempotência, fila lenta, regressão, resiliência, dado sensível, deriva de IaC — sempre com evidência navegável; fato ≠ hipótese. |
+| **Mock Connect** | Pluga mocks de parceiros indisponíveis e valida variações da resposta JSON — sugeridos pelos próprios traces, no modelo do Kafka Connect. |
+| **Agentes de IA** | Servidor **MCP**: assistentes de código leem a execução real (`diagnose_failure`, `compare_executions`…) — somente leitura por padrão. |
+| **Sem agente JVM** | Uma dependência. Sem `-javaagent`; compatível com **GraalVM Native Image** e Lambda Java 25. |
+| **Local-first** | Bind loopback, redaction na origem, CSP estrita, anti-CSRF; inteligência determinística local por padrão. |
 
----
+## Começar
 
-## 🎬 Demonstração
+| para | você precisa de |
+|---|---|
+| usar a biblioteca numa app Spring Boot ou Lambda | **JDK 21+** e Maven (o wrapper `./mvnw` já vem no repositório) ou Gradle |
+| rodar a demo completa (`examples/finance-pix`) | **Docker** — no Windows, só o Docker Desktop; no Linux/macOS, também JDK 25, Maven e Terraform ≥ 1.6 |
+| ligar agentes de IA (MCP) | JRE 21+ e um harness compatível (Claude Code, Cursor, VS Code…) |
 
-| Visão geral + execuções | Árvore com waterfall | Delta EXACT | Execução com erro |
-|---|---|---|---|
-| ![overview](docs/qa/screenshots/07-lambda-station-overview.png) | ![tree](docs/qa/screenshots/08-lambda-tree-dynamo-sqs.png) | ![delta](docs/qa/screenshots/09-lambda-inspector-delta.png) | ![error](docs/qa/screenshots/10-lambda-tree-failure.png) |
+### 1. Instale a biblioteca
 
----
+Enquanto não há release no Maven Central, publique os artefatos no seu repositório Maven local (uma vez por versão):
 
-## 🚀 Quickstart
-
-### Spring Boot (Embedded — padrão)
-
-```xml
-<!-- pom.xml -->
-<dependency>
-  <groupId>tech.neural7.trace2local</groupId>
-  <artifactId>trace2local-spring-boot-starter</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
-</dependency>
+```bash
+git clone https://github.com/thiago701/trace2local.git && cd trace2local
+./mvnw -B install -DskipTests              # Windows: .\mvnw.cmd -B install -DskipTests
 ```
 
+### 2. Spring Boot — modo embedded
+
+A UI e a API sobem **dentro** da sua aplicação, em `http://localhost:9876/trace2local`.
+
+**a) Adicione a dependência**
+
+<table>
+<tr><th>Maven</th><th>Gradle (Kotlin DSL)</th></tr>
+<tr><td>
+
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>tech.neural7.trace2local</groupId>
+      <artifactId>trace2local-bom</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+
+<dependencies>
+  <dependency>
+    <groupId>tech.neural7.trace2local</groupId>
+    <artifactId>trace2local-spring-boot-starter</artifactId>
+  </dependency>
+</dependencies>
+```
+
+</td><td>
+
+```kotlin
+repositories {
+    mavenLocal()      // até o release no Maven Central
+    mavenCentral()
+}
+
+dependencies {
+    implementation(platform(
+        "tech.neural7.trace2local:trace2local-bom:0.1.0-SNAPSHOT"))
+    implementation(
+        "tech.neural7.trace2local:trace2local-spring-boot-starter")
+}
+```
+
+</td></tr>
+</table>
+
+Ou deixe o plugin fazer por você, sem sobrescrever nada:
+
+```bash
+./mvnw tech.neural7.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT:analyze     # só lê: relatório do que será observado
+./mvnw tech.neural7.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT:configure   # BOM + starter + glossário + config + logback
+```
+
+**b) Inicie com o perfil `trace2local`**
+
+O starter só liga em perfil de desenvolvimento — `trace2local`, `dev`, `development`, `local` ou `localstack`. Em
+qualquer outro ele se desliga sozinho, então a mesma dependência pode seguir no artefato sem efeito em produção.
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=trace2local
+```
+
+Windows: `.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=trace2local"` · IDE: *Active profiles* =
+`trace2local` · contêiner: `SPRING_PROFILES_ACTIVE=trace2local`. O boot confirma:
+
+```text
+INFO  Trace2Local em http://127.0.0.1:9876/trace2local — modo Embedded | redaction=STRICT | capture-before=true
+```
+
+Sem essa linha, o perfil não está ativo.
+
+**c) Use** — abra **http://localhost:9876/trace2local**, escolha um endpoint na aba **API**, clique em
+**▶ Executar** e acompanhe a árvore crescer. Requisições feitas por qualquer cliente (curl, Postman, front-end)
+também aparecem.
+
+**d) Enriqueça a árvore** (opcional)
+
+| para ver | faça | módulo |
+|---|---|---|
+| passos de negócio com nome do domínio | `@Trace2Local("Criar pedido")` no método (Spring AOP, sem agente) | starter |
+| DynamoDB com o dado antes → depois | `Trace2LocalAws.instrument(DynamoDbClient.builder(), cfg)` | `trace2local-aws` |
+| SQS/SNS com o consumidor na mesma árvore | `Trace2LocalAws.instrument(SqsClient.builder())` e `Trace2LocalMessaging.sqsAttributes()` ao publicar | `trace2local-aws` |
+| SQL com Δ inferido | `Trace2LocalJdbc.wrap(dataSource, cfg)` + `trace2local.jdbc.mutation-capture=inferred` | `trace2local-jdbc` |
+| parceiros HTTP com nome | `Trace2LocalHttp.instrument(httpClient, "Antifraude")` | starter |
+| regras de negócio julgadas na Investigação | `src/main/resources/trace2local-business.md` | starter |
+
+O bean `Trace2LocalConfig` só existe com a ferramenta ligada — injete-o por `ObjectProvider` para o mesmo código
+subir em produção:
+
 ```java
-@RestController
-public class PedidoController {
-    @PostMapping("/pedidos")
-    public Pedido criar(@RequestBody NovoPedido request) {
-        return service.criar(request); // @Trace2Local no serviço = nó BUSINESS na árvore
+@Bean
+DynamoDbClient dynamoDb(ObjectProvider<Trace2LocalConfig> trace2local) {
+    DynamoDbClientBuilder builder = DynamoDbClient.builder();
+    trace2local.ifAvailable(cfg -> Trace2LocalAws.instrument(builder, cfg));   // inerte fora de dev
+    return builder.build();
+}
+```
+
+**e) Configure** (opcional — os padrões servem ao caso comum) em `application-trace2local.yml`:
+
+```yaml
+trace2local:
+  port: 9876                    # UI e API (0 = porta livre)
+  redaction:
+    mode: strict                # strict | keys | off — mascara dados sensíveis na origem
+  retention:
+    max-executions: 100
+  aws:
+    dynamodb:
+      capture-before: true      # Δ exato do DynamoDB (eleva ReturnValues — ver Limites declarados)
+  jdbc:
+    mutation-capture: inferred  # off | inferred
+```
+
+`trace2local.enabled=false` desliga tudo sem remover a dependência. Referência completa: [SPEC §5.4](docs/SPEC.md).
+
+### 3. AWS Lambda — modo Companion (Station)
+
+Em Lambda não há processo longo para hospedar a UI: as funções enviam a telemetria para o **Station**, que monta a
+árvore de todas elas (e dos consumidores SQS/SNS) num lugar só.
+
+**a) Suba o Station** — como contêiner na mesma rede do LocalStack (modelo pronto em
+[`examples/finance-pix/docker-compose.yml`](examples/finance-pix/docker-compose.yml)) ou direto no host:
+
+```bash
+java -jar trace2local-station/target/trace2local-station-0.1.0-SNAPSHOT.jar   # UI em http://localhost:9876/trace2local
+```
+
+**b) Adicione `trace2local-lambda`** (mais `trace2local-aws`/`trace2local-jdbc` se usar DynamoDB, SQS/SNS ou SQL) e
+estenda o handler base:
+
+```java
+public final class PedidoHandler extends Trace2LocalLambdaHandler<Map<String, Object>, Map<String, Object>> {
+    @Override protected SpanContext remoteParentOf(Map<String, Object> e, Context c) { return Trace2LocalTraceContext.fromApiGatewayEvent(e); }
+    @Override protected Map<String, Object> handle(Map<String, Object> e, Context c) throws Exception {
+        return step("Criar pedido", () -> service.criar(e));      // passo de negócio na árvore
     }
 }
 ```
 
-Suba a app e abra **`http://localhost:9876/trace2local`** — escolha `POST /pedidos`,
-clique **EXECUTE REQUEST** e veja a requisição viajar.
+**c) Aponte a função para o Station**
 
-### AWS Lambda (modo Companion com Station)
-
-```bash
-docker run -d --name trace2local-station -p 9876:9876 \
-  -e TRACE2LOCAL_BIND_ADDRESS=0.0.0.0 -e TRACE2LOCAL_ALLOW_NON_LOOPBACK=true \
-  -e TRACE2LOCAL_STATION_TOKEN=seu-token trace2local-station:0.1.0
-```
-
-```java
-public class MinhaFuncao extends Trace2LocalLambdaHandler<Map<String, String>, String> {
-    @Override
-    protected String handle(Map<String, String> input, Context ctx) { /* ... */ }
-}
-// envs da função: TRACE2LOCAL_STATION_ENDPOINT + TRACE2LOCAL_STATION_TOKEN
-```
-
-O runtime abre o span raiz (nó `LAMBDA`), correlaciona mutações e faz **flush
-síncrono** no fim da invocação (ADR-002) — a árvore aparece no Station.
-
-### Exemplos completos
-
-| Exemplo | O que demonstra | Como rodar |
+| variável | exemplo | efeito |
 |---|---|---|
-| [`examples/order-service`](examples/order-service/) | Spring Boot + DynamoDB + SNS/SQS fanout + consumidor (JC-1/2/3) + Native Image | `docker compose up --build` |
-| [`examples/lambda-sqs`](examples/lambda-sqs/) | Lambda java21 + DynamoDB + SQS no LocalStack, consumidor na MESMA árvore, token Bearer | `./mvnw -f examples/lambda-sqs/pom.xml -DskipTests package && docker compose -f examples/lambda-sqs/docker-compose.yml up` |
+| `TRACE2LOCAL_STATION_ENDPOINT` | `http://trace2local-station:19877` | destino da telemetria (rede do compose) |
+| `TRACE2LOCAL_STATION_TOKEN` | o mesmo do Station | Bearer do ingest |
+| `TRACE2LOCAL_JDBC_MUTATION_CAPTURE` | `inferred` | Δ inferido de SQL (opcional) |
 
----
+Sem endpoint o runtime é *pass-through*: o mesmo artefato vai para a AWS sem custo. Guia completo com SQS/SNS, JDBC,
+parceiros HTTP, Terraform e GraalVM nativo: [examples/finance-pix](examples/finance-pix/README.md).
 
-## 🧰 Instalador Maven
-
-O plugin `trace2local-maven-plugin` faz a **configuração automática** do projeto
-e a **engenharia reversa** dos recursos que aparecem no canvas — além de
-auditar os logs e sugerir/gerar o padrão compatível com **Datadog e
-OpenTelemetry**.
-
-### 1. Analisar (somente leitura — engenharia reversa)
+### 4. Agentes de IA (MCP)
 
 ```bash
-./mvnw tech.neural7.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT:analyze
+./mvnw -pl trace2local-mcp -am package -DskipTests   # → trace2local-mcp/target/trace2local-mcp-0.1.0-SNAPSHOT-all.jar
 ```
 
-Escaneia o bytecode compilado e gera `target/trace2local/`:
+```json
+{ "mcpServers": { "trace2local": { "command": "java",
+  "args": ["-jar", "trace2local-mcp/target/trace2local-mcp-0.1.0-SNAPSHOT-all.jar"],
+  "env": { "TRACE2LOCAL_URL": "http://127.0.0.1:9876/trace2local", "TRACE2LOCAL_MCP_TOOLS": "core" } } } }
+```
 
-- **`canvas-map.md`** — o que será mapeado na UI: endpoints Spring (catálogo +
-  disparo), métodos `@Trace2Local` (nós BUSINESS), serviços AWS SDK v2 e JDBC;
-- **`report.md`** — higiene de logs: usos de SLF4J, `System.out`,
-  `printStackTrace`, e sugestões concretas (ex.: *"Substitua System.out por
-  SLF4J em X — logs fora do SLF4J não correlacionam com o trace"*).
+Claude Code, Cursor, VS Code e outros harnesses passam a ler execuções, causas raiz, laudos e sugestões de mock.
+Somente leitura e dados estruturais por padrão — [docs/MCP.md](docs/MCP.md).
 
-### 2. Configurar (aplica a instalação)
+### Não apareceu nada?
+
+| sintoma | causa provável | correção |
+|---|---|---|
+| sem a linha `Trace2Local em http://…` no boot | perfil de desenvolvimento inativo | `-Dspring-boot.run.profiles=trace2local` |
+| boot falha com "NÃO DEVE subir em produção" | `trace2local.enabled=true` forçado fora de dev | remova a propriedade ou use um perfil de dev |
+| UI responde 421 | `Host` fora da allowlist | acesse por `localhost`/`127.0.0.1` |
+| porta 9876 ocupada | outra instância ou app | `trace2local.port` (Station: `TRACE2LOCAL_PORT`) |
+| Lambda não aparece no Station | endpoint/token/rede | procure `WARN Trace2Local: o envio ao Station não confirmou` no log da função |
+
+## Demo de 10 minutos: stack financeira completa
+
+[`examples/finance-pix`](examples/finance-pix/README.md) é um serviço de **transferências Pix** 100 % local:
+API Gateway (OpenAPI) → Lambda **Java 25** (JVM ou nativo GraalVM) → DynamoDB · Postgres (RDS) · SQS → Lambda ·
+SNS → Lambda · 5 APIs de parceiros, tudo provisionado por **Terraform** no **LocalStack**.
+
+**Windows** — só com o Docker Desktop (build, LocalStack e Terraform rodam em containers):
+
+```powershell
+examples\finance-pix\scripts\up.cmd          # ou: powershell -ExecutionPolicy Bypass -File examples\finance-pix\scripts\up.ps1
+```
+
+**Linux / macOS**:
 
 ```bash
-./mvnw tech.neural7.trace2local:trace2local-maven-plugin:0.1.0-SNAPSHOT:configure
+cd examples/finance-pix && ./scripts/up.sh && python3 scripts/journeys.py   # sobe e roda as 12 jornadas de aceite
 ```
 
-Idempotente (nunca sobrescreve arquivo existente):
+| endereço | o quê |
+|---|---|
+| http://localhost:19877/trace2local | UI do Trace2Local (Resonance) — abre sozinha no fim do `up` |
+| http://localhost:4568/restapis/pixapi/local/_user_request_/pix/transfers | API Pix (API Gateway do LocalStack) |
+| http://localhost:19878 | Mock Connect (gestão em `/trace2local/api/mocks`) |
 
-| Ação | Resultado |
-| :--- | :--- |
-| `pom.xml` | adiciona `trace2local-bom` (import) + `trace2local-spring-boot-starter` (backup em `pom.xml.trace2local.bak`) |
-| `src/main/resources/trace2local-business.md` | glossário de negócio para a aba STORY (se ausente) |
-| `src/main/resources/application-trace2local.yml` | config inicial (porta, redaction, retention, delta DynamoDB) |
-| `src/main/resources/logback-spring.xml` | padrão de log com correlação de trace nos DOIS padrões |
+Para derrubar tudo: `up.cmd -Down` (Windows) ou `docker compose down -v` em `examples/finance-pix`. Atrás de proxy
+corporativo com inspeção TLS: `up.cmd -CaBundle C:\caminho\ca-da-empresa.pem`.
 
-### 3. Logs portáteis (Datadog + OpenTelemetry)
+| Anatomia | Linha do tempo + CloudWatch | Mock Connect | Investigação |
+|---|---|---|---|
+| ![anatomia](docs/qa/screenshots/v4-resonance/01-anatomia-finance-pix.png) | ![linha do tempo](docs/qa/screenshots/v4-resonance/05-linha-do-tempo-pix.png) | ![mocks](docs/qa/screenshots/v4-resonance/06-mocks-sugestoes.png) | ![investigação](docs/qa/screenshots/v4-resonance/12-investigacao-pix-revisao.png) |
 
-O starter injeta no MDC, por requisição, as chaves dos dois ecossistemas:
+As 12 jornadas conferem a ferramenta **contra o estado real** (psql, DynamoDB) em seis níveis — **61/61 em JVM e
+em nativo**; cold start nativo 808 ms × JVM 2 191 ms ([critério de aceite](docs/qa/ACEITE.md)).
 
-| Chave | Formato | Quem lê |
-| :--- | :--- | :--- |
-| `trace_id` / `span_id` | hex 128/64 bits | OpenTelemetry (coletor Filelog, OTLP logs) |
-| `dd.trace_id` / `dd.span_id` | decimal unsigned 64 bits | Datadog (correlação de logs padrão) |
-
-Resultado real (demo payment-service):
-
-```
-INFO PaymentController - trace_id=259c9030880bbf221741f9751ba5189c span_id=87b3151e2ab98bac
-                        dd.trace_id=1675894817728829596 dd.span_id=9778182435261483948
-                        - Pix PIX-LOG2 criado
-```
-
-Os MESMOS logs correlacionam no trace local e em pipelines Datadog/OTel —
-adicione `logger.info(...)` de negócio nos seus serviços (o `analyze` aponta
-onde faltam).
-
----
-
-## 🔌 Instrumentação
-
-```java
-// AWS SDK v2 — delta EXACT do DynamoDB + semântica SNS/SQS
-DynamoDbClient ddb = Trace2LocalAws.instrument(DynamoDbClient.builder(), traceVantaConfig).build();
-
-// SQL — semântica + delta inferred (opcional)
-DataSource ds = Trace2LocalJdbc.wrap(myDataSource, traceVantaConfig);
-
-// Negócio — um nó BUSINESS por método
-@Trace2Local("CriarPedido")
-public Pedido criar(NovoPedido r) { /* ... */ }
-
-// Qualquer biblioteca sem library instrumentation — SPI via ServiceLoader (AOT-safe)
-public interface Trace2LocalExtension {
-    default void contribute(NodeBuilder node, SpanView span) {}
-    default Optional<DataMutation> captureMutation(MutationContext ctx) { return Optional.empty(); }
-    default RedactionPolicy redactionPolicy() { return RedactionPolicy.INHERIT; }
-    default List<EndpointDescriptor> discoverEndpoints() { return List.of(); }
-    default int order() { return 0; }
-}
-```
-
----
-
-## ⚙️ Como funciona
+## Como funciona
 
 ```mermaid
 flowchart LR
-    I[Instrumentação<br/>starter · aws · jdbc · lambda · @Trace2Local] -->|SpanStart/End + MutationEvent| B[Ring Buffer 4096<br/>descarte declarado na borda]
-    B --> A[Assembler · virtual thread<br/>TVEM · invariantes I1-I3]
-    A --> S[ExecutionStore<br/>acervo LRU]
-    S --> H[HTTP · REST + SSE 20fps] --> U[UI · canvas + inspector]
+    subgraph app[Sua aplicação]
+      I[Instrumentação<br/>starter · lambda · aws · jdbc · http · @Trace2Local]
+    end
+    I -->|spans + Δ de dados| B[Buffer limitado<br/>descarte declarado]
+    B --> A[Assembler<br/>árvore · continuação tardia]
+    A --> S[Acervo local]
+    S --> P[Laudo · regras preditivas<br/>fila assíncrona]
+    S --> H[REST + SSE]
+    H --> U[UI Resonance]
+    H --> M[MCP · agentes]
+    H --> C[Mock Connect]
 ```
 
-1. **Ponte** (`trace2local-otel`): um `SpanProcessor` *acrescentado* ao pipeline
-   OTel do dev — nunca o substitui. Se você já exporta para o Jaeger, continua exportando.
-2. **Ring buffer** (ADR-006): fila limitada com `offer()`, nunca `put()` — sob
-   rajada, eventos são descartados **e o descarte é exibido**.
-3. **Assembler**: monta o TVEM com eventos fora de ordem; órfão é reparentado
-   com aviso (I1); `selfTime` nunca negativo (I2); fidelidade do delta declarada (I3).
-4. **Delta de dados** (ADR-003): canal lateral correlacionado por `spanId` —
-   payload sensível nunca entra no pipeline OTel do dev.
-5. **UI** (ADR-004/005): WebJar offline no próprio JAR, um `EventSource` por aba,
-   tema escuro, teclado completo, waterfall — **nenhum byte sai da sua máquina**.
+| | Embedded (padrão) | Companion / Station |
+|---|---|---|
+| Onde roda | no JVM da aplicação, `:9876` | processo/contêiner `trace2local-station` |
+| Para | Spring Boot local, `docker compose`, testes | Lambda, LocalStack, `sam local`, vários serviços numa árvore |
+| Telemetria | `SpanProcessor` no processo | OTLP/HTTP + canal de mutação + logs (Bearer) |
+| Lambda | — | flush síncrono no fim da invocação, com orçamento |
 
-### Modos de execução (ADR-002)
+Arquitetura detalhada: [docs/ARQUITETURA.md](docs/ARQUITETURA.md) · especificação: [docs/SPEC.md](docs/SPEC.md) ·
+decisões: [docs/adr](docs/adr/README.md).
 
-| | **Embedded** (padrão) | **Companion / Station** |
-| :--- | :--- | :--- |
-| Onde roda a UI | No JVM da sua app, `:9876` | Container `trace2local-station`, `:9876` |
-| Para | Spring Boot local, `docker compose`, testes | Lambda, `sam local`, **multi-serviço em uma árvore** |
-| Telemetria | SpanProcessor in-process | OTLP/HTTP `/v1/traces` + `/t2lingest/v1/mutations` (Bearer opcional) |
-| Flush em Lambda | — | **Síncrono no fim da invocação** (o ambiente congela), teto 200 ms |
+## Módulos
 
----
+| módulo | papel |
+|---|---|
+| `trace2local-bom` | versões do projeto e de terceiros |
+| `trace2local-core` | modelo de execução, buffer, assembler, redaction, SPI — só JDK |
+| `trace2local-otel` | ponte OpenTelemetry (único lugar com nomes de atributo OTel — ADR-008), HTTP client, passos de negócio |
+| `trace2local-spring-boot-starter` | autoconfiguração, catálogo de endpoints, disparo, hints AOT |
+| `trace2local-lambda` | handler base, contexto de trace de API Gateway/SQS/SNS, flush síncrono |
+| `trace2local-aws` · `trace2local-jdbc` | DynamoDB (Δ exato), SQS/SNS (propagação), SQL (Δ inferido) |
+| `trace2local-station` | modo Companion: ingest OTLP, tail CloudWatch do LocalStack, disparo pelo contrato OpenAPI |
+| `trace2local-predictive` | laudo executivo/técnico, regras assíncronas preditivas, micro-decisões |
+| `trace2local-mocks` | Mock Connect ([docs/MOCKS.md](docs/MOCKS.md)) |
+| `trace2local-mcp` | servidor MCP para agentes ([docs/MCP.md](docs/MCP.md)) |
+| `trace2local-server` · `trace2local-ui` | REST + SSE; UI Resonance (offline, CSP estrita) |
+| `trace2local-testing` · `trace2local-maven-plugin` · `trace2local-architecture` | asserções sobre a árvore · instalador · guarda-rails no CI |
 
-## 🧩 Arquitetura e módulos
+## Compatibilidade
 
-Visão completa (regras de dependência, fluxo, SPI): **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)**.
+| eixo | suportado |
+|---|---|
+| JDK | **21+** (bytecode baseline 21; CI em 21 e 25) |
+| Spring Boot | 4.0 / 4.1 |
+| AWS | SDK v2 (DynamoDB, SQS, SNS); Lambda `java21`, `java25` e `provided.al2023` (JVM jlink ou nativo) |
+| GraalVM | Native Image (JDK 25) |
+| OpenTelemetry | SDK 1.66 / instrumentation 2.31 |
+| LocalStack | 3 / 4 (validado em 4.9) · Terraform AWS provider `~> 5.100` |
+| Navegador | Chrome, Edge, Firefox atuais — a UI é 100 % offline |
 
-| Módulo | Papel |
-| :--- | :--- |
-| `trace2local-bom` | BOM: versões do projeto **e** de terceiros — declare sem versão |
-| `trace2local-core` | TVEM, ring buffer, assembler, redaction, config, SPI — POJO + JDK |
-| `trace2local-otel` | Ponte OTel: `SpanProcessor`, `SemanticMapper` (anti-corrupção, ADR-008) |
-| `trace2local-ui` | Assets da UI (WebJar, offline absoluto, zero referência externa) |
-| `trace2local-server` | REST + SSE sobre `com.sun.net.httpserver` (sem framework) |
-| `trace2local-spring-boot-starter` | Autoconfig Boot, catálogo, launcher, guarda de produção, hints AOT |
-| `trace2local-aws` | Delta DynamoDB (EXACT) + semântica SNS/SQS |
-| `trace2local-jdbc` | Semântica SQL + delta `inferred` |
-| `trace2local-lambda` | `Trace2LocalLambdaHandler` com flush síncrono |
-| `trace2local-station` | Station standalone do modo Companion (ingest OTLP + mutações) |
-| `trace2local-testing` | JUnit 5 + asserções sobre a árvore (para os seus testes) |
-| `trace2local-architecture` | Regras ArchUnit que travam a arquitetura no CI |
+Em **0.x a API pode mudar entre minors**; SemVer estrito a partir do 1.0 ([ADR-010](docs/adr/ADR-010-distribuicao-licenca-e-compatibilidade.md)).
 
----
+## Qualidade
 
-## ⚙️ Configuração (`trace2local.*`)
+Uma versão só é aceita com todos os níveis verdes — [docs/qa/ACEITE.md](docs/qa/ACEITE.md):
 
-| Propriedade | Padrão | Nota |
-| :--- | :--- | :--- |
-| `enabled` | `true` em dev | kill switch: `-Dtrace2local.enabled=false` desliga tudo |
-| `port` | `9876` | `0` = efêmera |
-| `bind-address` | `127.0.0.1` | alterar exige `allow-non-loopback=true` |
-| `buffer.capacity` | `4096` | eventos; descarte na borda é exibido na UI |
-| `retention.max-executions` | `100` | LRU em memória |
-| `payload.max-bytes` | `8192` | por nó |
-| `redaction.mode` | `strict` | `strict` \| `keys` \| `off` |
-| `aws.dynamodb.capture-before` | `true` (dev) | eleva `ReturnValues` e restaura a resposta (R-01) |
-| `jdbc.mutation-capture` | `off` | `off` \| `inferred` |
-| `station.endpoint` | — | modo Companion |
-| `station.token` | — | Bearer do ingest (env `TRACE2LOCAL_STATION_TOKEN`) |
-| `flush-timeout-ms` | `200` | Lambda |
-
----
-
-## 🔒 Segurança
-
-Política completa e modelo de ameaças: **[SECURITY.md](SECURITY.md)**.
-
-- Bind **loopback por padrão**; exposição exige flag explícita + avisos.
-- **Redaction na origem**: chaves sensíveis + padrões de valor (JWT, chaves AWS,
-  cartão com Luhn, CPF/CNPJ, tokens GitHub, hashes bcrypt/argon2…) — mitigação declarada.
-- **Token Bearer opcional** no ingest; hardening HTTP (CSP sem `unsafe-inline`,
-  `nosniff`, `no-referrer`, `no-store`); limites de entrada; descarte declarado.
-- Auditoria de CVEs das versões pinadas: nenhuma afetada (Jackson 2.22.2 e
-  AssertJ 3.27.7 são exatamente as versões corrigidas — não rebaixar).
-- Reporte: GitHub Security Advisory ou `security@neural7.tech`.
-
----
-
-## 📦 Compatibilidade (v0.1)
-
-| Eixo | Suportado |
-| :--- | :--- |
-| **JDK (construir/rodar)** | **21+** (CI em 21 e 25; bytecode baseline 21 — ADR-009) |
-| Maven | **3.9+** (enforced; wrapper incluído) |
-| Spring Boot | **4.0/4.1** |
-| OpenTelemetry | SDK **1.66** / instrumentation **2.31** (semconv 1.44) |
-| AWS SDK | **v2** (DynamoDB/SNS/SQS); Lambda `java21`/`java25` |
-| GraalVM | **Native Image (JDK 25)** |
-| LocalStack | **3/4** (validado em 4.2) |
-| Navegador (UI) | Chrome/Edge/Firefox modernos (offline absoluto — ADR-005) |
-
-Em **0.x a API pode quebrar entre minors** (SemVer a partir do 1.0.0 — ADR-010).
-
----
-
-## 🧪 Testes e qualidade
+| nível | o que prova | resultado atual |
+|---|---|---|
+| L0 | unidades, contratos, propriedades, guarda-rails de arquitetura, UI offline e CSP | `mvn install` verde |
+| L1–L6 | jornadas reais na stack alvo: contrato, árvore, dados reais, assíncrono, mocks, ferramenta | 61/61 JVM · 61/61 nativo |
+| L7 | usabilidade por persona (Playwright) + contraste WCAG medido em todo texto visível | 69/69 |
+| L7b | agentes via MCP (cliente real) | 14/14 |
+| — | regras preditivas: 35 cenários (15 controles) | precisão/recall 1,00 · 0 falso positivo |
 
 ```bash
-./mvnw install                              # unidade + propriedade + contrato + ArchUnit
-./mvnw -Pit -pl examples/order-service verify   # E2E LocalStack real (Docker)
-./mvnw -Pit -pl examples/lambda-sqs verify      # E2E Lambda+SQS (Docker)
+AWS_REGION=us-east-1 ./mvnw -B install                 # L0
+./mvnw -Pit -pl examples/order-service,examples/lambda-sqs verify   # E2E com Testcontainers + LocalStack
 ```
 
-| Camada | O que cobre |
-| :--- | :--- |
-| Propriedade | Invariantes I1–I3 do TVEM sob eventos fora de ordem e perdidos (jqwik) |
-| Contrato | `SemanticMapper` por fixture de span — bump do OTel quebra aqui, não na UI |
-| Arquitetura | Regras de dependência + nenhum literal OTel fora da ponte + UI sem referência externa |
-| Segurança | Corpus de redaction, SSRF do launcher, guarda de produção, token Bearer do ingest |
-| E2E | LocalStack real (Testcontainers) + consistência UI↔API nas capturas de tela |
+## Segurança
 
----
+Ferramenta de desenvolvimento, segura por padrão: bind `127.0.0.1`, redaction na origem, CSP sem `unsafe-inline`,
+allowlist de `Host` e anti-CSRF, token opcional para ambientes compartilhados, inteligência sem egress por padrão,
+Mock Connect e MCP com opt-in para qualquer mutação. Modelo de ameaças e limites declarados em
+[SECURITY.md](SECURITY.md) e [docs/SEGURANCA-CORPORATIVA.md](docs/SEGURANCA-CORPORATIVA.md).
+Vulnerabilidades: GitHub Security Advisory ou `security@neural7.tech` — não abra issue pública.
 
-## 📖 Documentação
+## Documentação
 
-| Documento | Conteúdo |
-| :--- | :--- |
-| [SPEC.md](docs/SPEC.md) | Especificação técnica e arquitetural completa |
-| [ARQUITETURA.md](docs/ARQUITETURA.md) | Módulos, fluxo de runtime, pontos de extensão |
-| [docs/adr/](docs/adr/) | Decisões de arquitetura registradas (ADR-001…010) |
-| [SECURITY.md](SECURITY.md) | Modelo de ameaças, limites declarados, reporte |
-| [CHANGELOG.md](CHANGELOG.md) | Histórico completo desde o primeiro commit |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Como contribuir (convenções e definição de pronto) |
-| [docs/qa/](docs/qa/) | Evidências de QA: E2E, UX, consistência, telas |
+| documento | conteúdo |
+|---|---|
+| [ARQUITETURA.md](docs/ARQUITETURA.md) · [SPEC.md](docs/SPEC.md) | módulos, fluxo de runtime, extensões · especificação completa |
+| [docs/adr](docs/adr/README.md) | decisões de arquitetura (ADR-001 a ADR-017) |
+| [UX-RESONANCE.md](docs/UX-RESONANCE.md) | identidade visual, visões, acessibilidade |
+| [MOCKS.md](docs/MOCKS.md) | Mock Connect: conselheiro, binding, plugins, REST |
+| [MCP.md](docs/MCP.md) | servidor MCP: instalação por harness, ferramentas, segurança |
+| [PREDICTIVE.md](docs/PREDICTIVE.md) | regras assíncronas preditivas: catálogo, confiança, benchmarks |
+| [SEGURANCA-CORPORATIVA.md](docs/SEGURANCA-CORPORATIVA.md) | revisão de segurança, topologias, governança de dados |
+| [docs/qa](docs/qa/) | aceite, validações na stack alvo, benchmarks, evidências |
+| [AGENTS.md](AGENTS.md) · [CONTRIBUTING.md](CONTRIBUTING.md) | guia para agentes e contribuidores |
+| [CHANGELOG.md](CHANGELOG.md) | histórico desde o primeiro commit |
 
----
+## Perguntas frequentes
 
-## 🗺️ Roadmap
+<details>
+<summary><b>Substitui um APM (Datadog, X-Ray, New Relic)?</b></summary>
 
-M0–M6 implementados na v0.1; **M5 (prova AOT)** no CI; **M7** entrega o Station.
-Visões DAG/Waterfall/Sequence e exportação OTLP entram na v0.2 — detalhes em
-[SPEC §11.1](docs/SPEC.md).
+Não. O Trace2Local responde "o que esta requisição fez?" **enquanto você desenvolve**, com o dado antes → depois e
+o consumidor assíncrono na mesma árvore. Em produção o runtime Lambda é *pass-through* e o starter se desliga; os
+logs com `trace_id` gerados aqui continuam correlacionáveis no seu APM.
+</details>
 
----
+<details>
+<summary><b>Algum dado sai da minha máquina?</b></summary>
 
-## ⚠️ LEIA ANTES DE USAR — declarações de honestidade
+Não por padrão. A UI é servida em `127.0.0.1`, é 100 % offline e a inteligência é determinística e local. Integrações
+que poderiam enviar algo para fora (por exemplo, um modelo externo de micro-decisão) exigem configuração e chave
+explícitas — veja [SECURITY.md](SECURITY.md).
+</details>
 
-1. **Ferramenta de DEV-TIME — não empacote em produção.** O starter se
-   autodesabilita fora de dev e **falha o boot** se forçado sem
-   `trace2local.i-know-what-im-doing=true` (SPEC §8.4).
-2. **Quem tem a máquina, tem a UI.** Bind `127.0.0.1`, sem autenticação — em
-   loopback, auth seria teatro (ADR-007). Expor além do loopback exige flag
-   explícita e emite WARN; para uso remoto, túnel SSH.
-3. **A captura do delta do DynamoDB modifica a sua requisição** (eleva
-   `ReturnValues` e restaura a resposta — há teste provando a restauração;
-   R-01). Desligue com `trace2local.aws.dynamodb.capture-before=false`.
-4. **Redaction é mitigação, não garantia.** Campo de negócio com nome inocente
-   passa — o limite está declarado, não escondido (SPEC §8.3).
-5. **Cobertura sem agente é limitada** — a UI diz "não instrumentado", nunca
-   finge completude (R-02).
+<details>
+<summary><b>Preciso de Spring Boot? E de agente JVM?</b></summary>
 
-**Desvios registrados da SPEC** (honestidade acima de tudo — detalhes nos ADRs):
+Nenhum dos dois. Spring Boot ganha o modo embedded com zero configuração; Lambdas usam `trace2local-lambda` com o
+Station; qualquer serviço que exporte **OTLP/HTTP** aparece na árvore do Station (sem o Δ de dados). Não há
+`-javaagent`, por isso funciona em GraalVM Native Image.
+</details>
 
-| Item | SPEC | v0.1 |
-| :--- | :--- | :--- |
-| `UpdateItem` before/after | §4.10: ambos em uma chamada | **FECHADO** com `Trace2LocalAws.instrumentWithReadBack` (opcional: `before` do `ALL_OLD` + `after` exato por releitura dentro do span); o padrão `instrument` mantém `after` EXACT com `before=null` **declarado na UI** (a API do DynamoDB devolve UM conjunto por chamada) |
-| SSE `execution.completed` | §5.2: campos flat (`status`, `duration`, `metrics`) | **FECHADO**: `{"executionId","status","duration" (ISO-8601),"metrics","execution":{…}}` — flat conforme a SPEC, payload completo aninhado como extensão compatível |
-| `trace2local.port=0` | §5.4: "mesma porta da app" | porta efêmera; **`GET /api/meta` expõe a porta real** (descoberta programática); mesmo-que-a-app fica para v0.2 (exige servir a UI junto do DispatcherServlet) |
-| Schema por springdoc | §4.8 estratégia 1 | records via `RecordComponent` (integração springdoc na v0.2 — versão compatível com Boot 4 em auditoria) |
-| Catálogo Lambda | §4.8: parse de `template.yaml` | catálogo vazio (somente-observação), registrado como gap |
-| `jdbc.mutation-capture=before-image` | §4.10: opt-in com aviso | **rejeitado com erro explícito** (nunca rebaixado em silêncio) |
-| `ScopedValue` | §4.11: interno para executionId | não usado no núcleo (baseline 21 — ADR-009/D-1; migra quando o baseline subir para 23+) |
+<details>
+<summary><b>Funciona no Windows?</b></summary>
 
----
+Sim. A biblioteca é Java puro; a demo completa sobe com `up.cmd` usando só o Docker Desktop (o pacote da Lambda é
+gerado num container Linux, como a AWS exige).
+</details>
 
-## 👥 Contribuindo
+## Limites declarados
 
-Pull requests são bem-vindas! Leia **[CONTRIBUTING.md](CONTRIBUTING.md)** e o
-**[Código de Conduta](CODE_OF_CONDUCT.md)**. Decisão superada não é apagada —
-ADRs ganham status `Substituída por`; CHANGELOG desde o primeiro commit;
-build reprodutível e assinatura GPG no release.
+1. **Dev-time, não produção.** O starter se desabilita fora de dev e falha o boot se forçado sem
+   `trace2local.i-know-what-im-doing=true`; o runtime Lambda sem Station é *pass-through*.
+2. **A captura do Δ do DynamoDB altera a requisição** (eleva `ReturnValues` e restaura a resposta — testado).
+   Desligue com `trace2local.aws.dynamodb.capture-before=false`.
+3. **Redaction é mitigação, não garantia**: campo de negócio com nome inocente pode passar.
+4. **Cobertura sem agente é declarada**: o que não foi instrumentado aparece como tal, nunca como completo.
+5. **Simulado nunca se passa por real**: respostas do Mock Connect são marcadas (SIM/↪) em todas as visões.
 
----
+## Roadmap
 
-<div align="center">
+Visões DAG/sequência e exportação OTLP (v0.2) · rota do contrato nas chamadas a parceiros · acervo persistente
+opcional no Station · roteamento de mock para clientes não-Java · SLO por parceiro na Anatomia — detalhes em
+[docs/SPEC.md](docs/SPEC.md) §11 e [docs/qa/finance-pix/ANALISE-RESULTADOS.md](docs/qa/finance-pix/ANALISE-RESULTADOS.md).
 
-**Trace2Local** — *See your request travel through the system.*
+## Suporte
 
-Apache-2.0 © 2026 Neural7 Tech ·
-[Especificação](docs/SPEC.md) · [ADRs](docs/adr/) · [Arquitetura](docs/ARQUITETURA.md) · [Segurança](SECURITY.md)
+| preciso de | onde |
+|---|---|
+| reportar um bug | [issue com o modelo de bug](.github/ISSUE_TEMPLATE/bug-report.md) — inclua versão, modo (embedded/Station) e o `executionId` |
+| propor uma funcionalidade | [issue com o modelo de feature](.github/ISSUE_TEMPLATE/feature-request.md) |
+| reportar uma vulnerabilidade | GitHub Security Advisory ou `security@neural7.tech` (nunca issue pública) — [SECURITY.md](SECURITY.md) |
 
-</div>
+## Contribuindo
+
+Contribuições são bem-vindas. Leia o [CONTRIBUTING.md](CONTRIBUTING.md), o [Código de Conduta](CODE_OF_CONDUCT.md)
+e o [AGENTS.md](AGENTS.md) (regras inegociáveis: local-first, UI offline sob CSP, ACL de atributos OTel, aceite
+multinível). Decisão superada não é apagada: ganha um novo ADR.
+
+## Agradecimentos
+
+Construído sobre [OpenTelemetry](https://opentelemetry.io). Validado com [LocalStack](https://localstack.cloud) e
+[Testcontainers](https://testcontainers.com). O Mock Connect se inspira no modelo de conectores do
+[Kafka Connect](https://kafka.apache.org/documentation/#connect) e interopera com [WireMock](https://wiremock.org).
+
+## Licença
+
+[Apache License 2.0](LICENSE) · © 2026 Neural7 Tech · veja também [NOTICE](NOTICE).

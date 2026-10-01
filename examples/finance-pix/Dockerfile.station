@@ -1,0 +1,15 @@
+# Station do cenário finance-pix — imagem de RUNTIME a partir do jar já construído
+# (mvn -B -pl trace2local-station -am -DskipTests install na raiz). Sem Maven nem rede no
+# build, usuário não-root, dados em /data. Portas: 19877 (UI/API/ingest) e 19878 (Mock Connect).
+FROM eclipse-temurin:21-jre
+RUN groupadd -r t2l && useradd -r -g t2l -u 10001 t2l && mkdir -p /data && chown 10001:10001 /data
+WORKDIR /app
+COPY trace2local-station/target/trace2local-station-0.1.0-SNAPSHOT.jar station.jar
+USER 10001
+EXPOSE 19877 19878
+ENV TRACE2LOCAL_PORT=19877 \
+    TRACE2LOCAL_BIND_ADDRESS=0.0.0.0 \
+    TRACE2LOCAL_ALLOW_NON_LOOPBACK=true \
+    TRACE2LOCAL_DATA_DIR=/data \
+    TRACE2LOCAL_MOCKS_PORT=19878
+ENTRYPOINT ["java", "-XX:+ExitOnOutOfMemoryError", "-XX:MaxRAMPercentage=75", "-jar", "station.jar"]

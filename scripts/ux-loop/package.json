@@ -1,0 +1,12 @@
+{
+  "name": "trace2local-ux-loop",
+  "private": true,
+  "type": "module",
+  "description": "Loop de usabilidade por persona (Playwright) sobre um Station/app Trace2Local vivo.",
+  "scripts": {
+    "loop": "node persona-loop.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

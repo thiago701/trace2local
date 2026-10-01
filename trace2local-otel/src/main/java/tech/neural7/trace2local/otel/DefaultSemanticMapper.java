@@ -283,7 +283,10 @@ public final class DefaultSemanticMapper implements SemanticMapper {
     private static String sqlTarget(Map<String, Object> attrs) {
         String collection = str(attrs, DB_COLLECTION);
         if (collection != null && !collection.isBlank()) {
-            return collection;
+            // "SELECT accounts", "UPDATE ledger_entries": a operação diferencia passos
+            // que, só pela tabela, pareciam repetidos (achado no ledger do finance-pix)
+            String op = str(attrs, DB_OPERATION);
+            return op != null && !op.isBlank() && !"OTHER".equalsIgnoreCase(op) ? op.toUpperCase(java.util.Locale.ROOT) + " " + collection : collection;
         }
         String namespace = str(attrs, DB_NAMESPACE);
         if (namespace != null && !namespace.isBlank()) {

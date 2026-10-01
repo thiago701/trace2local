@@ -101,6 +101,16 @@
     <plugins>
       <!-- Fat jar para deploy no emulador Lambda do LocalStack (runtime java21):
            todas as dependências + serviços via META-INF/services unificados. -->
+      <!-- o shade SUBSTITUI o jar principal: sem forceCreation, um build incremental
+           (sem clean) re-sombreava o fat jar ANTERIOR e as classes velhas das
+           dependências venciam as novas (achado no loop de validação com LocalStack) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <forceCreation>true</forceCreation>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>

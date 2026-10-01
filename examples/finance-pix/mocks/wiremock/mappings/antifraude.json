@@ -1,0 +1,30 @@
+{
+  "mappings": [
+    {
+      "name": "Antifraude — conta sinalizada (negado)",
+      "priority": 1,
+      "request": {"method": "POST", "urlPath": "/v1/score",
+                  "bodyPatterns": [{"matchesJsonPath": {"expression": "$.payerAccountId", "equalTo": "acc-bloqueada"}}]},
+      "response": {"status": 200, "headers": {"Content-Type": "application/json"},
+                   "jsonBody": {"decision": "DENIED", "score": 930, "reasons": ["CONTA_SINALIZADA"]},
+                   "fixedDelayMilliseconds": 60}
+    },
+    {
+      "name": "Antifraude — valor atípico (revisão)",
+      "priority": 2,
+      "request": {"method": "POST", "urlPath": "/v1/score",
+                  "bodyPatterns": [{"matchesJsonPath": "$[?(@.amount >= 5000)]"}]},
+      "response": {"status": 200, "headers": {"Content-Type": "application/json"},
+                   "jsonBody": {"decision": "REVIEW", "score": 640, "reasons": ["VALOR_ATIPICO"]},
+                   "fixedDelayMilliseconds": 80}
+    },
+    {
+      "name": "Antifraude — aprovado",
+      "priority": 5,
+      "request": {"method": "POST", "urlPath": "/v1/score"},
+      "response": {"status": 200, "headers": {"Content-Type": "application/json"},
+                   "jsonBody": {"decision": "APPROVED", "score": 112, "reasons": []},
+                   "fixedDelayMilliseconds": 50}
+    }
+  ]
+}

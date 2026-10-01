@@ -14,7 +14,17 @@
 *.html text eol=lf
 *.svg  text eol=lf
 *.sh   text eol=lf
+*.sql  text eol=lf
+*.tf   text eol=lf
 mvnw   text eol=lf
+# bootstrap da Lambda (sem extensão): CRLF quebra o runtime custom no Linux
+examples/**/runtime/bootstrap-* text eol=lf
+**/Dockerfile*  text eol=lf
+
+# scripts Windows
+*.ps1  text eol=crlf
+*.cmd  text eol=crlf
+mvnw.cmd text eol=crlf
 
 # binários e imagens
 *.png  binary

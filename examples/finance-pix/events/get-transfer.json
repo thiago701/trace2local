@@ -1,0 +1,2 @@
+{"resource": "/pix/transfers/{transferId}", "path": "/pix/transfers/pix-naoexiste", "httpMethod": "GET",
+ "pathParameters": {"transferId": "pix-naoexiste"}, "headers": {}}

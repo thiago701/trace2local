@@ -1,47 +1,64 @@
-# Projeto de teste/validação: AWS Lambda (java21) + DynamoDB + SQS no LocalStack,
-# com a lib Trace2Local em modo Companion (ADR-002).
+# Projeto de teste/validação: AWS Lambda (java21) + DynamoDB + SQS + CloudWatch Logs
+# no LocalStack, com a lib Trace2Local em modo Companion (ADR-002).
 #
-# Pré-requisito: o fat jar já construído (mvn -f examples/lambda-sqs/pom.xml package)
-#   → target/lambda-sqs-bundle.jar (montado no container de provisionamento).
-# Uso: docker compose up   → sobe LocalStack + Station + provisiona e INVOCA a função.
-# A UI do Station: http://localhost:19877/trace2local
+# Pré-requisitos (uma vez):
+#   mvn -pl trace2local-station -am -DskipTests package          (jar do Station)
+#   mvn -f examples/lambda-sqs/pom.xml -DskipTests package         (target/lambda-sqs-bundle.jar)
+# Uso: docker compose up
+#   → sobe LocalStack + Station, provisiona tabelas/fila/funções e INVOCA o fluxo real:
+#     order-processor (DynamoDB + SQS) → event source mapping → order-billing (DynamoDB)
+#     e idempotent-processor (1ª chamada cria, 2ª é recusada pela guarda condicional).
+# UI do Station: http://localhost:19877/trace2local   (somente loopback do host)
 services:
   localstack:
     image: localstack/localstack:4.2
     ports:
-      # 4567 no host: 4566 costuma estar ocupada por um LocalStack standalone
-      # (a função emulada e o init usam o nome interno `localstack:4566`)
-      - "4567:4566"
+      # 4567 no host: 4566 costuma estar ocupada por um LocalStack standalone.
+      # Publicada só no loopback — LocalStack não tem autenticação.
+      - "127.0.0.1:4567:4566"
     environment:
-      - SERVICES=dynamodb,sqs,lambda
+      - SERVICES=dynamodb,sqs,lambda,logs
       - AWS_DEFAULT_REGION=us-east-1
       - PERSISTENCE=0
-      # o primeiro start do emulador copia o código extraído (14k arquivos) para
-      # dentro do container via socket do Docker — no Docker Desktop isso pode
-      # passar do teto padrão (~20s); 180s cobre extração + copy + boot da JVM
+      # o primeiro start do emulador copia o código extraído para o container da
+      # função; 180s cobre extração + copy + boot da JVM no Docker Desktop
       - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=180
-    extra_hosts:
-      # a função (emulada em container irmão) alcança o Station publicado no host
-      - "host.docker.internal:host-gateway"
+      # as funções emuladas entram NESTA rede e alcançam o Station pelo nome do
+      # serviço — o Station não precisa ser publicado fora do loopback do host
+      - LAMBDA_DOCKER_NETWORK=trace2local-demo
     volumes:
       # executor docker do Lambda: o LocalStack sobe a função em container irmão
       - /var/run/docker.sock:/var/run/docker.sock
+    networks: [demo]
 
   trace2local-station:
     build:
       context: ../..
       dockerfile: examples/lambda-sqs/Dockerfile.station
     ports:
-      - "19877:19877"
+      # UI/API publicadas SÓ no loopback do host (ADR-007); o ingest da função
+      # chega pela rede interna do compose
+      - "127.0.0.1:19877:19877"
     environment:
-      # ingest protegido: OTLP/mutações exigem Authorization: Bearer devtoken
-      # (a UI/API continuam locais; o token é do cenário demo — troque em produção)
+      # ingest protegido: OTLP/mutações/logs exigem Authorization: Bearer devtoken
+      # (token do cenário demo — troque fora dele)
       - TRACE2LOCAL_STATION_TOKEN=devtoken
+      # proteção contra DNS rebinding com bind 0.0.0.0 dentro do container
+      - TRACE2LOCAL_ALLOWED_HOSTS=localhost,127.0.0.1
+      # CloudWatch Logs REAL do LocalStack: linhas da função (START/END/REPORT + stdout)
+      - TRACE2LOCAL_CLOUDWATCH_ENDPOINT=http://localstack:4566
+      - TRACE2LOCAL_CLOUDWATCH_REGION=us-east-1
+      - TRACE2LOCAL_CLOUDWATCH_LOG_GROUP_PREFIX=/aws/lambda/
+      # glossário de negócio do cenário (cruza regras × fluxo na Investigação)
+      - TRACE2LOCAL_BUSINESS_FILE=/business/trace2local-business.md
+    volumes:
+      - ./trace2local-business.md:/business/trace2local-business.md:ro
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/19877 && echo ok"]
       interval: 2s
       timeout: 2s
       retries: 30
+    networks: [demo]
 
   init-localstack:
     image: amazon/aws-cli:2.22.0
@@ -60,3 +77,8 @@ services:
     entrypoint:
       - /bin/sh
       - /init/init.sh
+    networks: [demo]
+
+networks:
+  demo:
+    name: trace2local-demo

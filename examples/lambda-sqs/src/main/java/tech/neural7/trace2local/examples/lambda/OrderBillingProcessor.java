@@ -56,12 +56,14 @@ public final class OrderBillingProcessor extends Trace2LocalLambdaHandler<Map<St
         String orderId = input != null && input.get("orderId") != null
                 ? input.get("orderId")
                 : "ORDER-unknown";
+        System.out.println("INFO cobrança iniciada para " + orderId);
         // delta UPDATE capturado pelo DynamoDbDeltaInterceptor (before ausente — I3 declarado)
         dynamoDb.updateItem(r -> r.tableName(tableName)
                 .key(Map.of("pk", AttributeValue.fromS(orderId)))
                 .updateExpression("SET #st = :s")
                 .expressionAttributeNames(Map.of("#st", "status"))
                 .expressionAttributeValues(Map.of(":s", AttributeValue.fromS("BILLED"))));
+        System.out.println("INFO pedido " + orderId + " marcado como BILLED");
         return "{\"status\":\"billed\",\"orderId\":\"" + orderId + "\"}";
     }
 

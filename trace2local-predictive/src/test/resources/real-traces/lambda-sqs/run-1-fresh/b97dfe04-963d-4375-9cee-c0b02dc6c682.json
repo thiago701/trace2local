@@ -1,0 +1,294 @@
+{
+ "execution": {
+  "executionId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+  "traceId": "a5f5ccae9f8c42d9e6b1b3a0b65714ea",
+  "status": "FAILED",
+  "trigger": "LAMBDA_EVENT",
+  "startedAt": "2026-10-01T02:35:43.890705552Z",
+  "duration": 32,
+  "roots": [
+   {
+    "nodeId": "8b2fca0280ee6dc6",
+    "parentId": null,
+    "kind": "LAMBDA",
+    "label": "order-processor",
+    "status": "ERROR",
+    "startedAt": "2026-10-01T02:35:43.890705552Z",
+    "selfTime": 7,
+    "totalTime": 32,
+    "attributes": {
+     "t2l.execution.id": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+     "faas.invocation_id": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+     "faas.name": "order-processor",
+     "t2l.trigger": "lambda_event"
+    },
+    "payload": null,
+    "mutation": null,
+    "error": {
+     "type": "java.lang.IllegalStateException",
+     "message": "ordem recusada: ORDER-C3 excede o limite de crédito",
+     "stack": "java.lang.IllegalStateException: ordem recusada: ORDER-C3 excede o limite de crédito\n\tat tech.neural7.trace2local.examples.lambda.OrderProcessor.handle(OrderProcessor.java:87)\n\tat tech.neural7.trace2local.examples.lambda.OrderProcessor.handle(OrderProcessor.java:33)\n\tat tech.neural7.trace2local.lambda.Trace2LocalLambdaHandler.lambda$handleRequest$0(Trace2LocalLambdaHandler.java:50)\n\tat tech.neural7.trace2local.lambda.Trace2LocalLambdaRuntime.around(Trace2LocalLambdaRuntime.java:134)\n\tat tech.neural7.trace2local.lambda.Trace2LocalLambdaHandler.handleRequest(Trace2LocalLambdaHandler.java:50)\n\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)\n\tat java.base/java.lang.reflect.Method.invoke(Unknown Source)\n\tat com.amazonaws.services.lambda.runtime.api.client.EventHandlerLoader$PojoMethodRequestHandler.handleRequest(EventHandlerLoader.java:741)\n\tat com.amazonaws.services.lambda.runtime.api.client.EventHandlerLoader$PojoHandlerAsStreamHandler.handleRequest(EventHandlerLoader.java:658)\n\tat com.amazonaws.services.lambda.runtime.api.client.EventHandlerLoader$2.call(EventHandlerLoader.java:604)\n\tat com.amazonaws.services.lambda.runtime.api.client.AWSLambda.startRuntimeLoop(AWSLambda.java:329)\n\tat com.amazonaws.services.lambda.runtime.api.client.AWSLambda.startRuntimeLoops(AWSLambda.java:279)\n\tat com.amazonaws.services.lambda.runtime.api.client.AWSLambda.main(AWSLambda.java:228)\n"
+    },
+    "children": [
+     {
+      "nodeId": "3abbb49a9245f2ee",
+      "parentId": "8b2fca0280ee6dc6",
+      "kind": "DYNAMODB",
+      "label": "DynamoDB: orders",
+      "status": "OK",
+      "startedAt": "2026-10-01T02:35:43.892359510Z",
+      "selfTime": 25,
+      "totalTime": 25,
+      "attributes": {
+       "aws.dynamodb.table_names": "orders",
+       "http.request.method": "POST",
+       "rpc.system": "aws-api",
+       "http.response.status_code": "200",
+       "server.port": "4566",
+       "db.operation": "PutItem",
+       "db.system": "dynamodb",
+       "rpc.service": "DynamoDb",
+       "aws.request_id": "be023eb8-0ff2-4169-8a2b-77551d94b9c9",
+       "url.full": "http://172.18.0.3:4566/",
+       "server.address": "172.18.0.3",
+       "rpc.method": "PutItem"
+      },
+      "payload": null,
+      "mutation": {
+       "kind": "CREATE",
+       "target": "orders",
+       "key": "ORDER-C3",
+       "before": {},
+       "after": {
+        "pk": "ORDER-C3",
+        "total": 9999,
+        "customerId": "C-CARLA"
+       },
+       "deltas": [
+        {
+         "path": "pk",
+         "before": null,
+         "after": "ORDER-C3"
+        },
+        {
+         "path": "total",
+         "before": null,
+         "after": 9999
+        },
+        {
+         "path": "customerId",
+         "before": null,
+         "after": "C-CARLA"
+        }
+       ],
+       "fidelity": "EXACT"
+      },
+      "error": null,
+      "children": []
+     }
+    ]
+   }
+  ],
+  "metrics": {
+   "nodeCount": 2,
+   "maxDepth": 2,
+   "lostSpans": 0,
+   "droppedEvents": 0
+  },
+  "warnings": []
+ },
+ "logs": [
+  {
+   "timestamp": "2026-10-01T02:35:43.890881754Z",
+   "level": "INFO",
+   "logger": "stdout",
+   "message": "INFO pedido ORDER-C3 recebido (cliente C-CARLA, total 9999.00)",
+   "spanId": "8b2fca0280ee6dc6",
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "APP",
+   "traceId": "a5f5ccae9f8c42d9e6b1b3a0b65714ea"
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.919116580Z",
+   "level": "INFO",
+   "logger": "stdout",
+   "message": "INFO pedido ORDER-C3 gravado na tabela orders",
+   "spanId": "8b2fca0280ee6dc6",
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "APP",
+   "traceId": "a5f5ccae9f8c42d9e6b1b3a0b65714ea"
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.921698416Z",
+   "level": "WARN",
+   "logger": "stdout",
+   "message": "WARN pedido ORDER-C3 recusado: total 9999.00 excede o limite de crédito",
+   "spanId": "8b2fca0280ee6dc6",
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "APP",
+   "traceId": "a5f5ccae9f8c42d9e6b1b3a0b65714ea"
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.934012084Z",
+   "level": "ERROR",
+   "logger": "lambda",
+   "message": "Invocation failed: java.lang.IllegalStateException: ordem recusada: ORDER-C3 excede o limite de crédito",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "APP",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.986Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "START RequestId: b97dfe04-963d-4375-9cee-c0b02dc6c682 Version: $LATEST",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.988Z",
+   "level": "INFO",
+   "logger": "cloudwatch",
+   "message": "ordem recusada: ORDER-C3 excede o limite de crédito: java.lang.IllegalStateException",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.989Z",
+   "level": "INFO",
+   "logger": "cloudwatch",
+   "message": "java.lang.IllegalStateException: ordem recusada: ORDER-C3 excede o limite de crédito",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.989Z",
+   "level": "INFO",
+   "logger": "cloudwatch",
+   "message": "\tat tech.neural7.trace2local.examples.lambda.OrderProcessor.handle(OrderProcessor.java:87)",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.990Z",
+   "level": "INFO",
+   "logger": "cloudwatch",
+   "message": "\tat tech.neural7.trace2local.examples.lambda.OrderProcessor.handle(OrderProcessor.java:33)",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.991Z",
+   "level": "INFO",
+   "logger": "cloudwatch",
+   "message": "\tat tech.neural7.trace2local.lambda.Trace2LocalLambdaHandler.lambda$handleRequest$0(Trace2LocalLambdaHandler.java:50)",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.991Z",
+   "level": "INFO",
+   "logger": "cloudwatch",
+   "message": "\tat tech.neural7.trace2local.lambda.Trace2LocalLambdaRuntime.around(Trace2LocalLambdaRuntime.java:134)",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.992Z",
+   "level": "INFO",
+   "logger": "cloudwatch",
+   "message": "\tat tech.neural7.trace2local.lambda.Trace2LocalLambdaHandler.handleRequest(Trace2LocalLambdaHandler.java:50)",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.993Z",
+   "level": "INFO",
+   "logger": "cloudwatch",
+   "message": "\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.993Z",
+   "level": "INFO",
+   "logger": "cloudwatch",
+   "message": "\tat java.base/java.lang.reflect.Method.invoke(Unknown Source)",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.995Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "END RequestId: b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:43.995Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "REPORT RequestId: b97dfe04-963d-4375-9cee-c0b02dc6c682\tDuration: 82.00 ms\tBilled Duration: 83 ms\tMemory Size: 512 MB\tMax Memory Used: 512 MB",
+   "spanId": null,
+   "requestId": "b97dfe04-963d-4375-9cee-c0b02dc6c682",
+   "logGroup": "/aws/lambda/order-processor",
+   "logStream": "2026/10/01/[$LATEST]0d791022353e951a794d6f0496f8ecea",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  }
+ ]
+}

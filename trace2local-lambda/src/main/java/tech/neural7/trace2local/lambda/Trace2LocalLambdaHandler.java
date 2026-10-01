@@ -44,10 +44,21 @@ public abstract class Trace2LocalLambdaHandler<I, O> implements RequestHandler<I
         return null;
     }
 
+    /**
+     * Baggage W3C de entrada (default: nenhum). Para API Gateway, use
+     * {@link Trace2LocalTraceContext#baggageFromApiGatewayEvent} — permite escolher a
+     * variação de mock por requisição ({@code baggage: t2l.mock=<id>}, ADR-016).
+     */
+    protected io.opentelemetry.api.baggage.Baggage baggageOf(I input, Context context) {
+        return null;
+    }
+
     @Override
     public final O handleRequest(I input, Context context) {
         try {
-            return runtime.around(context, remoteParentOf(input, context), () -> handle(input, context));
+            String fn = context != null && context.getFunctionName() != null ? context.getFunctionName() : "lambda";
+            return runtime.around(context, remoteParentOf(input, context), baggageOf(input, context),
+                    LambdaTriggerSemantics.of(input, fn), () -> handle(input, context));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {

@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.SnsClientBuilder;
 import tech.neural7.trace2local.aws.Trace2LocalAws;
+import org.springframework.beans.factory.ObjectProvider;
 import tech.neural7.trace2local.config.Trace2LocalConfig;
 
 import java.net.URI;
@@ -21,27 +22,54 @@ import java.net.URI;
 public class AwsConfig {
 
     @Bean
-    public DynamoDbClient dynamoDbClient(Trace2LocalConfig cfg,
-                                         @Value("${localstack.endpoint}") String endpoint) {
+    public DynamoDbClient dynamoDbClient(ObjectProvider<Trace2LocalConfig> trace2local,
+                                         @Value("${localstack.endpoint}") String endpoint,
+                                         @Value("${aws.region:us-east-1}") String region) {
         DynamoDbClientBuilder builder = DynamoDbClient.builder()
-                .endpointOverride(URI.create(endpoint));
-        return Trace2LocalAws.instrument(builder, cfg).build();
+                .endpointOverride(URI.create(endpoint))
+                .region(software.amazon.awssdk.regions.Region.of(region))
+                .credentialsProvider(localCredentials());
+        // o bean Trace2LocalConfig só existe com a ferramenta ligada: fora de dev o cliente sobe cru
+        trace2local.ifAvailable(cfg -> Trace2LocalAws.instrument(builder, cfg));
+        return builder.build();
     }
 
     @Bean
-    public SnsClient snsClient(@Value("${localstack.endpoint}") String endpoint) {
+    public SnsClient snsClient(@Value("${localstack.endpoint}") String endpoint,
+                               @Value("${aws.region:us-east-1}") String region) {
         SnsClientBuilder builder = SnsClient.builder()
-                .endpointOverride(URI.create(endpoint));
+                .endpointOverride(URI.create(endpoint))
+                .region(software.amazon.awssdk.regions.Region.of(region))
+                .credentialsProvider(localCredentials());
         return Trace2LocalAws.instrument(builder).build();
     }
 
     @Bean
-    public software.amazon.awssdk.services.sqs.SqsClient sqsClient(@Value("${localstack.endpoint}") String endpoint) {
+    public software.amazon.awssdk.services.sqs.SqsClient sqsClient(@Value("${localstack.endpoint}") String endpoint,
+                                                                   @Value("${aws.region:us-east-1}") String region) {
         // client CRU: o span do receive é criado MANUALMENTE pelo BillingConsumer
         // (o wrap do AwsSdkTelemetry para SQS exige resolução eager do OTel, que
         // acontece antes do SDK do Trace2Local subir — ver Trace2LocalAws)
         return software.amazon.awssdk.services.sqs.SqsClient.builder()
                 .endpointOverride(URI.create(endpoint))
+                .region(software.amazon.awssdk.regions.Region.of(region))
+                .credentialsProvider(localCredentials())
+                .build();
+    }
+
+    /**
+     * Máquina limpa (SPEC §3.3): sem {@code ~/.aws} e sem {@code AWS_REGION} o demo
+     * precisa subir mesmo assim. A cadeia padrão continua valendo quando o dev
+     * tem credenciais; só na falta delas cai para as credenciais fictícias que o
+     * LocalStack aceita ({@code test/test}) — nunca para a AWS real.
+     */
+    static software.amazon.awssdk.auth.credentials.AwsCredentialsProvider localCredentials() {
+        return software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain.builder()
+                .reuseLastProviderEnabled(true)
+                .credentialsProviders(
+                        software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.builder().build(),
+                        software.amazon.awssdk.auth.credentials.StaticCredentialsProvider.create(
+                                software.amazon.awssdk.auth.credentials.AwsBasicCredentials.create("test", "test")))
                 .build();
     }
 }

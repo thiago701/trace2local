@@ -24,7 +24,7 @@ public final class ClassScanner {
     private static final String SPRING_REST = "Lorg/springframework/web/bind/annotation/RestController;";
     private static final String SPRING_CONTROLLER = "Lorg/springframework/web/bind/annotation/Controller;";
     private static final String REQUEST_MAPPING = "Lorg/springframework/web/bind/annotation/RequestMapping;";
-    private static final String TRACE_VANTA = "Ltech/neural7/trace2local/spring/Trace2Local;";
+    private static final String TRACE2LOCAL_ANNOTATION = "Ltech/neural7/trace2local/spring/Trace2Local;";
 
     public Findings scan(Path classesDir) throws IOException {
         Findings findings = new Findings();
@@ -60,7 +60,7 @@ public final class ClassScanner {
                     if (SPRING_REST.equals(descriptor) || SPRING_CONTROLLER.equals(descriptor)) {
                         isController = true;
                     }
-                    if (TRACE_VANTA.equals(descriptor)) {
+                    if (TRACE2LOCAL_ANNOTATION.equals(descriptor)) {
                         findings.businessMethods.add(className + " (classe)");
                     }
                     if (REQUEST_MAPPING.equals(descriptor)) {
@@ -99,7 +99,7 @@ public final class ClassScanner {
 
                         @Override
                         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-                            if (TRACE_VANTA.equals(desc)) {
+                            if (TRACE2LOCAL_ANNOTATION.equals(desc)) {
                                 return new AnnotationVisitor(Opcodes.ASM9) {
                                     @Override
                                     public void visit(String n, Object value) {

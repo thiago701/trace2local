@@ -1,0 +1,34 @@
+openapi: 3.0.3
+info:
+  title: Notificações ao cliente (push/e-mail, simulado)
+  version: "1.1"
+servers:
+  - url: http://notify.partner.local:8080
+paths:
+  /v1/notifications:
+    post:
+      operationId: notificar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [channel, recipientId, template]
+              properties:
+                channel: {type: string, enum: [PUSH, EMAIL, SMS]}
+                recipientId: {type: string}
+                template: {type: string}
+                data: {type: object}
+      responses:
+        "202":
+          description: enfileirada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [notificationId, status]
+                properties:
+                  notificationId: {type: string}
+                  status: {type: string, enum: [QUEUED, SENT]}
+              example: {notificationId: ntf-0001, status: QUEUED}

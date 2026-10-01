@@ -69,22 +69,28 @@ public final class OrderProcessor extends Trace2LocalLambdaHandler<Map<String, S
         String orderId = value(input, "orderId", "ORDER-" + (ctx != null ? ctx.getAwsRequestId() : "unknown"));
         String customerId = value(input, "customerId", "anonymous");
         String total = value(input, "total", "0.00");
+        // logs de aplicação no stdout: o runtime Lambda os entrega ao CloudWatch Logs
+        // (/aws/lambda/order-processor) e o Trace2Local os prende ao span/RequestId
+        System.out.println("INFO pedido " + orderId + " recebido (cliente " + customerId + ", total " + total + ")");
 
         // 1) DynamoDB — delta EXACT capturado pelo DynamoDbDeltaInterceptor
         dynamoDb.putItem(r -> r.tableName(tableName).item(Map.of(
                 "pk", AttributeValue.fromS(orderId),
                 "customerId", AttributeValue.fromS(customerId),
                 "total", AttributeValue.fromN(total))));
+        System.out.println("INFO pedido " + orderId + " gravado na tabela " + tableName);
 
         // 2) validação de negócio (caminho de erro — evidência de execução vermelha):
         //    o PutItem JÁ aconteceu: a árvore mostra o ramo DynamoDB OK sob uma raiz FAILED
         if ("true".equals(input != null ? input.get("fail") : null)) {
+            System.out.println("WARN pedido " + orderId + " recusado: total " + total + " excede o limite de crédito");
             throw new IllegalStateException("ordem recusada: " + orderId + " excede o limite de crédito");
         }
 
         // 3) SQS — span de produtor MANUAL com AWSTraceHeader (atributo de sistema):
         //    permite ao consumidor OrderBillingProcessor continuar a MESMA árvore (§4.11)
         sendToQueue(orderId, customerId);
+        System.out.println("INFO evento OrderCreated de " + orderId + " publicado em orders-queue");
 
         return "{\"status\":\"ok\",\"orderId\":\"" + orderId + "\"}";
     }

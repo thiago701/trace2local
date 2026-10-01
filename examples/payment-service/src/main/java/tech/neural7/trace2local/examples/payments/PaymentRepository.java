@@ -6,6 +6,8 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import org.springframework.stereotype.Repository;
 import tech.neural7.trace2local.aws.Trace2LocalAws;
+import org.springframework.beans.factory.ObjectProvider;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import tech.neural7.trace2local.config.Trace2LocalConfig;
 
 import java.math.BigDecimal;
@@ -25,10 +27,17 @@ public class PaymentRepository {
 
     private final DynamoDbClient dynamoDb;
 
-    public PaymentRepository(Trace2LocalConfig cfg) {
+    /**
+     * {@code ObjectProvider}: o bean {@link Trace2LocalConfig} só existe com a ferramenta ligada (perfil de dev) —
+     * em qualquer outro perfil o mesmo código sobe com o cliente cru (padrão recomendado no README).
+     */
+    public PaymentRepository(ObjectProvider<Trace2LocalConfig> trace2local) {
         String endpoint = System.getenv().getOrDefault("LOCALSTACK_ENDPOINT", "http://localhost:4566");
-        this.dynamoDb = Trace2LocalAws.instrumentWithReadBack(
-                        DynamoDbClient.builder(), cfg)
+        Trace2LocalConfig cfg = trace2local.getIfAvailable();
+        DynamoDbClientBuilder builder = cfg == null
+                ? DynamoDbClient.builder()
+                : Trace2LocalAws.instrumentWithReadBack(DynamoDbClient.builder(), cfg);
+        this.dynamoDb = builder
                 .region(Region.US_EAST_1)
                 .endpointOverride(URI.create(endpoint))
                 .build();

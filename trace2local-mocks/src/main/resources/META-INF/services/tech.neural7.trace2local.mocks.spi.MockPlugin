@@ -1,0 +1,19 @@
+# Plugins embutidos do Mock Connect (ADR-016). Plugins de terceiros usam o mesmo arquivo no próprio JAR.
+tech.neural7.trace2local.mocks.plugins.source.OpenApiStubSource
+tech.neural7.trace2local.mocks.plugins.source.ObservedStubSource
+tech.neural7.trace2local.mocks.plugins.source.InlineStubSource
+tech.neural7.trace2local.mocks.plugins.source.PassthroughStubSource
+tech.neural7.trace2local.mocks.plugins.transform.Transforms$SetField
+tech.neural7.trace2local.mocks.plugins.transform.Transforms$RemoveField
+tech.neural7.trace2local.mocks.plugins.transform.Transforms$RenameField
+tech.neural7.trace2local.mocks.plugins.transform.Transforms$SetStatus
+tech.neural7.trace2local.mocks.plugins.transform.Transforms$SetHeader
+tech.neural7.trace2local.mocks.plugins.transform.Transforms$Latency
+tech.neural7.trace2local.mocks.plugins.transform.Transforms$InjectFault
+tech.neural7.trace2local.mocks.plugins.transform.Transforms$Template
+tech.neural7.trace2local.mocks.plugins.predicate.Predicates$PathMatches
+tech.neural7.trace2local.mocks.plugins.predicate.Predicates$MethodIs
+tech.neural7.trace2local.mocks.plugins.predicate.Predicates$HeaderMatches
+tech.neural7.trace2local.mocks.plugins.predicate.Predicates$BodyMatches
+tech.neural7.trace2local.mocks.plugins.predicate.Predicates$CallCount
+tech.neural7.trace2local.mocks.plugins.predicate.Predicates$Probability

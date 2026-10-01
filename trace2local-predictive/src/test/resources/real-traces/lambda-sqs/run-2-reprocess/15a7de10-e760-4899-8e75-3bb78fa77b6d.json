@@ -1,0 +1,138 @@
+{
+ "execution": {
+  "executionId": "15a7de10-e760-4899-8e75-3bb78fa77b6d",
+  "traceId": "3ea53035916023875ed10eb8571b89d9",
+  "status": "FAILED",
+  "trigger": "LAMBDA_EVENT",
+  "startedAt": "2026-10-01T02:36:56.880375825Z",
+  "duration": 224,
+  "roots": [
+   {
+    "nodeId": "91acb4a3ac225436",
+    "parentId": null,
+    "kind": "LAMBDA",
+    "label": "idempotent-processor",
+    "status": "OK",
+    "startedAt": "2026-10-01T02:36:56.880375825Z",
+    "selfTime": 8,
+    "totalTime": 224,
+    "attributes": {
+     "t2l.execution.id": "15a7de10-e760-4899-8e75-3bb78fa77b6d",
+     "faas.invocation_id": "15a7de10-e760-4899-8e75-3bb78fa77b6d",
+     "faas.name": "idempotent-processor",
+     "t2l.trigger": "lambda_event"
+    },
+    "payload": null,
+    "mutation": null,
+    "error": null,
+    "children": [
+     {
+      "nodeId": "e7bb505018d7d5e6",
+      "parentId": "91acb4a3ac225436",
+      "kind": "BUSINESS",
+      "label": "IdempotencyGuard",
+      "status": "OK",
+      "startedAt": "2026-10-01T02:36:56.883383265Z",
+      "selfTime": 82,
+      "totalTime": 215,
+      "attributes": {
+       "t2l.business": "true"
+      },
+      "payload": null,
+      "mutation": null,
+      "error": null,
+      "children": [
+       {
+        "nodeId": "7cb65c164a3ecdde",
+        "parentId": "e7bb505018d7d5e6",
+        "kind": "DYNAMODB",
+        "label": "DynamoDB: idempotency",
+        "status": "ERROR",
+        "startedAt": "2026-10-01T02:36:56.942461263Z",
+        "selfTime": 132,
+        "totalTime": 132,
+        "attributes": {
+         "rpc.system": "aws-api",
+         "aws.dynamodb.table_names": "idempotency",
+         "url.full": "http://172.18.0.3:4566/",
+         "server.port": "4566",
+         "http.request.method": "POST",
+         "db.system": "dynamodb",
+         "rpc.service": "DynamoDb",
+         "server.address": "172.18.0.3",
+         "rpc.method": "PutItem",
+         "db.operation": "PutItem"
+        },
+        "payload": null,
+        "mutation": null,
+        "error": {
+         "type": "software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException",
+         "message": "The conditional request failed (Service: DynamoDb, Status Code: 400, Request ID: 035d9487-1213-4c5c-9ff3-a340c6b0a33b) (SDK Attempt Count: 1)",
+         "stack": "software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException: The conditional request failed (Service: DynamoDb, Status Code: 400, Request ID: 035d9487-1213-4c5c-9ff3-a340c6b0a33b) (SDK Attempt Count: 1)\n\tat software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException$BuilderImpl.build(ConditionalCheckFailedException.java:250)\n\tat software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException$BuilderImpl.build(ConditionalCheckFailedException.java:177)\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.utils.RetryableStageHelper.retryPolicyDisallowedRetryException(RetryableStageHelper.java:251)\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.RetryableStage.execute(RetryableStage.java:86)\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.RetryableStage.execute(RetryableStage.java:39)\n\tat software.amazon.awssdk.core.internal.http.pipeline.RequestPipelineBuilder$ComposingRequestPipelineStage.execute(RequestPipelineBuilder.java:206)\n\tat software.amazon.awssdk.core.internal.http.StreamManagingStage.execute(StreamManagingStage.java:53)\n\tat software.amazon.awssdk.core.internal.http.StreamManagingStage.execute(StreamManagingStage.java:35)\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ApiCallTimeoutTrackingStage.executeWithTimer(ApiCallTimeoutTrackingStage.java:82)\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ApiCallTimeoutTrackingStage.execute(ApiCallTimeoutTrackingStage.java:62)\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ApiCallTimeoutTrackingStage.execute(ApiCallTimeoutTrackingStage.java:43)\n\tat software.amazon.awssdk.core.internal.http.pipeline.RequestPipelineBuilder$ComposingRequestPipelineStage.execute(RequestPipelineBuilder.java:206)\n\tat software.amazon.awssdk.core.internal.http.pipeline.RequestPipelineBuilder$ComposingRequestPipelineStage.execute(RequestPipelineBuilder.java:206)\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ExecutionFailureExceptionReportingStage.execute(ExecutionFailureExceptionReportingStage.java:37)\n\tat software.amazon.awssdk.core.internal.http.pipeline.stages.ExecutionFailureExceptionReportingStage.execute(ExecutionFailureExceptionReportingStage.java:26)\n\tat software.amazon.awssdk.core.internal.http.AmazonSyncHttpClient$RequestExecutionBuilderImpl.execute(AmazonSyncHttpClient.java:213)\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.invoke(BaseSyncClientHandler.java:105)\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.doExecute(BaseSyncClientHandler.java:176)\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.lambda$execute$1(BaseSyncClientHandler.java:82)\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.measureApiCall(BaseSyncClientHandler.java:200)\n\tat software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler.execute(BaseSyncClientHandler.java:76)\n\tat software.amazon.awssdk.core.client.handler.SdkSyncClientHandler.execute(SdkSyncClientHandler.java:45)\n\tat software.amazon.awssdk.awscore.client.handler.AwsSyncClientHandler.execute(AwsSyncClientHandler.java:53)\n\tat software.amazon.awssdk.services.dynamodb.DefaultDynamoDbClient.putItem(DefaultDynamoDbClient.java:4703)\n\tat software.amazon.awssdk.services.dynamodb.DynamoDbClient.putItem(DynamoDbClient.java:7575)\n\tat tech.neural7.trace2local.examples.lambda.IdempotentProcessor.handle(IdempotentProcessor.java:70)\n\tat tech.neural7.trace2local.examples.lambda.IdempotentProcessor.handle(IdempotentProcessor.java:35)\n\tat tech.neural7.trace2local.lambda.Trace2LocalLambdaHandler.lambda$handleRequest$0(Trace2LocalLambdaHandler.java:50)\n\tat tech.neural7.trace2local.lambda.Trace2LocalLambdaRuntime.around(Trace2LocalLambdaRuntime.java:134)\n\tat tech.neural7.trace2local.lambda.Trace2LocalLambdaHandler.handleRequest(Trace2LocalLambdaHandler.java:50)\n\tat java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)\n\tat java.base/java.lang.reflect.Method.invoke(Unknown Source)\n\tat com.amazonaws.services.lambda.runtime.api.client.EventHandlerLoader$PojoMethodRequestHandler.handleRequest(EventHandlerLoader.java:741)\n\tat com.amazonaws.services.lambda.runtime.api.client.EventHandlerLoader$PojoHandlerAsStreamHandler.handleRequest(EventHandlerLoader.java:658)\n\tat com.amazonaws.services.lambda.runtime.api.client.EventHandlerLoader$2.call(EventHandlerLoader.java:604)\n\tat com.amazonaws.services.lambda.runtime.api.client.AWSLambda.startRuntimeLoop(AWSLambda.java:329)\n\tat com.amazonaws.services.lambda.runtime.api.client.AWSLambda.startRuntimeLoops(AWSLambda.java:279)\n\tat com.amazonaws.services.lambda.runtime.api.client.AWSLambda.main(AWSLambda.java:228)\n"
+        },
+        "children": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "metrics": {
+   "nodeCount": 3,
+   "maxDepth": 3,
+   "lostSpans": 0,
+   "droppedEvents": 0
+  },
+  "warnings": []
+ },
+ "logs": [
+  {
+   "timestamp": "2026-10-01T02:36:57.096696611Z",
+   "level": "WARN",
+   "logger": "stdout",
+   "message": "WARN chave PAY-777 já processada — reentrega ignorada sem efeito colateral",
+   "spanId": "e7bb505018d7d5e6",
+   "requestId": "15a7de10-e760-4899-8e75-3bb78fa77b6d",
+   "logGroup": "/aws/lambda/idempotent-processor",
+   "logStream": "2026/10/01/[$LATEST]9194edc1048bd57738d188bae10fb5b4",
+   "source": "APP",
+   "traceId": "3ea53035916023875ed10eb8571b89d9"
+  },
+  {
+   "timestamp": "2026-10-01T02:36:57.270Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "START RequestId: 15a7de10-e760-4899-8e75-3bb78fa77b6d Version: $LATEST",
+   "spanId": null,
+   "requestId": "15a7de10-e760-4899-8e75-3bb78fa77b6d",
+   "logGroup": "/aws/lambda/idempotent-processor",
+   "logStream": "2026/10/01/[$LATEST]9194edc1048bd57738d188bae10fb5b4",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:36:57.273Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "END RequestId: 15a7de10-e760-4899-8e75-3bb78fa77b6d",
+   "spanId": null,
+   "requestId": "15a7de10-e760-4899-8e75-3bb78fa77b6d",
+   "logGroup": "/aws/lambda/idempotent-processor",
+   "logStream": "2026/10/01/[$LATEST]9194edc1048bd57738d188bae10fb5b4",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:36:57.274Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "REPORT RequestId: 15a7de10-e760-4899-8e75-3bb78fa77b6d\tDuration: 395.96 ms\tBilled Duration: 396 ms\tMemory Size: 512 MB\tMax Memory Used: 512 MB",
+   "spanId": null,
+   "requestId": "15a7de10-e760-4899-8e75-3bb78fa77b6d",
+   "logGroup": "/aws/lambda/idempotent-processor",
+   "logStream": "2026/10/01/[$LATEST]9194edc1048bd57738d188bae10fb5b4",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  }
+ ]
+}

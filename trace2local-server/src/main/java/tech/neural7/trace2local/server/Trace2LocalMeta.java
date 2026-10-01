@@ -17,6 +17,15 @@ public record Trace2LocalMeta(
                 List.of("endpoints", "execute", "stream", "export"));
     }
 
+    /** Cópia com uma capacidade a mais (ex.: "mocks" quando o Mock Connect está ligado). */
+    public Trace2LocalMeta withCapability(String capability) {
+        java.util.List<String> caps = new java.util.ArrayList<>(capabilities);
+        if (!caps.contains(capability)) {
+            caps.add(capability);
+        }
+        return new Trace2LocalMeta(app, runtime, mode, version, List.copyOf(caps));
+    }
+
     public static Trace2LocalMeta station() {
         return new Trace2LocalMeta("station", System.getProperty("java.version"), "companion", VERSION,
                 List.of("endpoints", "stream", "export"));

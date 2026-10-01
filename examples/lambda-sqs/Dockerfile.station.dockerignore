@@ -1,0 +1,4 @@
+# contexto mínimo para o build do Station (BuildKit lê <Dockerfile>.dockerignore):
+# só o jar já empacotado entra no contexto — nada de código-fonte, .env ou target alheio
+*
+!trace2local-station/target/trace2local-station-0.1.0-SNAPSHOT.jar

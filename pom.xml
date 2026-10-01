@@ -73,12 +73,15 @@
     <module>trace2local-core</module>
     <module>trace2local-otel</module>
     <module>trace2local-ui</module>
+    <module>trace2local-predictive</module>
+    <module>trace2local-mocks</module>
     <module>trace2local-server</module>
     <module>trace2local-aws</module>
     <module>trace2local-jdbc</module>
     <module>trace2local-spring-boot-starter</module>
     <module>trace2local-lambda</module>
     <module>trace2local-station</module>
+    <module>trace2local-mcp</module>
     <module>trace2local-testing</module>
     <module>trace2local-maven-plugin</module>
     <module>trace2local-architecture</module>
@@ -148,6 +151,16 @@
       </dependency>
       <dependency>
         <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-predictive</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-mocks</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
         <artifactId>trace2local-aws</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -169,6 +182,11 @@
       <dependency>
         <groupId>tech.neural7.trace2local</groupId>
         <artifactId>trace2local-station</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-mcp</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

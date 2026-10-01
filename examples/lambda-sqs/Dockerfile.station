@@ -1,16 +1,18 @@
-# trace2local-station para o cenário lambda-sqs — exposto em 0.0.0.0:19877 para
-# receber OTLP/mutações da função Lambda emulada no LocalStack (ADR-002/§8.1:
-# exposição sem auth é consequência declarada do modo Companion local).
-FROM maven:3.9-eclipse-temurin-25 AS build
-WORKDIR /build
-COPY . .
-RUN mvn -q -pl trace2local-station -am -DskipTests package
-
-FROM eclipse-temurin:25-jre
+# Station do cenário lambda-sqs — imagem de RUNTIME a partir do jar já construído
+# (mvn -pl trace2local-station -am -DskipTests package). Sem Maven nem rede dentro
+# do Docker (build reprodutível e rápido), usuário não-root, dados em /data.
+#
+# Exposição: o bind 0.0.0.0 vale só DENTRO da rede do compose (a função Lambda
+# emulada fala com o Station pelo nome do serviço); no host a porta é publicada
+# apenas em 127.0.0.1 (ver docker-compose.yml) — ADR-007/§8.1.
+FROM eclipse-temurin:21-jre
+RUN groupadd -r t2l && useradd -r -g t2l -u 10001 t2l && mkdir -p /data && chown 10001:10001 /data
 WORKDIR /app
-COPY --from=build /build/trace2local-station/target/trace2local-station-0.1.0-SNAPSHOT.jar station.jar
+COPY trace2local-station/target/trace2local-station-0.1.0-SNAPSHOT.jar station.jar
+USER 10001
 EXPOSE 19877
-ENV TRACE2LOCAL_PORT=19877
-ENV TRACE2LOCAL_BIND_ADDRESS=0.0.0.0
-ENV TRACE2LOCAL_ALLOW_NON_LOOPBACK=true
-ENTRYPOINT ["java", "-jar", "station.jar"]
+ENV TRACE2LOCAL_PORT=19877 \
+    TRACE2LOCAL_BIND_ADDRESS=0.0.0.0 \
+    TRACE2LOCAL_ALLOW_NON_LOOPBACK=true \
+    TRACE2LOCAL_DATA_DIR=/data
+ENTRYPOINT ["java", "-XX:+ExitOnOutOfMemoryError", "-XX:MaxRAMPercentage=75", "-jar", "station.jar"]

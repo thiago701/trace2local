@@ -42,7 +42,7 @@ public class Trace2LocalAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public Trace2LocalConfig traceVantaConfig(Trace2LocalProperties properties, Environment environment) {
+    public Trace2LocalConfig trace2LocalConfig(Trace2LocalProperties properties, Environment environment) {
         boolean dev = ProductionGuard.isDevProfile(environment);
         if (!dev) {
             // D-3: a elevação de ReturnValues é de DEV — desligada em qualquer outro
@@ -64,7 +64,7 @@ public class Trace2LocalAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public Trace2LocalPipeline traceVantaPipeline(Trace2LocalConfig cfg) {
+    public Trace2LocalPipeline trace2LocalPipeline(Trace2LocalConfig cfg) {
         Trace2LocalPipeline pipeline = Trace2LocalPipeline.start(cfg);
         // sink compartilhado com o configurer SPI (quando o SDK é do autoconfigure do OTel)
         Trace2LocalBridge.set(pipeline.buffer()::offer, cfg);
@@ -81,7 +81,7 @@ public class Trace2LocalAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(OpenTelemetry.class)
     @ConditionalOnMissingClass("io.opentelemetry.instrumentation.spring.autoconfigure.OpenTelemetryAutoConfiguration")
-    public OpenTelemetrySdk traceVantaOpenTelemetry(Trace2LocalPipeline pipeline, Trace2LocalConfig cfg) {
+    public OpenTelemetrySdk trace2LocalOpenTelemetry(Trace2LocalPipeline pipeline, Trace2LocalConfig cfg) {
         List<io.opentelemetry.sdk.trace.export.SpanExporter> exporters = new java.util.ArrayList<>();
         String station = cfg.stationEndpoint();
         if (station != null && !station.isBlank()) {
@@ -103,13 +103,13 @@ public class Trace2LocalAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingClass("io.opentelemetry.instrumentation.spring.webmvc.v6_0.SpringWebMvcTelemetry")
-    public OncePerRequestFilter traceVantaWebFilter(Trace2LocalConfig cfg) {
+    public OncePerRequestFilter trace2LocalWebFilter(Trace2LocalConfig cfg) {
         return new Trace2LocalWebFilter(cfg);
     }
 
     /** Nós de negócio via @Trace2Local (AOP declarativo — sem bytecode em runtime). */
     @Bean
-    public Trace2LocalAspect traceVantaAspect(Trace2LocalConfig cfg) {
+    public Trace2LocalAspect trace2LocalAspect(Trace2LocalConfig cfg) {
         return new Trace2LocalAspect(cfg);
     }
 
@@ -131,7 +131,7 @@ public class Trace2LocalAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public RequestLauncher traceVantaRequestLauncher(
+    public RequestLauncher trace2LocalRequestLauncher(
             EndpointCatalog catalog,
             @org.springframework.beans.factory.annotation.Value("${server.port:8080}") int serverPort) {
         return new RequestLauncher(catalog::discover, serverPort);
@@ -140,7 +140,7 @@ public class Trace2LocalAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @Conditional(Trace2LocalEmbeddedModeCondition.class)
-    public Trace2LocalHttpServer traceVantaHttpServer(
+    public Trace2LocalHttpServer trace2LocalHttpServer(
             Trace2LocalConfig cfg,
             Trace2LocalPipeline pipeline,
             Trace2LocalProperties properties,

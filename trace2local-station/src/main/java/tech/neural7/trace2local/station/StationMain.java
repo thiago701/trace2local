@@ -35,17 +35,35 @@ public final class StationMain {
                     + "o ingest OTLP/mutações está aberto a qualquer um que alcance a porta "
                     + "(ADR-007/§8.1) — defina o token para proteger o ingest.");
         }
-        Trace2LocalHttpServer server = Trace2LocalHttpServer.builder(cfg, pipeline)
-                .meta(() -> Trace2LocalMeta.station())
-                .endpoints(() -> java.util.List.of()) // modo Companion: catálogo vazio, observação pura
+        // aba API: catálogo e disparo a partir do contrato OpenAPI do serviço (opcional)
+        OpenApiEndpoints api = OpenApiEndpoints.fromEnv();
+        Trace2LocalHttpServer.Builder builder = Trace2LocalHttpServer.builder(cfg, pipeline)
+                .endpoints(() -> api == null ? java.util.List.of() : api.endpoints());
+        if (api != null) {
+            builder.launcher(api);
+        }
+        builder
                 .extraRoute("/v1/traces", new OtlpTraceReceiver(pipeline, cfg))
                 .extraRoute("/t2lingest/v1/mutations", new MutationIngestReceiver(pipeline))
-                .build();
+                .extraRoute("/t2lingest/v1/logs", new LogIngestReceiver(pipeline));
+        // Mock Connect (ADR-016): plugins de mock de API + conselheiro — ligado por padrão, loopback
+        tech.neural7.trace2local.mocks.runtime.MockConnectWorker mocks = StationMocks.attach(cfg, pipeline, builder);
+        Trace2LocalMeta base = api == null ? Trace2LocalMeta.station() : Trace2LocalMeta.station().withCapability("execute");
+        Trace2LocalMeta meta = mocks == null ? base : base.withCapability("mocks");
+        Trace2LocalHttpServer server = builder.meta(() -> meta).build();
         server.start();
+        // linha do tempo baseada no CloudWatch (LocalStack) — opcional (ADR-012)
+        CloudWatchLogsTail cloudWatch = CloudWatchLogsTail.fromEnv(pipeline.logs());
         LOG.info(() -> "Trace2Local Station em http://" + cfg.bindAddress() + ":" + server.port()
-                + cfg.basePath() + " — OTLP em /v1/traces, mutações em /t2lingest/v1/mutations");
+                + cfg.basePath() + " — OTLP em /v1/traces, mutações em /t2lingest/v1/mutations, logs em /t2lingest/v1/logs");
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (cloudWatch != null) {
+                cloudWatch.close();
+            }
+            if (mocks != null) {
+                mocks.close();
+            }
             server.close();
             pipeline.close();
         }));
@@ -60,6 +78,8 @@ public final class StationMain {
                 .retentionMaxExecutions(intEnv("TRACE2LOCAL_RETENTION_MAX_EXECUTIONS", 100))
                 .stationToken(env("TRACE2LOCAL_STATION_TOKEN", null))
                 .infraScanDirs(env("TRACE2LOCAL_INFRA_SCAN_DIRS", ""))
+                .quiescenceMs(intEnv("TRACE2LOCAL_QUIESCENCE_MS", 5_000))
+                .lateContinuationMs(intEnv("TRACE2LOCAL_LATE_CONTINUATION_MS", 600_000))
                 .build();
     }
 
@@ -70,7 +90,12 @@ public final class StationMain {
 
     private static int intEnv(String key, int defaultValue) {
         String v = System.getenv(key);
-        return v != null ? Integer.parseInt(v) : defaultValue;
+        try {
+            return v != null && !v.isBlank() ? Integer.parseInt(v.trim()) : defaultValue;
+        } catch (NumberFormatException e) {
+            LOG.warning(key + " inválido (" + v + ") — usando " + defaultValue);
+            return defaultValue;
+        }
     }
 
     private static boolean boolEnv(String key, boolean defaultValue) {

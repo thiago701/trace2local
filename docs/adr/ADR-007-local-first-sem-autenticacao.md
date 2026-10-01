@@ -1,6 +1,6 @@
 # ADR-007 — Loopback-only, sem autenticação, redaction na origem
 
-- **Status:** Aceita (2026-09-18) — **decisão de produto, não apenas técnica**
+- **Status:** Aceita (2026-09-18) — **decisão de produto, não apenas técnica** · complementada pela [ADR-015](ADR-015-endurecimento-corporativo-ui-api.md) (2026-09-30: proteção contra CSRF/DNS rebinding e token de UI opcional para ambientes compartilhados)
 
 ## Contexto
 

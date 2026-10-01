@@ -26,12 +26,15 @@
 | `trace2local-bom` | BOM: versões do projeto + de terceiros (OTel, AWS, Jackson, testes) | — |
 | `trace2local-core` | TVEM (modelo de execução), ring buffer, assembler, redaction, config, SPI | — |
 | `trace2local-otel` | Ponte OTel↔TVEM: `SpanProcessor`, mapper semântico, boot do SDK | core |
-| `trace2local-ui` | Assets offline da UI (WebJar; zero referência externa) | — |
-| `trace2local-server` | HTTP (REST+SSE) sobre `com.sun.net.httpserver`, servidor estático, launcher | core, ui |
+| `trace2local-ui` | UI Resonance offline (WebJar, ES modules; zero referência externa; CSP estrita) | — |
+| `trace2local-predictive` | Regras Assíncronas Preditivas, laudo executivo/técnico, micro-decisões (Jev opcional + determinístico) — ADR-011/013 | core |
+| `trace2local-server` | HTTP (REST+SSE) sobre `com.sun.net.httpserver`, servidor estático, launcher, `RequestGuard` (ADR-015), `PredictiveService` | core, ui, predictive |
 | `trace2local-aws` | Instrumentação AWS SDK v2 (DynamoDB delta EXACT, SNS/SQS spans) | core, otel |
 | `trace2local-jdbc` | Delta de dados via JDBC (`mutation-capture=inferred`) | core |
 | `trace2local-lambda` | Modo Lambda: span raiz + flush síncrono + editor OTLP/mutações | core, otel |
-| `trace2local-station` | Modo Companion: ingest OTLP + canal de mutação (multi-serviço) | core, otel, server |
+| `trace2local-station` | Modo Companion: ingest OTLP + mutações + logs, tail de CloudWatch do LocalStack (multi-serviço) | core, otel, server |
+| `trace2local-mocks` | Mock Connect (ADR-016): pipeline source → transforms → sink, conselheiro, servidor embutido, REST `/api/mocks`, interoperabilidade WireMock | core, otel |
+| `trace2local-mcp` | Servidor MCP (ADR-017) para agentes de IA — cliente fino da API local (stdio / HTTP loopback) | — (só Jackson) |
 | `trace2local-spring-boot-starter` | Autoconfig Boot: Embedded ou Companion, launcher, `@Trace2Local` | core, otel, server, aws |
 | `trace2local-testing` | JUnit extension + assertions para os consumidores | core |
 | `trace2local-architecture` | Regras ArchUnit que travam esta arquitetura no CI | — |
@@ -71,8 +74,31 @@ flowchart LR
 3. O **hub SSE** propaga `LiveEvent`s coalescidos (20 fps) para a UI, que
    reconstrói a árvore por `parentId` (snapshots parciais não são confiáveis).
 4. Modo **Embedded**: tudo no mesmo processo. Modo **Companion/Station**:
-   OTLP `/v1/traces` + mutações `/t2lingest/v1/mutations` alimentam o mesmo
-   buffer — vários serviços viram UMA árvore (opcionalmente com Bearer token).
+   OTLP `/v1/traces` + mutações `/t2lingest/v1/mutations` + logs
+   `/t2lingest/v1/logs` alimentam o mesmo buffer — vários serviços viram UMA
+   árvore (opcionalmente com Bearer token).
+5. **Continuação tardia** (ADR-014): se o consumidor assíncrono chega depois
+   da quiescência do produtor, a execução é reaberta e fundida
+   (`execution.merged`) — mesma árvore, espera na fila medida.
+6. **Logs** (ADR-012) vão para o `LogStore` (por trace e RequestId), redigidos
+   na entrada; a UI os prende ao passo (spanId) ou à invocação (RequestId).
+7. **Inteligência** (ADR-011/013): cada `ExecutionCompleted` é oferecido (O(1))
+   ao pipeline preditivo; o worker correlaciona, detecta, decide (fato → Jev
+   opcional → regra local), ranqueia e publica `insights.updated` no SSE. O
+   laudo executivo/técnico é pré-calculado e servido em
+   `/api/executions/{id}/insights`.
+
+```mermaid
+flowchart LR
+    A[TraceAssembler] -- ExecutionCompleted --> Q[(fila preditiva)]
+    Q --> P[analisadores · FlowHistory · Topology]
+    P --> D{DecisionEngine}
+    D -- fato --> I[InsightStore]
+    D -- "Jev (opt-in)" --> I
+    D -- regra local --> I
+    L[LogStore] --> P
+    I -- insights.updated --> H[SSE] --> U[UI]
+```
 
 ## Pontos de extensão (SPI)
 
@@ -83,13 +109,18 @@ flowchart LR
 | `SdkTracerProviderConfigurer` (ServiceLoader) | Anexar o processor ao OTel do dev | app já instrumentada com OTel |
 | `EndpointDescriptor` + `ExecutionLauncher` | Catálogo e disparo da UI no Embedded | Spring MVC (built-in) ou outro framework |
 | `DataMutationChannel` | Publicar delta de dados de qualquer integração | connector custom de banco/API |
+| `LogChannel` | Publicar linhas de log correlacionáveis (trace/span/RequestId) | coletor de logs próprio |
+| `PredictiveAnalyzer` (ServiceLoader) | Regra preditiva de terceiros (escopo execução/acervo/projeto) | regra específica da empresa — siga o processo do [AGENTS.md](../AGENTS.md) |
+| `DecisionModel` | Outro motor de micro-decisão (modelo próprio/local) | modelo interno aprovado pela empresa |
 
 ## Configuração e segurança
 
 - `Trace2LocalConfig` é o modelo canônico; no Spring, `trace2local.*` liga via
   `Trace2LocalProperties` (contrato travado por `PropertyBindingContractTest`).
 - Segurança: bind loopback obrigatório, redaction na origem, token Bearer
-  opcional no ingest, headers de hardening — detalhes em [SECURITY.md](../SECURITY.md).
+  opcional no ingest, `RequestGuard` (Host allowlist, anti-CSRF, token de UI
+  opcional), CSP estrita — detalhes em [SECURITY.md](../SECURITY.md) e
+  [SEGURANCA-CORPORATIVA.md](SEGURANCA-CORPORATIVA.md).
 
 ## Compatibilidade e versões
 

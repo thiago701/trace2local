@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: Antifraude Pix (parceiro, simulado)
+  version: "1.4"
+servers:
+  - url: http://antifraude.partner.local:8080
+paths:
+  /v1/score:
+    post:
+      operationId: avaliarRisco
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [transferId, payerAccountId, amount]
+              properties:
+                transferId: {type: string}
+                payerAccountId: {type: string}
+                receiverIspb: {type: string}
+                amount: {type: number}
+      responses:
+        "200":
+          description: decisão
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Score'}
+              examples:
+                aprovado: {value: {decision: APPROVED, score: 112, reasons: []}}
+                revisao: {value: {decision: REVIEW, score: 640, reasons: [VALOR_ATIPICO]}}
+                negado: {value: {decision: DENIED, score: 930, reasons: [CONTA_SINALIZADA]}}
+        "422":
+          description: payload inválido
+components:
+  schemas:
+    Score:
+      type: object
+      required: [decision, score]
+      properties:
+        decision: {type: string, enum: [APPROVED, REVIEW, DENIED]}
+        score: {type: integer, minimum: 0, maximum: 1000}
+        reasons: {type: array, items: {type: string}}

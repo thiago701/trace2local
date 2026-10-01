@@ -1,0 +1,42 @@
+# syntax=docker/dockerfile:1.7
+# Build "só com Docker" do finance-pix — nenhum JDK, Maven, zip ou Terraform no host.
+# Gera os dois artefatos que o compose e o Terraform consomem e os EXPORTA para o host:
+#   trace2local-station-<v>.jar  (Station, release 21)   ·   lambda-jvm.zip (Lambdas Java 25 + JRE jlink Linux)
+#
+#   docker build -f examples/finance-pix/Dockerfile.build --target artifacts \
+#     --output type=local,dest=target/finance-pix-build .          # contexto = raiz do repositório
+#
+# Usado por scripts/up.ps1 (Windows). O jlink roda AQUI, em Linux: um JRE gerado no Windows não roda na Lambda.
+#
+# Proxy corporativo com inspeção TLS: passe a CA da empresa como contexto nomeado (arquivos .pem/.crt) —
+#   docker build --build-context ca=<pasta-com-a-ca> ...        (up.ps1 -CaBundle <arquivo>)
+# Sem isso, o estágio "ca" abaixo é vazio e nada muda.
+FROM scratch AS ca
+
+FROM maven:3.9-eclipse-temurin-25 AS build
+RUN --mount=from=ca,target=/tmp/extra-ca \
+    set -e; for f in $(find /tmp/extra-ca -type f \( -name '*.pem' -o -name '*.crt' \)); do \
+      mkdir -p /tmp/ca-split && cd /tmp/ca-split && rm -f c*.pem; \
+      awk '/BEGIN CERTIFICATE/{n++} n{print > ("c" n ".pem")}' "$f"; \
+      for c in c*.pem; do \
+        keytool -importcert -noprompt -cacerts -storepass changeit -alias "extra-$(basename "$f")-$c" -file "$c" >/dev/null 2>&1 || true; \
+        cp "$c" "/usr/local/share/ca-certificates/extra-$(basename "$f" | tr -c 'A-Za-z0-9' '_')-$c.crt"; \
+      done; \
+    done; update-ca-certificates >/dev/null 2>&1 || true
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends zip \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+COPY . .
+# checkout no Windows (core.autocrlf) pode trazer CRLF: bootstrap da Lambda e scripts precisam de LF
+RUN find examples/finance-pix/runtime examples/finance-pix/scripts -type f -exec sed -i 's/\r$//' {} + \
+ && chmod +x examples/finance-pix/scripts/*.sh
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -ntp install -DskipTests \
+      -pl trace2local-station,trace2local-lambda,trace2local-aws,trace2local-jdbc -am
+RUN --mount=type=cache,target=/root/.m2 \
+    cd examples/finance-pix && JAVA_HOME=/opt/java/openjdk ./scripts/build.sh
+
+FROM scratch AS artifacts
+COPY --from=build /src/trace2local-station/target/trace2local-station-0.1.0-SNAPSHOT.jar /station/
+COPY --from=build /src/examples/finance-pix/target/dist/lambda-jvm.zip /dist/

@@ -7,10 +7,11 @@ Station** (modo Companion, ADR-002).
 
 ```
 invoke ──▶ Lambda order-processor ──▶ DynamoDB PutItem (delta EXACT)
-                │                        ▲
-                └────────▶ SQS send ─────┘ flush síncrono: OTLP + /t2lingest/v1/mutations
-                                           ▼
-                                   Trace2Local Station (:19877)
+                │
+                └──▶ SQS orders-queue ══ event source mapping (real) ══▶ Lambda order-billing ──▶ DynamoDB UpdateItem
+   stdout ─▶ CloudWatch Logs (LocalStack) ──tail──┐        flush síncrono: OTLP + mutações + logs
+                                                  ▼
+                                   Trace2Local Station (127.0.0.1:19877) ── UI Resonance + Regras Preditivas
 ```
 
 ## O que é validado
@@ -26,6 +27,10 @@ invoke ──▶ Lambda order-processor ──▶ DynamoDB PutItem (delta EXACT)
 | **Monitoramento de IDEMPOTÊNCIA** | `IdempotentProcessor`: guarda condicional (`attribute_not_exists`) + nó BUSINESS — duplicado recusado aparece como DynamoDB **ERROR sem delta**, com o banco provando o não-efeito (3 chamadas → 2 itens). IT `IdempotencyJourneyIT` + demo `IdempotencyDemoRun` + telas 13/14 |
 | Flush síncrono | ADR-002/§4.2: o runtime força o flush no fim da invocação (teto 200 ms, configurável) |
 | Lambda REAL no LocalStack | fat jar + runtime `java21` + `aws lambda create-function`/`invoke` |
+| **Consumidor REAL via event source mapping** | `OrderBillingSqsHandler` (contrato `Records[].attributes.AWSTraceHeader`) chega segundos depois — **continuação tardia** funde na árvore do produtor (ADR-014) |
+| **Logs CloudWatch reais** | Station lê o CloudWatch do LocalStack (`TRACE2LOCAL_CLOUDWATCH_ENDPOINT`): START/END/REPORT + stdout, stack trace dobrada, alinhados ao span (ADR-012) |
+| **Regras de negócio × fluxo** | `trace2local-business.md` montado no Station: veredito por regra na aba Investigação |
+| **Regras Preditivas em dados reais** | rodada limpa sem achado de idempotência; reprocessamento (rodar o init de novo) revela `IDEM-001`/`IDEM-002` verdadeiros — [VALIDACAO-CASOS-REAIS.md](../../docs/qa/VALIDACAO-CASOS-REAIS.md) |
 
 ## Rodar
 
@@ -48,14 +53,22 @@ Evidências: `docs/qa/evidence-lambda-sqs*.json`.
 ### 2. Fluxo completo com o emulador Lambda do LocalStack (docker compose)
 
 ```sh
+mvn -pl trace2local-station -am -DskipTests package       # jar do Station (a imagem é só runtime)
 mvn -f examples/lambda-sqs/pom.xml -DskipTests package   # constrói target/lambda-sqs-bundle.jar
 docker compose -f examples/lambda-sqs/docker-compose.yml up
+docker compose -f examples/lambda-sqs/docker-compose.yml up --no-deps init-localstack   # (opcional) reprocessamento
 ```
 
-O compose sobe LocalStack (dynamodb+sqs+lambda), o Station (em container,
-`:19877`), provisiona a tabela/fila, cria a função `order-processor` (runtime
-`java21`), e faz uma **invocação de fumaça real** — a árvore aparece em
+O compose sobe LocalStack (dynamodb+sqs+lambda+logs) e o Station (container
+não-root, publicado **só em 127.0.0.1:19877**; as funções o alcançam pela rede
+interna `trace2local-demo` via `LAMBDA_DOCKER_NETWORK`), provisiona tabelas/fila,
+cria **três funções** java21 (`order-processor`, `order-billing` com *event source
+mapping* na fila, `idempotent-processor`) e roda seis jornadas reais (felizes,
+recusa por limite de crédito, idempotência criada + reentrega). A UI fica em
 http://localhost:19877/trace2local.
+
+Loop de usabilidade por persona (Playwright) sobre esse Station:
+`cd scripts/ux-loop && npm i && node persona-loop.mjs` (telas em `docs/qa/screenshots/v3-ressonancia`).
 
 Captura das telas (evidência visual) **com validação de consistência UI↔API**
 (o script compara os labels desenhados no canvas com a API REST do Station e
@@ -92,7 +105,8 @@ docker run --rm --entrypoint /bin/sh --network lambda-sqs_default \
   LocalStack no ambiente do emulador) → `http://localhost:4566`.
 - **Station endpoint** (dentro da função): `TRACE2LOCAL_STATION_ENDPOINT`
   (ADR-002 — obrigatório no modo Lambda); no compose aponta para
-  `http://host.docker.internal:19877` (Station publicado no host).
+  `http://trace2local-station:19877` (rede interna do compose — o Station não
+  precisa ser exposto fora do loopback do host).
 - **Fat jar**: `maven-shade-plugin` unifica `META-INF/services` (ServiceLoader
   do AWS SDK v2 e do OTel) e remove assinaturas; `aws-lambda-java-core` é
   `provided` — a imagem `java:21` do runtime já o fornece (embalar cópia

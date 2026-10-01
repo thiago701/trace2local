@@ -1,0 +1,138 @@
+openapi: 3.0.3
+info:
+  title: Pix Transfers API (demo Trace2Local)
+  version: 1.0.0
+  description: |
+    Iniciação de transferências Pix com antifraude. Contrato-fonte do API Gateway
+    (importado pelo Terraform com as integrações `aws_proxy`) e do catálogo de
+    endpoints do Trace2Local. Domínio fictício — nenhum dado real.
+  x-trace2local-glossary: ../trace2local-business.md
+servers:
+  - url: http://localhost:4566/restapis/{apiId}/local/_user_request_
+    variables:
+      apiId:
+        default: pix
+tags:
+  - name: transfers
+paths:
+  /pix/transfers:
+    post:
+      tags: [transfers]
+      operationId: createTransfer
+      summary: Inicia uma transferência Pix (assíncrona — liquidação via SPI)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Chave de idempotência do cliente (reenvio devolve a mesma resposta)
+          schema: {type: string, minLength: 8, maxLength: 64}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TransferRequest'}
+            examples:
+              aprovada: {value: {payerAccountId: acc-001, pixKey: joao@pix.example, amount: 150.00, description: "almoço"}}
+              revisao: {value: {payerAccountId: acc-001, pixKey: joao@pix.example, amount: 7000.00}}
+              negada: {value: {payerAccountId: acc-bloqueada, pixKey: joao@pix.example, amount: 90.00}}
+      responses:
+        "202":
+          description: Aceita (ACCEPTED) ou em revisão (IN_REVIEW)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TransferAccepted'}
+        "400":
+          description: Requisição inválida
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Problem'}
+        "409":
+          description: Idempotency-Key reutilizada com outro payload
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Problem'}
+        "422":
+          description: Recusada (antifraude, saldo, limite, chave inexistente)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Problem'}
+        "502":
+          description: Parceiro indisponível (DICT, KYC, antifraude)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Problem'}
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        uri: "${pix_api_invoke_arn}"
+        passthroughBehavior: when_no_match
+  /pix/transfers/{transferId}:
+    get:
+      tags: [transfers]
+      operationId: getTransfer
+      summary: Consulta o estado de uma transferência
+      parameters:
+        - name: transferId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Transferência
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Transfer'}
+        "404":
+          description: Não encontrada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Problem'}
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        uri: "${pix_api_invoke_arn}"
+        passthroughBehavior: when_no_match
+components:
+  schemas:
+    TransferRequest:
+      type: object
+      required: [payerAccountId, pixKey, amount]
+      properties:
+        payerAccountId: {type: string, example: acc-001}
+        pixKey: {type: string, description: "chave Pix do recebedor (e-mail, CPF, telefone ou EVP)"}
+        amount: {type: number, minimum: 0.01, maximum: 1000000}
+        description: {type: string, maxLength: 140}
+    TransferAccepted:
+      type: object
+      required: [transferId, status, endToEndId]
+      properties:
+        transferId: {type: string}
+        status: {type: string, enum: [ACCEPTED, IN_REVIEW]}
+        endToEndId: {type: string, description: "identificador E2E do Pix (E + ISPB + data + sequencial)"}
+        receiver: {$ref: '#/components/schemas/Party'}
+    Transfer:
+      type: object
+      required: [transferId, status, amount]
+      properties:
+        transferId: {type: string}
+        status: {type: string, enum: [ACCEPTED, IN_REVIEW, REJECTED, SETTLED, FAILED]}
+        amount: {type: number}
+        endToEndId: {type: string}
+        receiver: {$ref: '#/components/schemas/Party'}
+        createdAt: {type: string, format: date-time}
+        settledAt: {type: string, format: date-time}
+    Party:
+      type: object
+      properties:
+        ispb: {type: string, example: "60701190"}
+        name: {type: string, description: "nome mascarado (LGPD)"}
+    Problem:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum: [INVALID_REQUEST, IDEMPOTENCY_CONFLICT, INVALID_KEY, KYC_BLOCKED, LIMIT_EXCEEDED,
+                 INSUFFICIENT_FUNDS, REJECTED_BY_FRAUD, PARTNER_UNAVAILABLE, NOT_FOUND]
+        message: {type: string}
+        partner: {type: string}

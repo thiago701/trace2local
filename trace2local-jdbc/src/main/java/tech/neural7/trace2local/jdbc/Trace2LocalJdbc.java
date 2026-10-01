@@ -28,7 +28,7 @@ import java.time.Instant;
  * estáveis {@code db.*} e publica o delta {@code INFERRED} quando configurado.
  *
  * <pre>{@code
- * DataSource instrumented = Trace2LocalJdbc.wrap(dataSource, traceVantaConfig);
+ * DataSource instrumented = Trace2LocalJdbc.wrap(dataSource, trace2localConfig);
  * }</pre>
  *
  * Níveis de captura (SPEC §4.10): {@code off} (padrão — só o span), {@code inferred}

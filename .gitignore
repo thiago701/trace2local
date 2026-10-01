@@ -12,3 +12,26 @@ dependency-reduced-pom.xml
 
 node_modules/
 
+
+# Trace2Local — dados locais (baseline/histórico, feedback de insights, cassetes Jev de dev)
+.trace2local/
+# chaves e configurações locais de modelos (Jev/LLM) — nunca versionar
+.env.local
+*.secrets
+# saídas do loop de usabilidade
+scripts/ux-loop/out/
+
+# Terraform (estado e plugins locais — o lock de provider é versionado)
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+# Python (scripts de validação)
+__pycache__/
+*.pyc
+# pacotes e saídas de build das demos
+*.tgz
+examples/**/target/
+# GraalVM native-image: binários e relatórios de build
+*.bgv
+svm_err_*.md

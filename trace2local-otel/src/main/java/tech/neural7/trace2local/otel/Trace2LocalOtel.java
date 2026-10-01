@@ -49,6 +49,9 @@ public final class Trace2LocalOtel {
     public static SdkTracerProviderBuilder tracerProviderBuilder(
             Trace2LocalConfig cfg, Consumer<Trace2LocalEvent> sink, List<SpanExporter> exporters) {
         SdkTracerProviderBuilder builder = SdkTracerProvider.builder()
+                // alwaysOn: traceparent de entrada com sampled=0 (gateways, X-Ray) não pode
+                // apagar a execução local — o Trace2Local registra tudo (achado na stack Lambda)
+                .setSampler(io.opentelemetry.sdk.trace.samplers.Sampler.alwaysOn())
                 .addSpanProcessor(new Trace2LocalSpanProcessor(sink, cfg));
         for (SpanExporter exporter : exporters) {
             builder.addSpanProcessor(BatchSpanProcessor.builder(exporter).build());

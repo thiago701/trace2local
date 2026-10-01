@@ -29,20 +29,38 @@ Requisitos: **JDK 21+** (CI roda 21 e 25) e **Docker** apenas para os E2E.
 
 1. `./mvnw install` verde (unidade + propriedade + contrato + ArchUnit).
 2. Mudanças em telemetria/redaction têm teste de corpus ou de invariante.
-3. Mudanças de UI têm captura/checagem de consistência atualizadas
-   (`scripts/screenshots/`).
-4. CHANGELOG atualizado na seção `0.1.0-SNAPSHOT`.
-5. Nada de dependência nova sem versão pinada no parent/BOM.
+3. Mudanças de UI passam no loop de usabilidade (`scripts/ux-loop/persona-loop-pix.mjs`,
+   inclui auditoria de contraste WCAG) e atualizam as telas em `docs/qa/screenshots/v4-resonance/`.
+4. Mudanças em coleta, árvore, Lambda, Mock Connect ou MCP rodam as jornadas da stack alvo
+   (`examples/finance-pix/scripts/journeys.py`) — em JVM **e** nativo quando tocam o caminho do Lambda
+   ([docs/qa/ACEITE.md](docs/qa/ACEITE.md)). Achado vira correção + trava de regressão.
+5. CHANGELOG atualizado na seção `0.1.0-SNAPSHOT`.
+6. Nada de dependência nova sem versão pinada no parent/BOM.
 
 ## Estrutura de pastas
 
 ```
 trace2local-*/        módulos da lib (um por responsabilidade — docs/ARQUITETURA.md)
-examples/            apps de demonstração (NÃO são a lib)
+examples/            apps de demonstração (NÃO são a lib); stack alvo: examples/finance-pix
 docs/                SPEC, ADRs, pesquisa, arquitetura, evidências de QA
-scripts/screenshots/ captura e validação de consistência da UI
+scripts/ux-loop/     loops de usabilidade por persona (Playwright) — UI Resonance
+scripts/real-traces/ captura de traces reais para o dataset preditivo
+scripts/screenshots/ capturas da UI v2 (legado — ver LEGACY.md)
 .github/             CI e templates de issues/PRs
+AGENTS.md            guia para agentes/contribuidores + evolução das regras preditivas
 ```
+
+## UI, inteligência e segurança — regras rápidas
+
+- **UI**: ES modules sem dependência externa; nada de `style=`, `on*=`, script
+  inline ou `innerHTML` com dados (o `UiCspComplianceTest` reprova); rode
+  `scripts/ux-loop` contra um Station vivo antes de abrir PR de UI.
+- **Regras preditivas / micro-decisões**: siga o processo de promoção e os
+  deveres do [AGENTS.md](AGENTS.md#predictive-async-rules--continuous-evolution) —
+  regra nova exige cenário + controle e benchmark atualizado em `docs/qa/`.
+- **API**: clientes de `POST/DELETE` enviam `X-Trace2Local: 1` (ADR-015).
+- **Segredos**: chaves (Jev, LLM, tokens) só por variável de ambiente — nunca
+  em código, teste, cassete ou commit.
 
 ## Reportando bugs e pedindo features
 

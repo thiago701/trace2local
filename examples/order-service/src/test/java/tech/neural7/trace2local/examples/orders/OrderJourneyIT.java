@@ -160,7 +160,7 @@ class OrderJourneyIT {
     }
 
     @Autowired
-    Trace2LocalHttpServer traceVantaServer;
+    Trace2LocalHttpServer trace2LocalServer;
 
     // ------------------------------------------------------------- evidência
 
@@ -196,7 +196,7 @@ class OrderJourneyIT {
     }
 
     private String tvUrl() {
-        return "http://127.0.0.1:" + traceVantaServer.port() + "/trace2local";
+        return "http://127.0.0.1:" + trace2LocalServer.port() + "/trace2local";
     }
 
     // ------------------------------------------------------------- JC-1 + JC-3 (consumidor na mesma árvore)
@@ -205,7 +205,7 @@ class OrderJourneyIT {
     @Order(1)
     void jc1AndJc3FullJourneyWithAsyncConsumer() throws Exception {
         evidence("\n## JC-1 + JC-3 — POST /orders disparado pela UI, consumido pela fila na MESMA árvore");
-        evidence("App :18089 | Trace2Local :" + traceVantaServer.port());
+        evidence("App :18089 | Trace2Local :" + trace2LocalServer.port());
 
         long dispatchToStartedMs;
         long totalMs;
@@ -350,6 +350,8 @@ class OrderJourneyIT {
         HttpResponse<String> response = HTTP.send(HttpRequest.newBuilder()
                         .uri(URI.create(tvUrl() + "/api/execute"))
                         .header("Content-Type", "application/json")
+                        // prova de mesma origem exigida nas mutações da API (RequestGuard — anti-CSRF)
+                        .header("X-Trace2Local", "1")
                         .POST(HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(payload)))
                         .build(),
                 HttpResponse.BodyHandlers.ofString());

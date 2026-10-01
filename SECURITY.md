@@ -38,17 +38,45 @@ segurança declaradas, não acidentais:
    API (execuções carregam payloads), sem CORS aberto, path traversal
    bloqueado no servidor estático.
 
+6. **Proteção do navegador do dev (ADR-015)** — `RequestGuard` em todas as
+   rotas da UI/API: allowlist de `Host` (DNS rebinding → 421), mutações exigem
+   `X-Trace2Local: 1` e `Origin` de mesma origem (CSRF → 403), token de UI
+   opcional (`TRACE2LOCAL_UI_TOKEN`, gerado no perfil `corporate` fora do
+   loopback) trocado por cookie `HttpOnly; SameSite=Strict`.
+7. **Inteligência local-first (ADR-011/013)** — sem chave/endpoint nada sai da
+   máquina; com Jev, só estado estrutural redigido; LLM opcional e só por POST.
+8. **Mock Connect (ADR-016)** — gestão sob o mesmo `RequestGuard`; servidor de
+   mocks herda o bind do Station; destino `wiremock` em host público bloqueado
+   por padrão (`TRACE2LOCAL_MOCKS_ALLOW_PUBLIC_SINKS`); `PASSWORD` mascarado em
+   validação, status, estado persistido e export; `${env:…}` para segredos;
+   roteamento no cliente só com `TRACE2LOCAL_MOCKS_ROUTING=on` (opt-in) e o
+   runtime Lambda é *pass-through* sem Station — nunca liga em produção por acaso.
+9. **Servidor MCP (ADR-017)** — cliente fino da API local: base só loopback
+   (`--allow-remote` explícito), **somente leitura por padrão** (mutações com
+   `TRACE2LOCAL_MCP_ALLOW_MUTATIONS=true`), dados `structural` por padrão
+   (sem corpos de payload nem valores), transporte HTTP só em `127.0.0.1` com
+   validação de `Origin` e Bearer opcional; nada persistido. Registrar o servidor
+   num harness é a autorização para o agente ler execuções e logs.
+
+Revisão completa, topologias e checklist de aprovação: **[docs/SEGURANCA-CORPORATIVA.md](docs/SEGURANCA-CORPORATIVA.md)**.
+
 ## Limites declarados (não são bugs)
 
-- A **UI/API de inspeção não têm autenticação**: quem alcança a porta vê o
-  acervo. Por isso o loopback é obrigatório por padrão e a exposição é uma
-  decisão explícita. Se você precisa de acesso remoto à UI, coloque um proxy
-  autenticado na frente (SSH tunnel ou reverse proxy com auth).
-- O **token protege apenas o ingest** (`/v1/traces`, `/t2lingest/v1/mutations`);
-  as rotas da UI continuam locais.
+- Sem token configurado, a **UI/API de inspeção não exige login**: em
+  loopback, quem tem a máquina tem a UI (ADR-007). Fora do loopback use o
+  perfil `TRACE2LOCAL_SECURITY_PROFILE=corporate` (token) e TLS no proxy.
+- O **token de ingest** protege `/v1/traces`, `/t2lingest/v1/mutations` e
+  `/t2lingest/v1/logs`; o token de UI protege a UI/API.
 - Redaction é mitigação de vazamento acidental, não proteção contra atacante
   com acesso ao processo.
-- O Station não faz TLS: use em rede local ou atrás de um proxy TLS.
+- O Station não faz TLS: use em rede local ou atrás de um proxy TLS
+  (`TRACE2LOCAL_COOKIE_SECURE=true`).
+- Clientes programáticos de `POST/DELETE` na API precisam enviar
+  `X-Trace2Local: 1`.
+- O servidor de mocks (`embedded`) atende sem autenticação quem alcança a sua
+  porta — mantenha-a no loopback/rede do compose, como a do Station.
+- Saída das ferramentas MCP inclui logs e textos do app: o agente deve tratá-la
+  como dado (nunca como instrução) — o projeto documenta isso, o protocolo não impõe.
 
 ## Dependências — auditoria
 

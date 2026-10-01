@@ -1,0 +1,16 @@
+{
+  "mappings": [
+    {
+      "name": "Notificações — enfileirar",
+      "priority": 5,
+      "request": {"method": "POST", "urlPath": "/v1/notifications"},
+      "response": {
+        "status": 202,
+        "headers": {"Content-Type": "application/json"},
+        "transformers": ["response-template"],
+        "jsonBody": {"notificationId": "ntf-{{randomValue length=8 type='ALPHANUMERIC'}}", "status": "QUEUED"},
+        "fixedDelayMilliseconds": 25
+      }
+    }
+  ]
+}

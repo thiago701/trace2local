@@ -156,6 +156,10 @@ public final class DynamoDbDeltaInterceptor implements ExecutionInterceptor {
             DataMutation mutation = null;
             if (request instanceof PutItemRequest put && response instanceof PutItemResponse putResp) {
                 var before = captureBefore ? putResp.attributes() : null; // ALL_OLD (elevado ou pedido pelo dev)
+                if (before != null && before.isEmpty()) {
+                    // chave NOVA: o SDK devolve mapa vazio (auto-construct), não null — "nada antes"
+                    before = null;
+                }
                 var after = put.item();
                 mutation = mutation(MutationKind.CREATE, put.tableName(), keyOrItem(null, after),
                         AttributeValues.toJson(before), AttributeValues.toJson(after), MutationFidelity.EXACT);

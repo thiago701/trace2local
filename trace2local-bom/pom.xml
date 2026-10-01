@@ -39,6 +39,16 @@
       </dependency>
       <dependency>
         <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-predictive</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-mocks</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
         <artifactId>trace2local-aws</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -60,6 +70,11 @@
       <dependency>
         <groupId>tech.neural7.trace2local</groupId>
         <artifactId>trace2local-station</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tech.neural7.trace2local</groupId>
+        <artifactId>trace2local-mcp</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -1,0 +1,28 @@
+{
+  "mappings": [
+    {
+      "name": "DICT — chave inexistente",
+      "priority": 1,
+      "request": {"method": "GET", "urlPathPattern": "/api/v2/entries/naoexiste.*"},
+      "response": {"status": 404, "headers": {"Content-Type": "application/json"},
+                   "jsonBody": {"code": "ENTRY_NOT_FOUND", "message": "chave não encontrada"}}
+    },
+    {
+      "name": "DICT — consulta de chave",
+      "priority": 5,
+      "request": {"method": "GET", "urlPathTemplate": "/api/v2/entries/{key}"},
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "transformers": ["response-template"],
+        "jsonBody": {
+          "key": "{{request.path.key}}",
+          "keyType": "EMAIL",
+          "account": {"participant": "60701190", "branch": "0001", "accountNumber": "0007654321", "accountType": "CACC"},
+          "owner": {"type": "NATURAL_PERSON", "name": "J*** S***", "taxIdNumber": "***.456.789-**"}
+        },
+        "fixedDelayMilliseconds": 35
+      }
+    }
+  ]
+}

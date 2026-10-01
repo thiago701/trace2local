@@ -1,0 +1,164 @@
+{
+ "execution": {
+  "executionId": "ea2ea619-babf-40b5-b13b-2116be2b05f6",
+  "traceId": "f6a8f647bc5750d0b8455ebc1579e8d1",
+  "status": "COMPLETED",
+  "trigger": "LAMBDA_EVENT",
+  "startedAt": "2026-10-01T02:35:49.030336828Z",
+  "duration": 345,
+  "roots": [
+   {
+    "nodeId": "8b46a5667174ae1e",
+    "parentId": null,
+    "kind": "LAMBDA",
+    "label": "idempotent-processor",
+    "status": "OK",
+    "startedAt": "2026-10-01T02:35:49.030336828Z",
+    "selfTime": 6,
+    "totalTime": 345,
+    "attributes": {
+     "t2l.execution.id": "ea2ea619-babf-40b5-b13b-2116be2b05f6",
+     "faas.invocation_id": "ea2ea619-babf-40b5-b13b-2116be2b05f6",
+     "faas.name": "idempotent-processor",
+     "t2l.trigger": "lambda_event"
+    },
+    "payload": null,
+    "mutation": null,
+    "error": null,
+    "children": [
+     {
+      "nodeId": "44d3d2768f2ed338",
+      "parentId": "8b46a5667174ae1e",
+      "kind": "BUSINESS",
+      "label": "IdempotencyGuard",
+      "status": "OK",
+      "startedAt": "2026-10-01T02:35:49.033657128Z",
+      "selfTime": 91,
+      "totalTime": 338,
+      "attributes": {
+       "t2l.business": "true"
+      },
+      "payload": null,
+      "mutation": null,
+      "error": null,
+      "children": [
+       {
+        "nodeId": "ff2a774ac3a8444f",
+        "parentId": "44d3d2768f2ed338",
+        "kind": "DYNAMODB",
+        "label": "DynamoDB: idempotency",
+        "status": "OK",
+        "startedAt": "2026-10-01T02:35:49.100086718Z",
+        "selfTime": 246,
+        "totalTime": 246,
+        "attributes": {
+         "aws.dynamodb.table_names": "idempotency",
+         "http.request.method": "POST",
+         "rpc.system": "aws-api",
+         "http.response.status_code": "200",
+         "server.port": "4566",
+         "db.operation": "PutItem",
+         "db.system": "dynamodb",
+         "rpc.service": "DynamoDb",
+         "aws.request_id": "2b3cb1bc-a650-44a5-b544-3f1fe091515d",
+         "url.full": "http://172.18.0.3:4566/",
+         "server.address": "172.18.0.3",
+         "rpc.method": "PutItem"
+        },
+        "payload": null,
+        "mutation": {
+         "kind": "CREATE",
+         "target": "idempotency",
+         "key": "PAY-777",
+         "before": {},
+         "after": {
+          "createdAt": "2026-10-01T02:35:49.044306968Z",
+          "payload": "{\"valor\":120}",
+          "pk": "PAY-777"
+         },
+         "deltas": [
+          {
+           "path": "createdAt",
+           "before": null,
+           "after": "2026-10-01T02:35:49.044306968Z"
+          },
+          {
+           "path": "payload",
+           "before": null,
+           "after": "{\"valor\":120}"
+          },
+          {
+           "path": "pk",
+           "before": null,
+           "after": "PAY-777"
+          }
+         ],
+         "fidelity": "EXACT"
+        },
+        "error": null,
+        "children": []
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "metrics": {
+   "nodeCount": 3,
+   "maxDepth": 3,
+   "lostSpans": 0,
+   "droppedEvents": 0
+  },
+  "warnings": []
+ },
+ "logs": [
+  {
+   "timestamp": "2026-10-01T02:35:49.369767854Z",
+   "level": "INFO",
+   "logger": "stdout",
+   "message": "INFO chave de idempotência PAY-777 registrada — efeito aplicado uma única vez",
+   "spanId": "44d3d2768f2ed338",
+   "requestId": "ea2ea619-babf-40b5-b13b-2116be2b05f6",
+   "logGroup": "/aws/lambda/idempotent-processor",
+   "logStream": "2026/10/01/[$LATEST]03a98edce1653becf0d3584bfaf8b293",
+   "source": "APP",
+   "traceId": "f6a8f647bc5750d0b8455ebc1579e8d1"
+  },
+  {
+   "timestamp": "2026-10-01T02:35:49.544Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "START RequestId: ea2ea619-babf-40b5-b13b-2116be2b05f6 Version: $LATEST",
+   "spanId": null,
+   "requestId": "ea2ea619-babf-40b5-b13b-2116be2b05f6",
+   "logGroup": "/aws/lambda/idempotent-processor",
+   "logStream": "2026/10/01/[$LATEST]03a98edce1653becf0d3584bfaf8b293",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:49.547Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "END RequestId: ea2ea619-babf-40b5-b13b-2116be2b05f6",
+   "spanId": null,
+   "requestId": "ea2ea619-babf-40b5-b13b-2116be2b05f6",
+   "logGroup": "/aws/lambda/idempotent-processor",
+   "logStream": "2026/10/01/[$LATEST]03a98edce1653becf0d3584bfaf8b293",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  },
+  {
+   "timestamp": "2026-10-01T02:35:49.549Z",
+   "level": "PLATFORM",
+   "logger": "cloudwatch",
+   "message": "REPORT RequestId: ea2ea619-babf-40b5-b13b-2116be2b05f6\tDuration: 519.03 ms\tBilled Duration: 520 ms\tMemory Size: 512 MB\tMax Memory Used: 512 MB",
+   "spanId": null,
+   "requestId": "ea2ea619-babf-40b5-b13b-2116be2b05f6",
+   "logGroup": "/aws/lambda/idempotent-processor",
+   "logStream": "2026/10/01/[$LATEST]03a98edce1653becf0d3584bfaf8b293",
+   "source": "CLOUDWATCH",
+   "traceId": null
+  }
+ ]
+}

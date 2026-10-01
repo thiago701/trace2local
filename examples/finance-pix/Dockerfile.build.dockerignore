@@ -1,0 +1,13 @@
+# contexto = raiz do repo; só código-fonte entra no build (sem saídas, estado ou dependências do host)
+.git
+.idea
+.vscode
+**/target
+**/node_modules
+**/.terraform
+**/*.tfstate
+**/*.tfstate.*
+docs
+scripts/ux-loop
+scripts/screenshots
+# examples/* continuam: são <module> do pom raiz (o Maven exige os diretórios mesmo com -pl)

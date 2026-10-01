@@ -1,0 +1,16 @@
+{
+  "mappings": [
+    {
+      "name": "SPI — liquidação",
+      "priority": 5,
+      "request": {"method": "POST", "urlPath": "/spi/v1/settlements"},
+      "response": {
+        "status": 201,
+        "headers": {"Content-Type": "application/json"},
+        "transformers": ["response-template"],
+        "jsonBody": {"endToEndId": "{{jsonPath request.body '$.endToEndId'}}", "status": "SETTLED", "settledAt": "{{now}}"},
+        "fixedDelayMilliseconds": 120
+      }
+    }
+  ]
+}

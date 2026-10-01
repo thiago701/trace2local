@@ -130,6 +130,54 @@ class OtlpTraceReceiverTest {
     }
 
     @Test
+    void payloadAttributesBecomeTheNodePayloadNotAttributes() throws Exception {
+        Trace2LocalConfig cfg = Trace2LocalConfig.builder().quiescenceMs(2_000).build();
+        try (Trace2LocalPipeline pipeline = Trace2LocalPipeline.start(cfg)) {
+            HttpServer http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 4);
+            http.createContext("/v1/traces", new OtlpTraceReceiver(pipeline, cfg));
+            http.setExecutor(java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor());
+            http.start();
+            try {
+                String traceId = "efefefefefefefefefefefefefefefef";
+                String big = "x".repeat(200_000);
+                Span client = Span.newBuilder()
+                        .setTraceId(ByteString.copyFrom(hex(traceId)))
+                        .setSpanId(ByteString.copyFrom(hex("eeeeeeeeeeeeeeee")))
+                        .setName("Antifraude /v1/score")
+                        .setKind(Span.SpanKind.SPAN_KIND_CLIENT)
+                        .setStartTimeUnixNano(0)
+                        .setEndTimeUnixNano(10_000_000L)
+                        .addAttributes(kv(tech.neural7.trace2local.otel.OtelAttributeNames.HTTP_METHOD, "POST"))
+                        .addAttributes(kv(tech.neural7.trace2local.otel.OtelAttributeNames.SERVER_ADDRESS, "antifraude.partner"))
+                        .addAttributes(kv(tech.neural7.trace2local.otel.Trace2LocalAttributes.PAYLOAD_REQUEST, "{\"amount\":150.0}"))
+                        .addAttributes(kv(tech.neural7.trace2local.otel.Trace2LocalAttributes.PAYLOAD_RESPONSE, big))
+                        .build();
+                ExportTraceServiceRequest request = ExportTraceServiceRequest.newBuilder()
+                        .addResourceSpans(ResourceSpans.newBuilder().addScopeSpans(ScopeSpans.newBuilder().addSpans(client)))
+                        .build();
+                HttpResponse<String> response = HttpClient.newHttpClient().send(HttpRequest.newBuilder()
+                                .uri(URI.create("http://127.0.0.1:" + http.getAddress().getPort() + "/v1/traces"))
+                                .POST(HttpRequest.BodyPublishers.ofByteArray(request.toByteArray()))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString());
+                assertThat(response.statusCode()).isEqualTo(200);
+
+                var node = awaitExecution(pipeline, traceId, Duration.ofSeconds(5)).roots().get(0);
+                assertThat(node.payload()).isNotNull();
+                assertThat(node.payload().request()).isEqualTo("{\"amount\":150.0}");
+                // teto de payload aplicado no Station também (cliente OTLP de terceiros)
+                assertThat(node.payload().response().length()).isLessThan(big.length());
+                assertThat(node.payload().response()).endsWith(tech.neural7.trace2local.internal.Redactor.TRUNCATED);
+                assertThat(node.attributes()).doesNotContainKeys(
+                        tech.neural7.trace2local.otel.Trace2LocalAttributes.PAYLOAD_REQUEST,
+                        tech.neural7.trace2local.otel.Trace2LocalAttributes.PAYLOAD_RESPONSE);
+            } finally {
+                http.stop(0);
+            }
+        }
+    }
+
+    @Test
     void rejectsMalformedProtobuf() throws Exception {
         try (Trace2LocalPipeline pipeline = Trace2LocalPipeline.start(Trace2LocalConfig.defaults())) {
             HttpServer http = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 4);

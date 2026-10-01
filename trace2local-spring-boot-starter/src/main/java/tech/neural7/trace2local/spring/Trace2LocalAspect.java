@@ -24,12 +24,12 @@ public class Trace2LocalAspect {
         this.cfg = cfg;
     }
 
-    @Around("@annotation(traceVanta)")
-    public Object aroundBusinessMethod(ProceedingJoinPoint joinPoint, Trace2Local traceVanta) throws Throwable {
+    @Around("@annotation(trace2Local)")
+    public Object aroundBusinessMethod(ProceedingJoinPoint joinPoint, Trace2Local trace2Local) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        String label = traceVanta.value() == null || traceVanta.value().isBlank()
+        String label = trace2Local.value() == null || trace2Local.value().isBlank()
                 ? signature.getMethod().getName()
-                : traceVanta.value();
+                : trace2Local.value();
         // resolvido a cada chamada: em testes, o SDK ativo pode ser trocado pela extensão;
         // Trace2LocalOtel.get() cobre "SDK nosso" e "SDK do dev" (registro próprio — ver javadoc)
         Tracer tracer = tech.neural7.trace2local.otel.Trace2LocalOtel.get().getTracer("tech.neural7.trace2local:business");

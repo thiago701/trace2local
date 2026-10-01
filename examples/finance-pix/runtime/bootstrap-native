@@ -1,0 +1,4 @@
+#!/bin/sh
+# Runtime custom provided.al2023 — executável nativo GraalVM (AOT). Sem JVM: cold start em milissegundos.
+set -e
+exec "$LAMBDA_TASK_ROOT/finance-pix-native" $EXTRA_NATIVE_OPTS

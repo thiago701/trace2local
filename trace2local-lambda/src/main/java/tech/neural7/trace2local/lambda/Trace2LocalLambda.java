@@ -31,7 +31,16 @@ public final class Trace2LocalLambda {
         if (token == null || token.isBlank()) {
             token = System.getProperty("trace2local.station.token");
         }
-        return Trace2LocalConfig.builder().stationEndpoint(endpoint).stationToken(token).build();
+        Trace2LocalConfig.Builder b = Trace2LocalConfig.builder().stationEndpoint(endpoint).stationToken(token);
+        String jdbc = System.getenv("TRACE2LOCAL_JDBC_MUTATION_CAPTURE");
+        if ("inferred".equalsIgnoreCase(jdbc)) {
+            b.jdbcMutationCapture(tech.neural7.trace2local.config.JdbcMutationCapture.INFERRED);
+        }
+        String flush = System.getenv("TRACE2LOCAL_FLUSH_TIMEOUT_MS");
+        if (flush != null && flush.matches("\\d{1,6}")) {
+            b.flushTimeoutMs(Integer.parseInt(flush));
+        }
+        return b.build();
     }
 
     public static <I, O> RequestHandler<I, O> instrument(RequestHandler<I, O> delegate, Trace2LocalConfig cfg) {

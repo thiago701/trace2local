@@ -1,0 +1,39 @@
+openapi: 3.0.3
+info:
+  title: Bureau KYC & Limites (simulado)
+  version: "2.3"
+  description: |
+    Situação cadastral (KYC) e limites transacionais do pagador. No ambiente local
+    este bureau NÃO está disponível (só existe na rede do parceiro, via VPN) —
+    é o caso de uso do Mock Connect para "API indisponível localmente".
+servers:
+  - url: http://kyc.bureau.local:8080
+paths:
+  /v2/customers/{customerId}/limits:
+    get:
+      operationId: consultarLimites
+      parameters:
+        - {name: customerId, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: situação e limites
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Limits'}
+              examples:
+                verificado: {value: {customerId: acc-001, kycStatus: VERIFIED, dailyLimit: 20000.00, availableToday: 18500.00, nightLimit: 1000.00}}
+                pendente: {value: {customerId: acc-002, kycStatus: PENDING, dailyLimit: 500.00, availableToday: 500.00, nightLimit: 200.00}}
+                bloqueado: {value: {customerId: acc-003, kycStatus: BLOCKED, dailyLimit: 0, availableToday: 0, nightLimit: 0}}
+        "404":
+          description: cliente desconhecido
+components:
+  schemas:
+    Limits:
+      type: object
+      required: [customerId, kycStatus, dailyLimit, availableToday]
+      properties:
+        customerId: {type: string}
+        kycStatus: {type: string, enum: [VERIFIED, PENDING, BLOCKED]}
+        dailyLimit: {type: number}
+        availableToday: {type: number}
+        nightLimit: {type: number}

@@ -66,6 +66,37 @@ class InfraIndexerTest {
     }
 
     @Test
+    void terraformUsesTheRealResourceNameNotTheLocalLabel(@TempDir Path dir) throws IOException {
+        // achado da validação finance-pix: o rótulo local "transfers" virava um componente
+        // "declarado e nunca observado" ao lado do real pix-transfers
+        Files.writeString(dir.resolve("main.tf"), """
+                resource "aws_dynamodb_table" "transfers" {
+                  name         = "pix-transfers"
+                  hash_key     = "transferId"
+                  attribute {
+                    name = "transferId"   # aninhado: não é o nome da tabela
+                    type = "S"
+                  }
+                }
+                resource "aws_sqs_queue" "settlement" {
+                  attribute_hint = 1
+                  name = "pix-settlement"
+                }
+                resource "aws_lambda_function" "fn" {
+                  for_each      = local.functions
+                  function_name = each.key
+                }
+                """);
+
+        List<InfraIndexer.Entry> entries = new InfraIndexer().scan(List.of(dir));
+
+        assertThat(entries).filteredOn(e -> e.type().equals("RECURSO_TERRAFORM"))
+                .extracting(InfraIndexer.Entry::value)
+                .containsExactlyInAnyOrder("pix-transfers", "pix-settlement", "each.key")
+                .doesNotContain("transferId", "transfers", "fn");
+    }
+
+    @Test
     void emptyScanProducesNoEntries(@TempDir Path empty) {
         assertThat(new InfraIndexer().scan(List.of(empty))).isEmpty();
     }

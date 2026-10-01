@@ -91,7 +91,9 @@ public class ConfigureMojo extends AbstractMojo {
                     ? "criado com correlação Datadog+OTel" : "já existia (não sobrescrito)"));
             getLog().info("");
             getLog().info("Próximos passos:");
-            getLog().info("  1. rode a aplicação em perfil dev e abra http://localhost:9876/trace2local");
+            getLog().info("  1. rode com o perfil trace2local (liga a ferramenta e carrega application-trace2local.yml):");
+            getLog().info("       ./mvnw spring-boot:run -Dspring-boot.run.profiles=trace2local");
+            getLog().info("     e abra http://localhost:9876/trace2local (o log de boot imprime a URL)");
             getLog().info("  2. dispare uma requisição — os logs agora carregam trace_id/span_id (OTel) e dd.trace_id/dd.span_id (Datadog)");
             getLog().info("  3. rode 'mvn trace2local:analyze' para ver o mapa completo do canvas");
             getLog().info("");

@@ -26,8 +26,15 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.jdk }}
           cache: maven
-      - name: Build + testes unitários
+      - name: Build + testes unitários + guarda-rails (ACL OTel, UI offline, CSP)
         run: mvn -B -ntp install
+        env:
+          AWS_REGION: us-east-1
+      - name: Stack alvo finance-pix compila (Java 25)
+        if: matrix.jdk == 25
+        run: mvn -B -ntp -f examples/finance-pix/pom.xml -DskipTests package
+      - name: Servidor MCP — jar executável responde --version
+        run: java -jar trace2local-mcp/target/trace2local-mcp-*-all.jar --version
 
   e2e:
     name: E2E (LocalStack via Testcontainers)
